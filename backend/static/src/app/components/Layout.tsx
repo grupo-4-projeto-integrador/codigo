@@ -352,7 +352,7 @@ export function Layout() {
           {!isSidebarCollapsed && (
             <>
               <img src={logo} alt="Logo" className="w-7 h-7 mr-3" />
-              <span className="font-bold text-lg tracking-wide flex-1">Shopping Flamboyant</span>
+              <span className="font-bold text-lg tracking-wide flex-1">Flamboyant Shopping</span>
             </>
           )}
           {isSidebarCollapsed && (

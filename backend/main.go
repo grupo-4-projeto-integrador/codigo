@@ -1,26 +1,33 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
-	"database/sql"
-	_ "modernc.org/sqlite" // Não esqueça do driver do banco!
+	_ "github.com/lib/pq" // Driver correto para Postgres
 )
 
 func main() {
-	// --- PARTE DO BANCO (Mantenha isso) ---
-	db, _ := sql.Open("sqlite", "./seguros.db")
-	db.Exec("CREATE TABLE IF NOT EXISTS usuarios (id INTEGER PRIMARY KEY, nome TEXT)")
-	db.Close() 
+	// String de conexão: mude 'sua_senha' pela senha do seu Postgres
+	connStr := "host=localhost port=5432 user=postgres password=esufg123 dbname=seguros_db sslmode=disable"
+	
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatal("Erro no driver:", err)
+	}
+	defer db.Close()
 
-	// --- PARTE DA IMAGEM (Servidor de arquivos) ---
+	// Testa se o banco responde
+	if err := db.Ping(); err != nil {
+		log.Fatal("Não conectou ao banco. Verifique a senha!", err)
+	}
+	fmt.Println("Conectado ao PostgreSQL com sucesso!")
+
+	// Seu servidor de arquivos continua igual
 	fileserver := http.FileServer(http.Dir("./static/dist"))
-
 	http.Handle("/", fileserver)
 
-	fmt.Printf("Servidor rodando em http://localhost:8082\n")
-	if err := http.ListenAndServe(":8082", nil); err != nil {
-		log.Fatal(err)
-	}
+	fmt.Println("Servidor rodando em http://localhost:8082")
+	log.Fatal(http.ListenAndServe(":8082", nil))
 }
