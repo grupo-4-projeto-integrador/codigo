@@ -134,40 +134,37 @@ export function Insurance() {
     { categoria: "Equipamentos Eletrônicos", apolices: 3, valor: 11.6, sinistrosPagos: 22, color: colors.olive }
   ];
 
-  // Table Data - Data atual: 01/05/2026
-  // Dataset completo com 30 apólices realistas + lojistas
-  const allPolicies = [
-    { id: "AP-2025-001", lojista: "Livraria Cultura", tipo: "Incêndio", seguradora: "Porto Seguro", vigencia: "15/08/2025", vencimento: "15/08/2026", status: "Ativa", cobertura: "R$ 12.000.000,00", premio: "R$ 48.500,00" },
-    { id: "AL-2025-0034", lojista: "Shopping Flamboyant", tipo: "Responsabilidade Civil", seguradora: "Allianz Seguros", vigencia: "22/06/2025", vencimento: "22/06/2026", status: "Ativa", cobertura: "R$ 5.000.000,00", premio: "R$ 28.000,00" },
-    { id: "AP-2024-112", lojista: "Zara", tipo: "Danos Elétricos", seguradora: "Bradesco Seguros", vigencia: "08/03/2024", vencimento: "08/03/2025", status: "Vencida", cobertura: "R$ 2.100.000,00", premio: "R$ 15.800,00" },
-    { id: "TM-2024-0078", lojista: "Havaianas", tipo: "Roubo e Furto", seguradora: "Tokio Marine", vigencia: "30/07/2025", vencimento: "30/07/2026", status: "Ativa", cobertura: "R$ 3.500.000,00", premio: "R$ 22.500,00" },
-    { id: "SU-2024-4521", lojista: "Renner", tipo: "Alagamento e Infiltração", seguradora: "SulAmérica", vigencia: "08/03/2024", vencimento: "08/03/2025", status: "Vencida", cobertura: "R$ 1.800.000,00", premio: "R$ 12.000,00" },
-    { id: "AP-2025-067", lojista: "Óticas Carol", tipo: "Vidros e Fachadas", seguradora: "Liberty Seguros", vigencia: "12/09/2025", vencimento: "12/09/2026", status: "Ativa", cobertura: "R$ 900.000,00", premio: "R$ 8.900,00" },
-    { id: "AP-2025-023", lojista: "Cinemark", tipo: "Incêndio", seguradora: "Mapfre Seguros", vigencia: "01/10/2025", vencimento: "01/10/2026", status: "Ativa", cobertura: "R$ 15.000.000,00", premio: "R$ 52.000,00" },
-    { id: "AP-2024-198", lojista: "C&A", tipo: "Responsabilidade Civil", seguradora: "HDI Seguros", vigencia: "15/11/2023", vencimento: "15/11/2024", status: "Vencida", cobertura: "R$ 6.500.000,00", premio: "R$ 31.200,00" },
-    { id: "TM-2024-9012", lojista: "Outback", tipo: "Incêndio", seguradora: "Tokio Marine", vigencia: "20/05/2025", vencimento: "20/05/2026", status: "A Vencer", cobertura: "R$ 10.000.000,00", premio: "R$ 45.000,00" },
-    { id: "AP-2025-102", lojista: "Fast Shop", tipo: "Equipamentos Eletrônicos", seguradora: "Zurich Seguros", vigencia: "03/11/2025", vencimento: "03/11/2026", status: "Ativa", cobertura: "R$ 4.200.000,00", premio: "R$ 25.400,00" },
-    { id: "AP-2024-234", lojista: "Riachuelo", tipo: "Incêndio", seguradora: "Tokio Marine", vigencia: "12/01/2024", vencimento: "12/01/2025", status: "Vencida", cobertura: "R$ 10.000.000,00", premio: "R$ 45.000,00" },
-    { id: "AP-2025-156", lojista: "Arezzo", tipo: "Responsabilidade Civil", seguradora: "Allianz Seguros", vigencia: "10/01/2026", vencimento: "10/01/2027", status: "Ativa", cobertura: "R$ 7.000.000,00", premio: "R$ 33.500,00" },
-    { id: "AP-2025-178", lojista: "Vivara", tipo: "Roubo e Furto", seguradora: "Bradesco Seguros", vigencia: "15/12/2025", vencimento: "15/12/2026", status: "Ativa", cobertura: "R$ 4.500.000,00", premio: "R$ 27.800,00" },
-    { id: "AP-2024-267", lojista: "Lojas Americanas", tipo: "Vidros e Fachadas", seguradora: "SulAmérica", vigencia: "20/02/2024", vencimento: "20/02/2025", status: "Vencida", cobertura: "R$ 1.100.000,00", premio: "R$ 9.500,00" },
-    { id: "AP-2025-190", lojista: "Subway", tipo: "Alagamento e Infiltração", seguradora: "Liberty Seguros", vigencia: "05/02/2026", vencimento: "05/02/2027", status: "Ativa", cobertura: "R$ 2.200.000,00", premio: "R$ 14.200,00" },
-    { id: "AP-2025-201", lojista: "McDonald's", tipo: "Danos Elétricos", seguradora: "Mapfre Seguros", vigencia: "18/03/2026", vencimento: "18/03/2027", status: "Ativa", cobertura: "R$ 3.100.000,00", premio: "R$ 19.900,00" },
-    { id: "AP-2024-289", lojista: "Pernambucanas", tipo: "Incêndio", seguradora: "HDI Seguros", vigencia: "01/12/2023", vencimento: "01/12/2024", status: "Vencida", cobertura: "R$ 13.500.000,00", premio: "R$ 49.800,00" },
-    { id: "AP-2025-213", lojista: "Cacau Show", tipo: "Responsabilidade Civil", seguradora: "Porto Seguro", vigencia: "25/08/2025", vencimento: "25/08/2026", status: "Ativa", cobertura: "R$ 5.500.000,00", premio: "R$ 29.500,00" },
-    { id: "AP-2025-225", lojista: "Pandora", tipo: "Roubo e Furto", seguradora: "Zurich Seguros", vigencia: "12/04/2026", vencimento: "12/04/2027", status: "Ativa", cobertura: "R$ 3.900.000,00", premio: "R$ 24.700,00" },
-    { id: "AP-2024-301", lojista: "Marisa", tipo: "Equipamentos Eletrônicos", seguradora: "Tokio Marine", vigencia: "15/04/2024", vencimento: "15/04/2025", status: "Vencida", cobertura: "R$ 3.600.000,00", premio: "R$ 21.300,00" },
-    { id: "AP-2025-237", lojista: "Chilli Beans", tipo: "Vidros e Fachadas", seguradora: "Allianz Seguros", vigencia: "08/07/2025", vencimento: "08/07/2026", status: "Ativa", cobertura: "R$ 1.300.000,00", premio: "R$ 10.200,00" },
-    { id: "AP-2025-249", lojista: "Magazine Luiza", tipo: "Incêndio", seguradora: "Bradesco Seguros", vigencia: "08/05/2026", vencimento: "08/05/2027", status: "A Vencer", cobertura: "R$ 11.000.000,00", premio: "R$ 46.200,00" },
-    { id: "AP-2024-312", lojista: "Casas Bahia", tipo: "Danos Elétricos", seguradora: "SulAmérica", vigencia: "20/05/2024", vencimento: "20/04/2025", status: "Vencida", cobertura: "R$ 2.400.000,00", premio: "R$ 16.500,00" },
-    { id: "AP-2025-261", lojista: "Burger King", tipo: "Responsabilidade Civil", seguradora: "Liberty Seguros", vigencia: "28/09/2025", vencimento: "28/09/2026", status: "Ativa", cobertura: "R$ 6.200.000,00", premio: "R$ 32.100,00" },
-    { id: "AP-2025-273", lojista: "Starbucks", tipo: "Alagamento e Infiltração", seguradora: "Mapfre Seguros", vigencia: "15/10/2025", vencimento: "15/10/2026", status: "Ativa", cobertura: "R$ 2.000.000,00", premio: "R$ 13.800,00" },
-    { id: "AP-2024-345", lojista: "Ótica Moderna", tipo: "Roubo e Furto", seguradora: "HDI Seguros", vigencia: "10/06/2024", vencimento: "10/06/2025", status: "Vencida", cobertura: "R$ 4.100.000,00", premio: "R$ 26.400,00" },
-    { id: "AP-2025-285", lojista: "Apple Store", tipo: "Equipamentos Eletrônicos", seguradora: "Porto Seguro", vigencia: "22/11/2025", vencimento: "22/11/2026", status: "Ativa", cobertura: "R$ 3.800.000,00", premio: "R$ 23.600,00" },
-    { id: "AP-2025-297", lojista: "Le Biscuit", tipo: "Incêndio", seguradora: "Zurich Seguros", vigencia: "28/01/2026", vencimento: "28/01/2027", status: "Ativa", cobertura: "R$ 14.200.000,00", premio: "R$ 51.500,00" },
-    { id: "AP-2024-378", lojista: "Imaginarium", tipo: "Vidros e Fachadas", seguradora: "Tokio Marine", vigencia: "18/07/2024", vencimento: "18/07/2025", status: "Vencida", cobertura: "R$ 1.500.000,00", premio: "R$ 11.700,00" },
-    { id: "AP-2025-309", lojista: "Saraiva", tipo: "Danos Elétricos", seguradora: "Allianz Seguros", vigencia: "05/12/2025", vencimento: "05/12/2026", status: "Ativa", cobertura: "R$ 2.700.000,00", premio: "R$ 17.900,00" }
-  ];
+  const [allPolicies, setAllPolicies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchApolices = async () => {
+      try {
+        const response = await fetch('/api/apolices');
+        if (response.ok) {
+          const data = await response.json();
+          const mapped = data.map((d: any) => ({
+            id: d.luc,
+            lojista: d.fantasia,
+            tipo: d.segmento,
+            seguradora: d.seguradora,
+            vigencia: d.vigencia,
+            vencimento: d.vencimento,
+            status: d.status,
+            cobertura: "-", // removido da tabela original
+            premio: "-"     // removido da tabela original
+          }));
+          setAllPolicies(mapped);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar apólices:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchApolices();
+  }, []);
 
   const itemsPerPage = 10;
 
@@ -1412,7 +1409,7 @@ export function Insurance() {
           <table className="w-full min-w-[800px]">
             <thead className="bg-[#F7F8FA] dark:bg-[#1A1F2E]">
               <tr>
-                <th className="px-4 py-3 text-left text-[13px] font-bold bg-[#F0F1F3] dark:bg-[#242938]" style={{ color: colors.brandMaroon }}>Apólice</th>
+                <th className="px-4 py-3 text-left text-[13px] font-bold bg-[#F0F1F3] dark:bg-[#242938]" style={{ color: colors.brandMaroon }}>LUC</th>
 
                 {/* Lojista - Sortable */}
                 <th
@@ -1421,7 +1418,7 @@ export function Insurance() {
                   onClick={() => handleSort('lojista')}
                 >
                   <div className="flex items-center gap-2">
-                    <span>Lojista</span>
+                    <span>Fantasia</span>
                     {sortColumn === 'lojista' && (
                       sortDirection === 'asc' ? (
                         <ChevronUp className="w-3.5 h-3.5" style={{ color: '#6B1420' }} strokeWidth={1.5} />
@@ -1439,7 +1436,7 @@ export function Insurance() {
                   onClick={() => handleSort('tipo')}
                 >
                   <div className="flex items-center gap-2">
-                    <span>Tipo</span>
+                    <span>Segmento</span>
                     {sortColumn === 'tipo' && (
                       sortDirection === 'asc' ? (
                         <ChevronUp className="w-3.5 h-3.5" style={{ color: '#6B1420' }} strokeWidth={1.5} />

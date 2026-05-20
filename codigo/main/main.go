@@ -13,13 +13,12 @@ import (
 )
 
 type Apolice struct {
-	CodigoApolice string
-	Lojista       string
-	Tipo          string
-	Seguradora    string
-	Vigencia      string
-	Vencimento    string
-	Status        string
+	luc        string
+	fantasia   string
+	segmento   string
+	seguradora string
+	vigencia   string
+	vencimento string
 }
 
 func lerEntrada(mensagem string, reader *bufio.Reader) string {
@@ -36,11 +35,11 @@ func pause(reader *bufio.Reader) {
 func inserirApolice(db *sql.DB, a Apolice) error {
 	sqlStatement := `
 		INSERT INTO "Apolices" (
-			codigo_apolice, "Lojista", "Tipo", "Seguradora", "Vigencia", "Vencimento", "Status"
+			codigo_apolice, "luc", "fantasia", "segmento", "seguradora", "vigencia", "vencimento"
 		) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING codigo_apolice;`
 
 	var codigo string
-	err := db.QueryRow(sqlStatement, a.CodigoApolice, a.Lojista, a.Tipo, a.Seguradora, a.Vigencia, a.Vencimento, a.Status).Scan(&codigo)
+	err := db.QueryRow(sqlStatement, a.luc, a.fantasia, a.segmento, a.seguradora, a.vigencia, a.vencimento).Scan(&codigo)
 	if err != nil {
 		return fmt.Errorf("falha ao inserir: %w", err)
 	}
@@ -49,7 +48,7 @@ func inserirApolice(db *sql.DB, a Apolice) error {
 }
 
 func listarApolices(db *sql.DB) error {
-	rows, err := db.Query(`SELECT codigo_apolice, "Lojista", "Seguradora", "Status" FROM "Apolices"`)
+	rows, err := db.Query(`SELECT codigo_apolice, "luc", "segmento", "vencimento" FROM "Apolices"`)
 	if err != nil {
 		return fmt.Errorf("falha ao buscar apólices: %w", err)
 	}
@@ -57,16 +56,16 @@ func listarApolices(db *sql.DB) error {
 
 	fmt.Println("\n--- LISTA DE APÓLICES ---")
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "CÓDIGO\tLOJISTA\tSEGURADORA\tSTATUS")
+	fmt.Fprintln(w, "CÓDIGO\tluc\tsegmento\tvencimento")
 	fmt.Fprintln(w, "------\t-------\t----------\t------")
 
 	count := 0
 	for rows.Next() {
-		var codigo, lojista, seguradora, status string
-		if err := rows.Scan(&codigo, &lojista, &seguradora, &status); err != nil {
+		var codigo, luc, segmento, vencimento string
+		if err := rows.Scan(&codigo, &luc, &segmento, &vencimento); err != nil {
 			return err
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", codigo, lojista, seguradora, status)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", codigo, luc, segmento, vencimento)
 		count++
 	}
 	w.Flush()
@@ -82,10 +81,10 @@ func listarApolices(db *sql.DB) error {
 func atualizarApolice(db *sql.DB, codigo string, a Apolice) error {
 	sqlStatement := `
 		UPDATE "Apolices" 
-		SET "Lojista"=$1, "Tipo"=$2, "Seguradora"=$3, "Vigencia"=$4, "Vencimento"=$5, "Status"=$6
+		SET "luc"=$1, "fantasia"=$2, "segmento"=$3, "seguradora"=$4, "vigencia"=$5, "vencimento"=$6
 		WHERE codigo_apolice=$7;`
 
-	res, err := db.Exec(sqlStatement, a.Lojista, a.Tipo, a.Seguradora, a.Vigencia, a.Vencimento, a.Status, codigo)
+	res, err := db.Exec(sqlStatement, a.luc, a.fantasia, a.segmento, a.seguradora, a.vigencia, a.vencimento, codigo)
 	if err != nil {
 		return fmt.Errorf("falha ao atualizar: %w", err)
 	}
@@ -115,7 +114,6 @@ func deletarApolice(db *sql.DB, codigo string) error {
 	}
 	return nil
 }
-
 
 func main() {
 	connStr := "user=postgres password=postgres dbname=postgres host=localhost port=5432 sslmode=disable"
@@ -150,13 +148,12 @@ func main() {
 		case "1":
 			fmt.Println("\n--- NOVA APÓLICE ---")
 			novaApolice := Apolice{
-				CodigoApolice: lerEntrada("Código (ex: GO-1001): ", reader),
-				Lojista:       lerEntrada("Lojista: ", reader),
-				Tipo:          lerEntrada("Tipo: ", reader),
-				Seguradora:    lerEntrada("Seguradora: ", reader),
-				Vigencia:      lerEntrada("Vigência (YYYY-MM-DD): ", reader),
-				Vencimento:    lerEntrada("Vencimento (YYYY-MM-DD): ", reader),
-				Status:        lerEntrada("Status (Ativa/Vencida/A Vencer): ", reader),
+				luc:        lerEntrada("luc: ", reader),
+				fantasia:   lerEntrada("fantasia: ", reader),
+				segmento:   lerEntrada("segmento: ", reader),
+				seguradora: lerEntrada("Vigência (YYYY-MM-DD): ", reader),
+				vigencia:   lerEntrada("vigencia (YYYY-MM-DD): ", reader),
+				vencimento: lerEntrada("vencimento (Ativa/Vencida/A Vencer): ", reader),
 			}
 			if err := inserirApolice(db, novaApolice); err != nil {
 				log.Println(err)
@@ -173,14 +170,14 @@ func main() {
 			fmt.Println("\n--- ATUALIZAR APÓLICE ---")
 			codigo := lerEntrada("Digite o CÓDIGO da apólice que deseja alterar: ", reader)
 			fmt.Println("Digite os novos dados (ou repita os antigos se não quiser mudar):")
-			
+
 			dadosAtualizados := Apolice{
-				Lojista:       lerEntrada("Novo Lojista: ", reader),
-				Tipo:          lerEntrada("Novo Tipo: ", reader),
-				Seguradora:    lerEntrada("Nova Seguradora: ", reader),
-				Vigencia:      lerEntrada("Nova Vigência (YYYY-MM-DD): ", reader),
-				Vencimento:    lerEntrada("Novo Vencimento (YYYY-MM-DD): ", reader),
-				Status:        lerEntrada("Novo Status: ", reader),
+				luc:        lerEntrada("Novo luc: ", reader),
+				fantasia:   lerEntrada("Novo fantasia: ", reader),
+				segmento:   lerEntrada("Nova segmento: ", reader),
+				seguradora: lerEntrada("Nova Vigência (YYYY-MM-DD): ", reader),
+				vigencia:   lerEntrada("Novo vigencia (YYYY-MM-DD): ", reader),
+				vencimento: lerEntrada("Novo vencimento: ", reader),
 			}
 			if err := atualizarApolice(db, codigo, dadosAtualizados); err != nil {
 				log.Println(err)
