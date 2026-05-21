@@ -1,9 +1,79 @@
-import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, Upload, X, ChevronUp, ChevronDown, User, Filter } from "lucide-react";
+import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, Trash2, ChevronRight, Upload, X, ChevronUp, ChevronDown, User, Filter } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
+
+type ApoliceFormData = {
+  luc: string;
+  fantasia: string;
+  segmento: string;
+  seguradora: string;
+  vigencia: string;
+  vencimento: string;
+};
+
+type ApoliceRecord = ApoliceFormData & {
+  id: string;
+  lojista: string;
+  tipo: string;
+  status: string;
+  cobertura?: string;
+  premio?: string;
+  observacoes?: string;
+};
+
+const SEGMENTO_OPTIONS = [
+  "MODA",
+  "ALIMENTAÇÃO",
+  "SERVIÇOS",
+  "PERFUMARIA E COSMÉTICOS",
+];
+
+const EMPTY_FORM_DATA: ApoliceFormData = {
+  luc: "",
+  fantasia: "",
+  segmento: "",
+  seguradora: "",
+  vigencia: "",
+  vencimento: "",
+};
+
+const normalizeDateForInput = (value: string) => {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+
+  const [day, month, year] = value.split("/");
+  if (day && month && year) {
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  return value;
+};
+
+const getDaysRemaining = (value: string) => {
+  const normalizedValue = normalizeDateForInput(value);
+  if (!normalizedValue) return 0;
+
+  const dueDate = new Date(`${normalizedValue}T00:00:00`);
+  const today = new Date();
+  const currentDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+  return Math.floor((dueDateOnly.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+};
+
+const calculatePolicyStatus = (vencimento: string) => {
+  const daysRemaining = getDaysRemaining(vencimento);
+
+  if (daysRemaining < 0) return "Vencida";
+  if (daysRemaining <= 30) return "A Vencer";
+  return "Ativa";
+};
+
+const normalizeStatus = (value: string) => value.trim().toUpperCase();
 
 export function Insurance() {
   const navigate = useNavigate();
@@ -30,9 +100,14 @@ export function Insurance() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showConformidadeModal, setShowConformidadeModal] = useState(false);
-  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+  const [selectedPolicy, setSelectedPolicy] = useState<ApoliceRecord | null>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmittingApolice, setIsSubmittingApolice] = useState(false);
+  const [isUpdatingApolice, setIsUpdatingApolice] = useState(false);
+  const [isDeletingApolice, setIsDeletingApolice] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   // Table sorting states
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -47,15 +122,7 @@ export function Insurance() {
   const tableSectionRef = useRef<HTMLDivElement>(null);
 
   // Form state para nova apólice
-  const [formData, setFormData] = useState({
-    tipo: "",
-    seguradora: "",
-    vigencia: "",
-    vencimento: "",
-    cobertura: "",
-    premio: "",
-    observacoes: ""
-  });
+  const [formData, setFormData] = useState<ApoliceFormData>(EMPTY_FORM_DATA);
 
   // Detect dark mode
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -134,42 +201,49 @@ export function Insurance() {
     { categoria: "Equipamentos Eletrônicos", apolices: 3, valor: 11.6, sinistrosPagos: 22, color: colors.olive }
   ];
 
-  const [allPolicies, setAllPolicies] = useState<any[]>([]);
+  const [allPolicies, setAllPolicies] = useState<ApoliceRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchApolices = async () => {
-      try {
-        const response = await fetch('/api/apolices');
-        if (response.ok) {
-          const data = await response.json();
-          const mapped = data.map((d: any) => ({
-            id: d.luc,
-            lojista: d.fantasia,
-            tipo: d.segmento,
-            seguradora: d.seguradora,
-            vigencia: d.vigencia,
-            vencimento: d.vencimento,
-            status: d.status,
-            cobertura: "-", // removido da tabela original
-            premio: "-"     // removido da tabela original
-          }));
-          setAllPolicies(mapped);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar apólices:", error);
-      } finally {
-        setLoading(false);
+  const fetchApolices = useCallback(async () => {
+    try {
+      const response = await fetch('/api/apolices');
+      if (!response.ok) {
+        throw new Error('Não foi possível carregar as apólices');
       }
-    };
-    
-    fetchApolices();
+
+      const data = await response.json();
+      const mapped: ApoliceRecord[] = data.map((d: any) => ({
+        id: d.luc,
+        luc: d.luc,
+        fantasia: d.fantasia,
+        lojista: d.fantasia,
+        segmento: d.segmento,
+        tipo: d.segmento,
+        seguradora: d.seguradora,
+        vigencia: d.vigencia,
+        vencimento: d.vencimento,
+        status: calculatePolicyStatus(d.vencimento ?? ''),
+        cobertura: '-',
+        premio: '-',
+      }));
+
+      setAllPolicies(mapped);
+    } catch (error) {
+      console.error('Erro ao buscar apólices:', error);
+      toast.error('Não foi possível carregar as apólices');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchApolices();
+  }, [fetchApolices]);
 
   const itemsPerPage = 10;
 
   // Extract unique values for filter options
-  const uniqueTipos = Array.from(new Set(allPolicies.map(p => p.tipo))).sort();
+  const uniqueTipos = Array.from(new Set(allPolicies.map(p => p.segmento))).sort();
   const uniqueSeguradoras = Array.from(new Set(allPolicies.map(p => p.seguradora))).sort();
 
   // Count active filters
@@ -207,14 +281,14 @@ export function Insurance() {
   };
 
   const filteredPolicies = allPolicies.filter(policy => {
-    const matchesSearch = policy.tipo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         policy.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = policy.luc.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         policy.fantasia.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         policy.segmento.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          policy.seguradora.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         policy.cobertura.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         policy.premio.toLowerCase().includes(searchQuery.toLowerCase());
+                         policy.status.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "todas" ||
                          policy.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesTipo = tipoFilter === "todos" || policy.tipo === tipoFilter;
+    const matchesTipo = tipoFilter === "todos" || policy.segmento === tipoFilter;
     const matchesSeguradora = seguradoraFilter === "todas" || policy.seguradora === seguradoraFilter;
 
     // Date filtering logic
@@ -228,8 +302,8 @@ export function Insurance() {
   const sortedPolicies = [...filteredPolicies].sort((a, b) => {
     if (!sortColumn) return 0;
 
-    let aValue = a[sortColumn as keyof typeof a];
-    let bValue = b[sortColumn as keyof typeof b];
+    let aValue: string | number = a[sortColumn as keyof typeof a] ?? '';
+    let bValue: string | number = b[sortColumn as keyof typeof b] ?? '';
 
     // Convert dates to comparable format
     if (sortColumn === 'vigencia' || sortColumn === 'vencimento') {
@@ -252,42 +326,46 @@ export function Insurance() {
   const paginatedPolicies = sortedPolicies.slice(startIndex, endIndex);
   const totalFilteredPages = Math.ceil(sortedPolicies.length / itemsPerPage);
 
+  const expiredPoliciesCount = allPolicies.filter((policy) => policy.status === "Vencida").length;
+  const expiringPoliciesCount = allPolicies.filter((policy) => policy.status === "A Vencer").length;
+  const activePoliciesCount = allPolicies.filter((policy) => policy.status === "Ativa").length;
+  const totalPoliciesCount = allPolicies.length;
+  const compliancePercent = totalPoliciesCount > 0 ? Math.round((activePoliciesCount / totalPoliciesCount) * 100) : 0;
+
+  const performanceData = [
+    { name: "Conformes", value: activePoliciesCount, color: colors.forest, label: `${activePoliciesCount} apólices` },
+    { name: "A regularizar", value: expiringPoliciesCount, color: colors.tan, label: `${expiringPoliciesCount} apólices` },
+    { name: "Crítico", value: expiredPoliciesCount, color: colors.brandRed, label: `${expiredPoliciesCount} apólices` }
+  ];
+
   // Handlers
   const handleNovaApolice = () => {
-    setFormData({
-      tipo: "",
-      seguradora: "",
-      vigencia: "",
-      vencimento: "",
-      cobertura: "",
-      premio: "",
-      observacoes: ""
-    });
+    setFormData(EMPTY_FORM_DATA);
+    setFormError(null);
     setShowNovaApoliceModal(true);
   };
 
   const handleVerApolice = (policyId: string) => {
     const policy = allPolicies.find(p => p.id === policyId);
+    if (!policy) return; // Check if policy exists
     setSelectedPolicy(policy);
     setShowViewApoliceModal(true);
   };
 
   const handleEditarApolice = (policyId: string) => {
     const policy = allPolicies.find(p => p.id === policyId);
-    if (policy) {
-      setFormData({
-        tipo: policy.tipo,
-        seguradora: policy.seguradora,
-        vigencia: policy.vigencia,
-        vencimento: policy.vencimento,
-        cobertura: policy.cobertura,
-        premio: policy.premio,
-        observacoes: ""
-      });
-      setSelectedPolicy(policy);
-      setShowViewApoliceModal(false);
-      setShowEditApoliceModal(true);
-    }
+    if (!policy) return;
+    setFormData({
+      luc: policy.luc,
+      fantasia: policy.fantasia,
+      segmento: policy.segmento,
+      seguradora: policy.seguradora,
+      vigencia: normalizeDateForInput(policy.vigencia),
+      vencimento: normalizeDateForInput(policy.vencimento),
+    });
+    setSelectedPolicy(policy);
+    setShowViewApoliceModal(false);
+    setShowEditApoliceModal(true);
   };
 
   const handleSort = (column: string) => {
@@ -302,16 +380,167 @@ export function Insurance() {
     setCurrentPage(1); // Reset to first page when sorting
   };
 
-  const handleSubmitNovaApolice = (e: React.FormEvent) => {
+  const handleSubmitNovaApolice = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Nova apólice criada com sucesso!\n\nTipo: ${formData.tipo}\nSeguradora: ${formData.seguradora}`);
-    setShowNovaApoliceModal(false);
+    const validationErrors: string[] = [];
+
+    if (!formData.luc.trim()) validationErrors.push('Informe o LUC.');
+    if (!formData.fantasia.trim()) validationErrors.push('Informe a fantasia.');
+    if (!formData.segmento.trim()) validationErrors.push('Selecione o segmento.');
+    if (!formData.seguradora.trim()) validationErrors.push('Informe a seguradora.');
+    if (!formData.vigencia) validationErrors.push('Informe a vigência.');
+    if (!formData.vencimento) validationErrors.push('Informe o vencimento.');
+
+    if (formData.vigencia && formData.vencimento && formData.vencimento < formData.vigencia) {
+      validationErrors.push('O vencimento não pode ser anterior à vigência.');
+    }
+
+    if (validationErrors.length > 0) {
+      setFormError(validationErrors[0]);
+      toast.error(validationErrors[0]);
+      return;
+    }
+
+    setFormError(null);
+    setIsSubmittingApolice(true);
+
+    try {
+      const response = await fetch('/api/apolices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          luc: formData.luc.trim(),
+          fantasia: formData.fantasia.trim(),
+          segmento: formData.segmento.trim(),
+          seguradora: formData.seguradora.trim(),
+          vigencia: formData.vigencia,
+          vencimento: formData.vencimento,
+        }),
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || responseBody?.message || 'Não foi possível criar a apólice');
+      }
+
+      await fetchApolices();
+      setCurrentPage(1);
+      setShowNovaApoliceModal(false);
+      setShowDropdown(false);
+      setFormData(EMPTY_FORM_DATA);
+      toast.success(`Apólice ${responseBody?.luc || formData.luc} criada com sucesso`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao criar apólice';
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmittingApolice(false);
+    }
   };
 
-  const handleSubmitEditApolice = (e: React.FormEvent) => {
+  const handleSubmitEditApolice = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Apólice ${selectedPolicy?.id} atualizada com sucesso!`);
-    setShowEditApoliceModal(false);
+
+    const validationErrors: string[] = [];
+
+    if (!selectedPolicy) validationErrors.push('Apólice não selecionada.');
+    if (!formData.luc.trim()) validationErrors.push('Informe o LUC.');
+    if (!formData.fantasia.trim()) validationErrors.push('Informe a fantasia.');
+    if (!formData.segmento.trim()) validationErrors.push('Selecione o segmento.');
+    if (!formData.seguradora.trim()) validationErrors.push('Informe a seguradora.');
+    if (!formData.vigencia) validationErrors.push('Informe a vigência.');
+    if (!formData.vencimento) validationErrors.push('Informe o vencimento.');
+
+    if (formData.vigencia && formData.vencimento && formData.vencimento < formData.vigencia) {
+      validationErrors.push('O vencimento não pode ser anterior à vigência.');
+    }
+
+    if (validationErrors.length > 0) {
+      setFormError(validationErrors[0]);
+      toast.error(validationErrors[0]);
+      return;
+    }
+
+    setFormError(null);
+    setIsUpdatingApolice(true);
+
+    try {
+      const response = await fetch(`/api/apolices/${encodeURIComponent(selectedPolicy!.id)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          luc: formData.luc.trim(),
+          fantasia: formData.fantasia.trim(),
+          segmento: formData.segmento.trim(),
+          seguradora: formData.seguradora.trim(),
+          vigencia: formData.vigencia,
+          vencimento: formData.vencimento,
+        }),
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || responseBody?.message || 'Não foi possível atualizar a apólice');
+      }
+
+      await fetchApolices();
+      setCurrentPage(1);
+      setShowEditApoliceModal(false);
+      setSelectedPolicy(null);
+      toast.success(`Apólice ${responseBody?.luc || formData.luc} atualizada com sucesso`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao atualizar apólice';
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setIsUpdatingApolice(false);
+    }
+  };
+
+  const handleOpenDeleteConfirm = (policyId?: string) => {
+    if (policyId) {
+      const policy = allPolicies.find((item) => item.id === policyId);
+      if (policy) {
+        setSelectedPolicy(policy);
+      }
+    }
+
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleConfirmDeleteApolice = async () => {
+    if (!selectedPolicy) return;
+
+    setIsDeletingApolice(true);
+
+    try {
+      const response = await fetch(`/api/apolices/${encodeURIComponent(selectedPolicy.id)}`, {
+        method: 'DELETE',
+      });
+
+      const responseBody = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || responseBody?.message || 'Não foi possível excluir a apólice');
+      }
+
+      await fetchApolices();
+      setCurrentPage(1);
+      toast.success(`Apólice ${selectedPolicy.id} excluída com sucesso`);
+      setShowDeleteConfirmModal(false);
+      handleCloseModals();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro ao excluir apólice';
+      toast.error(message);
+    } finally {
+      setIsDeletingApolice(false);
+    }
   };
 
   const handleCloseModals = () => {
@@ -322,9 +551,14 @@ export function Insurance() {
     setShowUploadModal(false);
     setShowDropdown(false);
     setShowConformidadeModal(false);
+    setShowDeleteConfirmModal(false);
     setSelectedPolicy(null);
     setUploadedFile(null);
     setIsDragging(false);
+    setFormError(null);
+    setIsSubmittingApolice(false);
+    setIsUpdatingApolice(false);
+    setIsDeletingApolice(false);
   };
 
   const handleUploadApolice = () => {
@@ -386,6 +620,7 @@ export function Insurance() {
 
   const handleRenovarApolice = (policyId: string) => {
     const policy = allPolicies.find(p => p.id === policyId);
+    if (!policy) return; // Check if policy exists
     setSelectedPolicy(policy);
     setShowRenovarModal(true);
   };
@@ -398,6 +633,7 @@ export function Insurance() {
 
   const handleVerApoliceCard = (policyId: string) => {
     const policy = allPolicies.find(p => p.id === policyId);
+    if (!policy) return; // Check if policy exists
     setSelectedPolicy(policy);
     setShowViewApoliceModal(true);
   };
@@ -523,15 +759,6 @@ export function Insurance() {
   };
 
   // Performance Data - Donut segmentado (3 estados)
-  const performanceData = [
-    { name: "Conformes", value: 21, color: colors.forest, label: "21 apólices" },
-    { name: "A regularizar", value: 0, color: colors.tan, label: "0 apólices" },
-    { name: "Crítico", value: 9, color: colors.brandRed, label: "9 apólices" }
-  ];
-
-  const totalLojas = performanceData.reduce((sum, item) => sum + item.value, 0);
-  const conformidadePercentual = Math.round((performanceData[0].value / totalLojas) * 100);
-
   const getRiskColor = (level: string) => {
     switch(level) {
       case "low": return colors.forest;
@@ -559,20 +786,20 @@ export function Insurance() {
   };
 
   const getStatusBadgeStyle = (status: string) => {
-    switch(status) {
-      case "Ativa":
+    switch(normalizeStatus(status)) {
+      case "ATIVA":
         return {
           backgroundColor: "#e8f5ee",
           color: colors.forest,
           border: `1px solid ${colors.forest}4D`
         };
-      case "A Vencer":
+      case "A VENCER":
         return {
           backgroundColor: "#fdf3e0",
           color: colors.olive,
           border: `1px solid ${colors.olive}4D`
         };
-      case "Vencida":
+      case "VENCIDA":
         return {
           backgroundColor: "#fdecea",
           color: colors.brandRed,
@@ -639,7 +866,7 @@ export function Insurance() {
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>9</div>
+            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>{expiredPoliciesCount}</div>
             <div className="flex items-center gap-1 mb-1">
               <span className="text-[11px]" style={{ color: colors.brandRed }}>▲ 12%</span>
               <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
@@ -681,7 +908,7 @@ export function Insurance() {
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.olive }}>2</div>
+            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.olive }}>{expiringPoliciesCount}</div>
             <div className="flex items-center gap-1 mb-1">
               <span className="text-[11px]" style={{ color: colors.brandRed }}>▲ 100%</span>
               <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
@@ -723,7 +950,7 @@ export function Insurance() {
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>19</div>
+            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>{activePoliciesCount}</div>
             <div className="flex items-center gap-1 mb-1">
               <span className="text-[11px]" style={{ color: colors.forest }}>▲ 15%</span>
               <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
@@ -752,14 +979,14 @@ export function Insurance() {
                 <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Conformidade das Lojas</div>
               </div>
             </div>
-            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.forest }}>70%</div>
+            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.forest }}>{compliancePercent}%</div>
             <div className="flex items-center gap-1 mb-1">
               <span className="text-[11px]" style={{ color: colors.brandRed }}>▼ 8%</span>
               <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
             </div>
-            <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-auto">9 apólices vencidas</div>
+            <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-auto">{expiredPoliciesCount} apólices vencidas</div>
             <div className="w-full h-1 rounded-sm overflow-hidden mt-auto" style={{ backgroundColor: colors.cardBorder }}>
-              <div className="h-full rounded-sm transition-all" style={{ width: '70%', backgroundColor: colors.forest }} />
+              <div className="h-full rounded-sm transition-all" style={{ width: `${compliancePercent}%`, backgroundColor: colors.forest }} />
             </div>
           </motion.div>
         </div>
@@ -1508,9 +1735,9 @@ export function Insurance() {
             <tbody>
               {paginatedPolicies.map((policy, index) => (
                 <tr key={index} className="border-b h-12 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]" style={{ borderColor: colors.cardBorder }}>
-                  <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{policy.id}</td>
-                  <td className="px-4 py-3 text-[12px] font-semibold" style={{ color: colors.brandMaroon }}>{policy.lojista}</td>
-                  <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.tipo}</td>
+                  <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{policy.luc}</td>
+                  <td className="px-4 py-3 text-[12px] font-semibold" style={{ color: colors.brandMaroon }}>{policy.fantasia}</td>
+                  <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.segmento}</td>
                   <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.seguradora}</td>
                   <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vigencia}</td>
                   <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vencimento}</td>
@@ -1535,6 +1762,21 @@ export function Insurance() {
                         whileTap={{ scale: 0.98 }}
                         transition={{ duration: 0.15, ease: "easeOut" }}
                       >
+                        <motion.button
+                          onClick={() => handleOpenDeleteConfirm(policy.id)}
+                          className="flex items-center gap-1 px-2 py-1 text-[11px] font-medium border rounded"
+                          style={{ color: colors.brandRed, borderColor: `${colors.brandRed}66` }}
+                          whileHover={{
+                            scale: 1.05,
+                            backgroundColor: isDarkMode ? '#2A1414' : '#FFF5F5',
+                            boxShadow: "0 4px 12px rgba(217, 48, 48, 0.15)"
+                          }}
+                          whileTap={{ scale: 0.98 }}
+                          transition={{ duration: 0.15, ease: "easeOut" }}
+                        >
+                          <Trash2 className="w-3 h-3" strokeWidth={1.5} />
+                          Excluir
+                        </motion.button>
                         <FileText className="w-3 h-3" strokeWidth={1.5} />
                         Ver Apólice
                       </motion.button>
@@ -1745,7 +1987,7 @@ export function Insurance() {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <div className="text-[28px] font-bold" style={{ color: colors.forest }}>{conformidadePercentual}%</div>
+              <div className="text-[28px] font-bold" style={{ color: colors.forest }}>{compliancePercent}%</div>
               <div className="text-[10px] text-gray-600 dark:text-[#94A3B8]">Geral</div>
             </div>
           </div>
@@ -1829,6 +2071,7 @@ export function Insurance() {
                 <button
                   onClick={() => {
                     const policy = allPolicies.find(p => p.id === "AL-2025-0034");
+                    if (!policy) return;
                     setSelectedPolicy(policy);
                     setShowViewApoliceModal(true);
                   }}
@@ -2021,24 +2264,50 @@ export function Insurance() {
           <form onSubmit={handleSubmitNovaApolice} className="p-4 md:p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Tipo de Seguro *</label>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>LUC *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.luc}
+                  onChange={(e) => setFormData({ ...formData, luc: e.target.value })}
+                  placeholder="T-359A"
+                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
+                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
+                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
+                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Fantasia *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.fantasia}
+                  onChange={(e) => setFormData({ ...formData, fantasia: e.target.value })}
+                  placeholder="CAROL BASSI"
+                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
+                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
+                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
+                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Segmento *</label>
                 <select
                   required
-                  value={formData.tipo}
-                  onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                  value={formData.segmento}
+                  onChange={(e) => setFormData({ ...formData, segmento: e.target.value })}
                   className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
                   style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
                   onFocus={(e) => e.target.style.borderColor = colors.brandRed}
                   onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
                 >
                   <option value="">Selecione...</option>
-                  <option value="Seguro Incêndio">Incêndio e Explosão</option>
-                  <option value="Responsabilidade Civil">Responsabilidade Civil</option>
-                  <option value="Roubo e Furto">Roubo e Furto</option>
-                  <option value="Danos Elétricos">Danos Elétricos</option>
-                  <option value="Alagamento e Infiltração">Alagamento e Infiltração</option>
-                  <option value="Vidros e Fachadas">Vidros e Fachadas</option>
-                  <option value="Equipamentos">Equipamentos</option>
+                  {SEGMENTO_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
                 </select>
               </div>
 
@@ -2049,7 +2318,7 @@ export function Insurance() {
                   required
                   value={formData.seguradora}
                   onChange={(e) => setFormData({ ...formData, seguradora: e.target.value })}
-                  placeholder="Ex: Porto Seguro"
+                  placeholder="Mapfre Seguros"
                   className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
                   style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
                   onFocus={(e) => e.target.style.borderColor = colors.brandRed}
@@ -2058,7 +2327,7 @@ export function Insurance() {
               </div>
 
               <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vigência *</label>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Vigência *</label>
                 <input
                   type="date"
                   required
@@ -2072,7 +2341,7 @@ export function Insurance() {
               </div>
 
               <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vencimento *</label>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Vencimento *</label>
                 <input
                   type="date"
                   required
@@ -2085,50 +2354,13 @@ export function Insurance() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Valor da Cobertura *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.cobertura}
-                  onChange={(e) => setFormData({ ...formData, cobertura: e.target.value })}
-                  placeholder="R$ 10.000.000,00"
-                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Prêmio Anual *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.premio}
-                  onChange={(e) => setFormData({ ...formData, premio: e.target.value })}
-                  placeholder="R$ 45.000,00"
-                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                />
-              </div>
             </div>
 
-            <div>
-              <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Observações</label>
-              <textarea
-                value={formData.observacoes}
-                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                rows={3}
-                placeholder="Informações adicionais sobre a apólice..."
-                className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 resize-none placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-              />
-            </div>
+            {formError && (
+              <div className="rounded-lg border px-4 py-3 text-[12px]" style={{ borderColor: `${colors.brandRed}40`, color: colors.brandRed, backgroundColor: `${colors.brandRed}08` }}>
+                {formError}
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4 border-t" style={{ borderColor: colors.cardBorder }}>
               <motion.button
@@ -2148,16 +2380,17 @@ export function Insurance() {
               </motion.button>
               <motion.button
                 type="submit"
-                className="flex-1 px-4 py-3 rounded-lg text-[13px] font-semibold text-white bg-[#D93030] dark:bg-[#E04444]"
-                whileHover={{
+                disabled={isSubmittingApolice}
+                className="flex-1 px-4 py-3 rounded-lg text-[13px] font-semibold text-white bg-[#D93030] dark:bg-[#E04444] disabled:opacity-70 disabled:cursor-not-allowed"
+                whileHover={!isSubmittingApolice ? {
                   scale: 1.05,
                   filter: "brightness(1.1)",
                   boxShadow: "0 8px 20px rgba(217, 48, 48, 0.3)"
-                }}
-                whileTap={{ scale: 0.98 }}
+                } : undefined}
+                whileTap={!isSubmittingApolice ? { scale: 0.98 } : undefined}
                 transition={{ duration: 0.15, ease: "easeOut" }}
               >
-                Criar Apólice
+                {isSubmittingApolice ? 'Criando...' : 'Criar Apólice'}
               </motion.button>
             </div>
           </form>
@@ -2180,7 +2413,7 @@ export function Insurance() {
                   {selectedPolicy.status}
                 </span>
               </div>
-              <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">{selectedPolicy.tipo}</p>
+              <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">{selectedPolicy.segmento}</p>
 
               {/* Metadados de Auditoria */}
               <div className="mt-3 space-y-1.5">
@@ -2254,7 +2487,7 @@ export function Insurance() {
               <button
                 onClick={() => {
                   const element = document.createElement('a');
-                  element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`Apólice: ${selectedPolicy?.id}\nTipo: ${selectedPolicy?.tipo}\nSeguradora: ${selectedPolicy?.seguradora}\nVigência: ${selectedPolicy?.vigencia}\nVencimento: ${selectedPolicy?.vencimento}\nStatus: ${selectedPolicy?.status}\nCobertura: ${selectedPolicy?.cobertura}\nPrêmio: ${selectedPolicy?.premio}`);
+                  element.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(`Apólice: ${selectedPolicy?.id}\nSegmento: ${selectedPolicy?.segmento}\nSeguradora: ${selectedPolicy?.seguradora}\nVigência: ${selectedPolicy?.vigencia}\nVencimento: ${selectedPolicy?.vencimento}\nStatus: ${selectedPolicy?.status}`);
                   element.download = `apolice-${selectedPolicy?.id}.txt`;
                   document.body.appendChild(element);
                   element.click();
@@ -2324,7 +2557,7 @@ export function Insurance() {
               <div className="grid grid-cols-2 gap-4 text-[13px]">
                 <div>
                   <div className="text-gray-500 dark:text-[#94A3B8] mb-1">Tipo de Seguro</div>
-                  <div className="font-semibold" style={{ color: colors.brandMaroon }}>{selectedPolicy.tipo}</div>
+                  <div className="font-semibold" style={{ color: colors.brandMaroon }}>{selectedPolicy.segmento}</div>
                 </div>
                 <div>
                   <div className="text-gray-500 dark:text-[#94A3B8] mb-1">Seguradora</div>
@@ -2730,23 +2963,48 @@ export function Insurance() {
           <form onSubmit={handleSubmitEditApolice} className="p-4 md:p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Tipo de Seguro *</label>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>LUC *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.luc}
+                  onChange={(e) => setFormData({ ...formData, luc: e.target.value })}
+                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
+                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
+                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
+                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Fantasia *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.fantasia}
+                  onChange={(e) => setFormData({ ...formData, fantasia: e.target.value })}
+                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
+                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
+                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
+                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Segmento *</label>
                 <select
                   required
-                  value={formData.tipo}
-                  onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                  value={formData.segmento}
+                  onChange={(e) => setFormData({ ...formData, segmento: e.target.value })}
                   className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
                   style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
                   onFocus={(e) => e.target.style.borderColor = colors.brandRed}
                   onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
                 >
-                  <option value="Seguro Incêndio">Incêndio e Explosão</option>
-                  <option value="Responsabilidade Civil">Responsabilidade Civil</option>
-                  <option value="Roubo e Furto">Roubo e Furto</option>
-                  <option value="Danos Elétricos">Danos Elétricos</option>
-                  <option value="Alagamento e Infiltração">Alagamento e Infiltração</option>
-                  <option value="Vidros e Fachadas">Vidros e Fachadas</option>
-                  <option value="Equipamentos">Equipamentos</option>
+                  <option value="">Selecione...</option>
+                  {SEGMENTO_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
                 </select>
               </div>
 
@@ -2765,13 +3023,12 @@ export function Insurance() {
               </div>
 
               <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vigência *</label>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Vigência *</label>
                 <input
-                  type="text"
+                  type="date"
                   required
                   value={formData.vigencia}
                   onChange={(e) => setFormData({ ...formData, vigencia: e.target.value })}
-                  placeholder="DD/MM/AAAA"
                   className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
                   style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
                   onFocus={(e) => e.target.style.borderColor = colors.brandRed}
@@ -2780,13 +3037,12 @@ export function Insurance() {
               </div>
 
               <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vencimento *</label>
+                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Vencimento *</label>
                 <input
-                  type="text"
+                  type="date"
                   required
                   value={formData.vencimento}
                   onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
-                  placeholder="DD/MM/AAAA"
                   className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
                   style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
                   onFocus={(e) => e.target.style.borderColor = colors.brandRed}
@@ -2794,50 +3050,19 @@ export function Insurance() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Valor da Cobertura *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.cobertura}
-                  onChange={(e) => setFormData({ ...formData, cobertura: e.target.value })}
-                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Prêmio Anual *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.premio}
-                  onChange={(e) => setFormData({ ...formData, premio: e.target.value })}
-                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Observações</label>
-              <textarea
-                value={formData.observacoes}
-                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                rows={3}
-                placeholder="Informações adicionais sobre a apólice..."
-                className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 resize-none placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-              />
             </div>
 
             <div className="flex gap-3 pt-4 border-t" style={{ borderColor: colors.cardBorder }}>
+              <button
+                type="button"
+                onClick={() => handleOpenDeleteConfirm()}
+                className="inline-flex items-center justify-center px-4 py-3 rounded-lg border text-[13px] font-semibold transition-all hover:bg-red-50 dark:hover:bg-red-950/20"
+                style={{ color: colors.brandRed, borderColor: `${colors.brandRed}40`, backgroundColor: `${colors.brandRed}08` }}
+                aria-label="Excluir apólice"
+                title="Excluir apólice"
+              >
+                <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+              </button>
               <button
                 type="button"
                 onClick={handleCloseModals}
@@ -2848,12 +3073,61 @@ export function Insurance() {
               </button>
               <button
                 type="submit"
+                disabled={isUpdatingApolice}
                 className="flex-1 px-4 py-3 rounded-lg text-[13px] font-semibold text-white bg-[#D93030] dark:bg-[#E04444] hover:bg-[#b92828] dark:hover:bg-[#F05555] transition-all"
               >
-                Salvar Alterações
+                {isUpdatingApolice ? 'Salvando...' : 'Salvar Alterações'}
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    )}
+
+    {showDeleteConfirmModal && selectedPolicy && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(8px)' }}>
+        <div className="w-full max-w-md rounded-2xl bg-white dark:bg-[#242938] border shadow-2xl" style={{ borderColor: colors.cardBorder }}>
+          <div className="p-6 border-b" style={{ borderColor: colors.cardBorder }}>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: `${colors.brandRed}12`, color: colors.brandRed }}>
+                <Trash2 className="h-5 w-5" strokeWidth={1.8} />
+              </div>
+              <div>
+                <h3 className="text-[18px] font-bold" style={{ color: colors.brandMaroon }}>Apagar apólice</h3>
+                <p className="text-[12px] text-gray-500 dark:text-[#94A3B8]">Esta ação não pode ser desfeita.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-3">
+            <p className="text-[13px] text-gray-700 dark:text-[#CBD5E1]">
+              Tem certeza que deseja apagar a apólice <span className="font-semibold" style={{ color: colors.brandMaroon }}>{selectedPolicy.id}</span>?
+            </p>
+            <p className="text-[12px] text-gray-500 dark:text-[#94A3B8]">
+              Depois da exclusão, a apólice será removida do PostgreSQL e da listagem.
+            </p>
+          </div>
+
+          <div className="flex gap-3 p-6 pt-0">
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirmModal(false)}
+              disabled={isDeletingApolice}
+              className="flex-1 rounded-lg border px-4 py-3 text-[13px] font-semibold transition-all hover:bg-gray-50 dark:hover:bg-[#1A1F2E] disabled:opacity-70"
+              style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmDeleteApolice}
+              disabled={isDeletingApolice}
+              className="flex-1 rounded-lg px-4 py-3 text-[13px] font-semibold text-white transition-all disabled:opacity-70"
+              style={{ backgroundColor: colors.brandRed }}
+            >
+              {isDeletingApolice ? 'Apagando...' : 'Apagar apólice'}
+            </button>
+          </div>
         </div>
       </div>
     )}
