@@ -34,6 +34,13 @@ func Run() error {
 
 func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 	mux := http.NewServeMux()
+	
+	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
+	})
+	
 	apolice.RegisterRoutes(mux, db)
 	registerStaticFiles(mux, cfg.Frontend.Dir)
 

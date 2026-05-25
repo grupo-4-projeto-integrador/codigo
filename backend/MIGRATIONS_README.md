@@ -3,7 +3,7 @@
 This folder contains a minimal initial migration for the project's PostgreSQL schema.
 
 Files
-- `initial_schema.sql`: creates the `public.new` table used by the backend.
+- `initial_schema.sql`: creates the `seguros` table used by the backend.
 
 Apply the migration locally (example):
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const tableName = `public.new`
+const tableName = `seguros`
 
 type Repository interface {
 	List() ([]Apolice, error)

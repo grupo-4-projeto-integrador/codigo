@@ -51,6 +51,7 @@ func runSQLFile(db *sql.DB, path string) error {
 			continue
 		}
 		if _, err := db.Exec(stmt); err != nil {
+			fmt.Printf("Failing stmt: %q\n", stmt)
 			return err
 		}
 	}
@@ -75,13 +76,13 @@ func importSeedDump(db *sql.DB, path string) (err error) {
 		}
 	}()
 
-	if _, err = tx.Exec(`TRUNCATE TABLE public.new`); err != nil {
+	if _, err = tx.Exec(`TRUNCATE TABLE seguros`); err != nil {
 		return err
 	}
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		if strings.HasPrefix(scanner.Text(), "COPY public.new ") {
+		if strings.HasPrefix(scanner.Text(), "COPY public.new ") || strings.HasPrefix(scanner.Text(), "COPY seguros ") {
 			break
 		}
 	}
@@ -89,7 +90,7 @@ func importSeedDump(db *sql.DB, path string) (err error) {
 		return err
 	}
 
-	const insertStmt = `INSERT INTO public.new (luc, fantasia, segmento, seguradora, vigencia, vencimento, status)
+	const insertStmt = `INSERT INTO seguros (luc, fantasia, segmento, seguradora, vigencia, vencimento, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	for scanner.Scan() {

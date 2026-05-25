@@ -47,7 +47,7 @@ func Load() (Config, error) {
 		},
 	}
 
-	if cfg.Postgres.Password == "" {
+	if cfg.Postgres.Password == "" && os.Getenv("DATABASE_URL") == "" {
 		return Config{}, fmt.Errorf("PG_PASSWORD is not set; set environment variables or create a .env file based on .env.example")
 	}
 
