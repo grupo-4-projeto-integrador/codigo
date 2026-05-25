@@ -466,7 +466,7 @@ export function Insurance() {
   // Setores: Moda | Alimentação | Eletrônicos | Serviços | Âncoras
   const complianceMapData = [
     {
-      floor: "3º Piso",
+      floor: "Piso 3",
       sectors: [
         { sector: "Moda", icon: "👔", status: "compliant", stores: ["Zara", "Renner"], expired: 2, warning: 0, daysToExpire: null, storeDetails: "Zara: AP-2024-112 vencida há 54 dias\nRenner: SU-2024-4521 vencida há 54 dias" },
         { sector: "Alimentação", icon: "🍽️", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
@@ -476,7 +476,7 @@ export function Insurance() {
       ]
     },
     {
-      floor: "2º Piso",
+      floor: "Piso 2",
       sectors: [
         { sector: "Moda", icon: "👔", status: "critical", stores: ["Riachuelo", "Lojas Americanas"], expired: 2, warning: 0, daysToExpire: null, storeDetails: "Riachuelo: AP-2024-234 vencida há 110 dias\nLojas Americanas: AP-2024-267 vencida há 71 dias" },
         { sector: "Alimentação", icon: "🍽️", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
@@ -486,23 +486,13 @@ export function Insurance() {
       ]
     },
     {
-      floor: "1º Piso",
+      floor: "Piso 1",
       sectors: [
         { sector: "Moda", icon: "👔", status: "critical", stores: ["Pernambucanas", "Marisa"], expired: 2, warning: 0, daysToExpire: null, storeDetails: "Pernambucanas: AP-2024-289 vencida há 152 dias\nMarisa: AP-2024-301 vencida há 17 dias" },
         { sector: "Alimentação", icon: "🍽️", status: "warning", stores: ["Outback"], expired: 0, warning: 1, daysToExpire: 18, storeDetails: "Outback: TM-2024-9012 vence em 18 dias" },
         { sector: "Eletrônicos", icon: "📱", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
         { sector: "Serviços", icon: "🔧", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
         { sector: "Âncoras", icon: "🏬", status: "critical", stores: ["Extra Hipermercado"], expired: 1, warning: 0, daysToExpire: null, storeDetails: "Extra: AP-2024-345 vencida há 326 dias" }
-      ]
-    },
-    {
-      floor: "Térreo",
-      sectors: [
-        { sector: "Moda", icon: "👔", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
-        { sector: "Alimentação", icon: "🍽️", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
-        { sector: "Eletrônicos", icon: "📱", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
-        { sector: "Serviços", icon: "🔧", status: "critical", stores: ["Ótica Moderna"], expired: 1, warning: 0, daysToExpire: null, storeDetails: "Ótica Moderna: AP-2024-378 vencida há 288 dias" },
-        { sector: "Âncoras", icon: "🏬", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" }
       ]
     }
   ];
