@@ -4,3 +4,4 @@ dist/
 *.exe~
 *.db
 .env
+github/agents

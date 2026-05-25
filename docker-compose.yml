@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:15
+    container_name: seguros_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sua_senha
+      POSTGRES_DB: seguros_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: 
+      context: ./backend
+    container_name: seguros_backend
+    restart: unless-stopped
+    command: sh -c "./migrate && ./api-server"
+    environment:
+      DATABASE_URL: "postgres://postgres:sua_senha@db:5432/seguros_db?sslmode=disable"
+      PORT: "8082"
+    ports:
+      - "8082:8082"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: seguros_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

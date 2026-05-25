@@ -22,7 +22,7 @@ Projeto de Seguros com backend em Go e frontend em React/Vite.
 
 As instruções completas de migration estão em [backend/MIGRATIONS_README.md](backend/MIGRATIONS_README.md).
 
-No mínimo, você precisa criar o banco `seguros_db` e aplicar a migration inicial.
+No mínimo, você precisa criar o banco `seguros` e aplicar a migration inicial.
 
 ### 3. Configurar variáveis de ambiente
 
@@ -36,7 +36,7 @@ $env:PG_HOST = 'localhost'
 $env:PG_PORT = '5432'
 $env:PG_USER = 'postgres'
 $env:PG_PASSWORD = 'sua_senha'
-$env:PG_DBNAME = 'seguros_db'
+$env:PG_DBNAME = 'seguros'
 $env:PG_SSLMODE = 'disable'
 ```
 
@@ -48,7 +48,7 @@ export PG_HOST=localhost
 export PG_PORT=5432
 export PG_USER=postgres
 export PG_PASSWORD=sua_senha
-export PG_DBNAME=seguros_db
+export PG_DBNAME=seguros
 export PG_SSLMODE=disable
 ```
 
@@ -61,6 +61,8 @@ go run ./cmd/api
 
 O servidor sobe em `http://localhost:8082` por padrão.
 
+> **Dica:** Para verificar se o backend está online localmente sem depender do React, acesse `http://localhost:8082/api/health`. Não tente acessar rotas do frontend como `/seguros` direto no backend.
+
 ### 5. Iniciar o frontend
 
 ```powershell
@@ -68,6 +70,8 @@ Set-Location c:\Users\kamik\Desktop\PoC\codigo\frontend
 corepack pnpm install
 corepack pnpm dev
 ```
+
+O frontend de desenvolvimento rodará na porta **5173** (`http://localhost:5173`). Use ela para navegar na interface.
 
 ### 6. Build e testes
 
@@ -86,6 +90,43 @@ Set-Location c:\Users\kamik\Desktop\PoC\codigo\frontend
 corepack pnpm test
 corepack pnpm build
 ```
+
+## Como rodar o projeto via Docker (Recomendado)
+
+A maneira mais simples, rápida e padronizada de rodar o sistema inteiro (seja no PC da faculdade, no trabalho ou em casa) é usando o Docker Compose. 
+
+Siga este passo a passo:
+
+### 1. Clonar o Repositório
+```bash
+git clone <URL_DO_SEU_REPOSITORIO>
+cd <NOME_DA_PASTA>/codigo
+```
+*(Se você já tem os arquivos baixados, apenas certifique-se de estar dentro da pasta `codigo/`)*
+
+### 2. Subir o ambiente completo
+Esse comando fará o download das imagens necessárias (Node, Go, Postgres) e executará o build simultâneo do Backend e Frontend:
+```bash
+docker-compose up --build -d
+```
+*(A flag `-d` deixa rodando em segundo plano. Se quiser ver os logs em tempo real, basta tirar o `-d`)*
+
+### 3. Acessar a aplicação
+O Docker cuidará de todo o roteamento. Basta abrir o seu navegador em:
+- **Frontend / Aplicação Completa**: [http://localhost](http://localhost) (Nginx na porta 80).
+
+> **Atenção (Rotas Frontend vs Backend):** Se você tentar acessar `http://localhost/seguros` ou `http://localhost:8082/seguros` diretamente no backend, receberá um erro 404. Isso é normal! Rotas como `/seguros` ou `/dashboard` são de responsabilidade do frontend (React SPA). O backend em Go serve estritamente a API através do prefixo `/api/*` (ex: `/api/apolices`).
+> Para testar se o backend subiu corretamente de forma independente, acesse a nova rota de healthcheck: **`http://localhost:8082/api/health`** (retorna `{"status":"ok"}`).
+
+A API do backend estará rodando internamente na porta **8082** e o banco de dados Postgres na porta **5432**, todos interligados automaticamente. O frontend também direcionará todas as rotas `/api/*` para o backend sem necessidade de configuração adicional.
+
+### 4. Parar e desligar tudo
+Quando terminar o trabalho, para encerrar e remover os contêineres graciosamente, execute:
+```bash
+docker-compose down
+```
+
+---
 
 ## CI
 
