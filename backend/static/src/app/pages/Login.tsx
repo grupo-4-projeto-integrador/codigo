@@ -18,7 +18,7 @@ export function Login() {
             <img src={logo} alt="Shopping Flamboyant" className="w-full h-full object-contain" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Shopping Flamboyant
+            Flamboyant Shopping
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Gestão Integrada de Ocorrências e Sinistros
@@ -31,7 +31,7 @@ export function Login() {
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4 mb-6 flex items-start">
             <ShieldAlert className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0 text-yellow-600" />
             <div className="text-sm font-medium">
-              Acesso restrito. Este sistema destina-se apenas a gerentes e administradores autorizados do Shopping Flamboyant.
+              Acesso restrito. Este sistema destina-se apenas a gerentes e administradores autorizados do Flamboyant Shopping.
             </div>
           </div>
 
