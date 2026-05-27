@@ -1,4 +1,5 @@
 # Grupo-4-Projeto-Integrador
+<<<<<<< HEAD
 
 Projeto de Seguros com backend em Go e frontend em React/Vite.
 
@@ -167,3 +168,6 @@ Se preferir, o [Makefile](../Makefile) continua disponível para ambientes com G
 
 - Se quiser popular o banco manualmente fora do CI, siga o [guia de migrations](backend/MIGRATIONS_README.md).
 - Se preferir usar um `.env`, copie `backend/.env.example` para `backend/.env` e ajuste os valores.
+=======
+Repositório a ser empregado para software no escopo de Seguros
+>>>>>>> eb54f6375754fa7b6e31d38e3f9bb4a010c606f4
