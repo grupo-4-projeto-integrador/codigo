@@ -1878,7 +1878,12 @@ export function Insurance() {
 
                   {/* Células de conformidade */}
                   <div className="flex-1 flex gap-1.5">
-                    {floorData.sectors?.map((sectorData, sectorIndex) => (
+                    {floorData.sectors?.filter(
+                  (sectorData)=>
+                    sectorData.status==="warning"||
+                    sectorData.status==="critical"
+                  )
+                      .map((sectorData,sectorIndex) => (
                       <motion.div
                         key={sectorIndex}
                         className="flex-1 h-11 rounded cursor-pointer relative"
