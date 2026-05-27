@@ -463,10 +463,10 @@ export function Insurance() {
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      if (file.type === 'text/csv' || file.name.endsWith('.pdf')) {
         setUploadedFile(file);
       } else {
-        alert('Por favor, envie apenas arquivos PDF');
+        alert('Por favor, envie apenas arquivos CSV');
       }
     }
   };
@@ -1711,7 +1711,7 @@ export function Insurance() {
                       </div>
                       <div>
                         <div className="font-semibold">Upload de Apólice</div>
-                        <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Importar arquivo PDF da apólice</div>
+                        <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Importar arquivo CSV da apólice</div>
                       </div>
                     </motion.button>
                   </div>
@@ -2567,7 +2567,7 @@ export function Insurance() {
             <div className="sticky top-0 bg-white dark:bg-[#242938] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
               <div>
                 <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Upload de Apólice</h2>
-                <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Envie o arquivo PDF da apólice</p>
+                <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Envie o arquivo CSV da apólice</p>
               </div>
               <motion.button
                 onClick={handleCloseModals}
@@ -2599,7 +2599,7 @@ export function Insurance() {
                 <input
                   id="file-upload"
                   type="file"
-                  accept=".pdf,application/pdf"
+                  accept=".csv,text/csv"
                   onChange={handleFileSelect}
                   className="hidden"
                 />
@@ -2638,13 +2638,13 @@ export function Insurance() {
                   ) : (
                     <div className="space-y-2">
                       <p className="text-[14px] font-semibold" style={{ color: colors.brandMaroon }}>
-                        {isDragging ? 'Solte o arquivo aqui' : 'Arraste o arquivo PDF aqui'}
+                        {isDragging ? 'Solte o arquivo aqui' : 'Arraste o arquivo CSV aqui'}
                       </p>
                       <p className="text-[12px] text-gray-500 dark:text-[#94A3B8]">
                         ou clique para selecionar do seu computador
                       </p>
                       <p className="text-[11px] text-gray-400 dark:text-[#64748B]">
-                        Apenas arquivos PDF • Tamanho máximo: 10MB
+                        Apenas arquivos CSV • Tamanho máximo: 10MB
                       </p>
                     </div>
                   )}
