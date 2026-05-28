@@ -592,7 +592,91 @@ export function Insurance() {
 
         {/* Top KPI Row - 4 cards com altura fixa 140px */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-          {/* Card 1 - Apólices Vencidas - PRIORIDADE 1 */}
+          {/* Card 1 - Apólices Ativas - PRIORIDADE 1 */}
+          <motion.div
+            onClick={() => handleKPICardClick("ativa")}
+            className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
+            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
+            whileHover={{
+              scale: 1.02,
+              boxShadow: `0 8px 24px ${colors.forest}20`,
+              y: -4
+            }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <div className="flex items-start justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.forest}15` }}>
+                  <Shield className="w-5 h-5" style={{ color: colors.forest }} strokeWidth={1.5} />
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Apólices Ativas</div>
+              </div>
+              <div className="w-20 h-9">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={sparklineActive}>
+                    <defs>
+                      <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={colors.cream} stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor={colors.cream} stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="value" stroke={colors.forest} strokeWidth={2} fill="url(#colorActive)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>19</div>
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-[11px]" style={{ color: colors.forest }}>▲ 15%</span>
+              <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
+            </div>
+            <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">em conformidade</div>
+          </motion.div>
+
+          {/* Card 2 - Apólices a Vencer - PRIORIDADE 2 */}
+          <motion.div
+            onClick={() => handleKPICardClick("a vencer")}
+            className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
+            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
+            whileHover={{
+              scale: 1.02,
+              boxShadow: `0 8px 24px ${colors.olive}20`,
+              y: -4
+            }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <div className="flex items-start justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.olive}15` }}>
+                  <Bell className="w-5 h-5" style={{ color: colors.olive }} strokeWidth={1.5} />
+                </div>
+                <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Apólices a Vencer</div>
+              </div>
+              <div className="w-20 h-9">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={sparklineExpiring}>
+                    <defs>
+                      <linearGradient id="colorExpiring" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={colors.olive} stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor={colors.olive} stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="value" stroke={colors.olive} strokeWidth={2} fill="url(#colorExpiring)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.olive }}>2</div>
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-[11px]" style={{ color: colors.brandRed }}>▲ 100%</span>
+              <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
+            </div>
+            <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">próximas 30 dias</div>
+          </motion.div>
+
+          {/* Card 3 - Apólices Vencidas - PRIORIDADE 3 */}
           <motion.div
             onClick={() => handleKPICardClick("vencida")}
             className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
@@ -638,90 +722,6 @@ export function Insurance() {
               <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
             </div>
             <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">requerem ação imediata</div>
-          </motion.div>
-
-          {/* Card 2 - Apólices a Vencer - PRIORIDADE 2 */}
-          <motion.div
-            onClick={() => handleKPICardClick("a vencer")}
-            className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
-            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-            whileHover={{
-              scale: 1.02,
-              boxShadow: `0 8px 24px ${colors.olive}20`,
-              y: -4
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <div className="flex items-start justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.olive}15` }}>
-                  <Bell className="w-5 h-5" style={{ color: colors.olive }} strokeWidth={1.5} />
-                </div>
-                <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Apólices a Vencer</div>
-              </div>
-              <div className="w-20 h-9">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={sparklineExpiring}>
-                    <defs>
-                      <linearGradient id="colorExpiring" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={colors.olive} stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor={colors.olive} stopOpacity={0.1}/>
-                      </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="value" stroke={colors.olive} strokeWidth={2} fill="url(#colorExpiring)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.olive }}>2</div>
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-[11px]" style={{ color: colors.brandRed }}>▲ 100%</span>
-              <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
-            </div>
-            <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">próximas 30 dias</div>
-          </motion.div>
-
-          {/* Card 3 - Apólices Ativas - PRIORIDADE 3 */}
-          <motion.div
-            onClick={() => handleKPICardClick("ativa")}
-            className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
-            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-            whileHover={{
-              scale: 1.02,
-              boxShadow: `0 8px 24px ${colors.forest}20`,
-              y: -4
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <div className="flex items-start justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.forest}15` }}>
-                  <Shield className="w-5 h-5" style={{ color: colors.forest }} strokeWidth={1.5} />
-                </div>
-                <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Apólices Ativas</div>
-              </div>
-              <div className="w-20 h-9">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={sparklineActive}>
-                    <defs>
-                      <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={colors.cream} stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor={colors.cream} stopOpacity={0.1}/>
-                      </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="value" stroke={colors.forest} strokeWidth={2} fill="url(#colorActive)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-            <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>19</div>
-            <div className="flex items-center gap-1 mb-1">
-              <span className="text-[11px]" style={{ color: colors.forest }}>▲ 15%</span>
-              <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
-            </div>
-            <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">em conformidade</div>
           </motion.div>
 
           {/* Card 4 - Conformidade das Lojas - PRIORIDADE 4 */}
@@ -1625,7 +1625,7 @@ export function Insurance() {
         {canEdit && (
           <div className="relative">
             <motion.button
-              onClick={() => setShowDropdown(!showDropdown)}
+              onClick={handleNovaApolice}
               className="w-full text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 text-[12px] font-semibold bg-[#D93030] dark:bg-[#E04444] shadow-md"
               whileHover={{
                 scale: 1.05,
@@ -1655,28 +1655,6 @@ export function Insurance() {
                   boxShadow: `0 8px 24px ${colors.brandMaroon}20`
                 }}
               >
-                <motion.button
-                  onClick={() => {
-                    setShowDropdown(false);
-                    handleNovaApolice();
-                  }}
-                  className="w-full px-4 py-3 flex items-center gap-3 text-left text-[13px] font-medium"
-                  style={{ color: colors.brandMaroon }}
-                  whileHover={{
-                    scale: 1.02,
-                    backgroundColor: isDarkMode ? '#1A1F2E' : '#F9FAFB'
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                >
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: `${colors.brandRed}15` }}>
-                    <Plus className="w-4 h-4" style={{ color: colors.brandRed }} strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Criar Manualmente</div>
-                    <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Preencher formulário de nova apólice</div>
-                  </div>
-                </motion.button>
 
                 <div className="border-t" style={{ borderColor: colors.cardBorder }} />
 

@@ -471,15 +471,7 @@ export function Layout() {
             {/* Search Placeholder */}
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="w-4 h-4 text-gray-400 dark:text-gray-500" />
               </span>
-              <input
-                type="text"
-                placeholder="Buscar lojista ou número de apólice..."
-                value={headerSearchQuery}
-                onChange={(e) => handleHeaderSearch(e.target.value)}
-                className="w-full bg-gray-50 dark:bg-[#1E2435] border border-gray-200 dark:border-[#2E3447] text-gray-900 dark:text-[#F1F5F9] text-sm rounded-lg focus:ring-[#D93030] dark:focus:ring-[#E04444] focus:border-[#D93030] dark:focus:border-[#E04444] block pl-10 p-2.5 transition-colors placeholder:text-gray-500 dark:placeholder:text-gray-400"
-              />
             </div>
           </div>
 
