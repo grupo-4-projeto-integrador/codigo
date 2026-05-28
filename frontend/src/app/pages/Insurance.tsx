@@ -571,7 +571,7 @@ export function Insurance() {
   // Setores: Moda | Alimentação | Eletrônicos | Serviços | Âncoras
   const complianceMapData = [
     {
-      floor: "3º Piso",
+      floor: "Piso 3",
       sectors: [
         { sector: "Moda", icon: "👔", status: "compliant", stores: ["Zara", "Renner"], expired: 2, warning: 0, daysToExpire: null, storeDetails: "Zara: AP-2024-112 vencida há 54 dias\nRenner: SU-2024-4521 vencida há 54 dias" },
         { sector: "Alimentação", icon: "🍽️", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
@@ -581,7 +581,7 @@ export function Insurance() {
       ]
     },
     {
-      floor: "2º Piso",
+      floor: "Piso 2",
       sectors: [
         { sector: "Moda", icon: "👔", status: "critical", stores: ["Riachuelo", "Lojas Americanas"], expired: 2, warning: 0, daysToExpire: null, storeDetails: "Riachuelo: AP-2024-234 vencida há 110 dias\nLojas Americanas: AP-2024-267 vencida há 71 dias" },
         { sector: "Alimentação", icon: "🍽️", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
@@ -591,23 +591,13 @@ export function Insurance() {
       ]
     },
     {
-      floor: "1º Piso",
+      floor: "Piso 1",
       sectors: [
         { sector: "Moda", icon: "👔", status: "critical", stores: ["Pernambucanas", "Marisa"], expired: 2, warning: 0, daysToExpire: null, storeDetails: "Pernambucanas: AP-2024-289 vencida há 152 dias\nMarisa: AP-2024-301 vencida há 17 dias" },
         { sector: "Alimentação", icon: "🍽️", status: "warning", stores: ["Outback"], expired: 0, warning: 1, daysToExpire: 18, storeDetails: "Outback: TM-2024-9012 vence em 18 dias" },
         { sector: "Eletrônicos", icon: "📱", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
         { sector: "Serviços", icon: "🔧", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
         { sector: "Âncoras", icon: "🏬", status: "critical", stores: ["Extra Hipermercado"], expired: 1, warning: 0, daysToExpire: null, storeDetails: "Extra: AP-2024-345 vencida há 326 dias" }
-      ]
-    },
-    {
-      floor: "Térreo",
-      sectors: [
-        { sector: "Moda", icon: "👔", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
-        { sector: "Alimentação", icon: "🍽️", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
-        { sector: "Eletrônicos", icon: "📱", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" },
-        { sector: "Serviços", icon: "🔧", status: "critical", stores: ["Ótica Moderna"], expired: 1, warning: 0, daysToExpire: null, storeDetails: "Ótica Moderna: AP-2024-378 vencida há 288 dias" },
-        { sector: "Âncoras", icon: "🏬", status: "compliant", stores: [], expired: 0, warning: 0, daysToExpire: null, storeDetails: "" }
       ]
     }
   ];
@@ -1769,85 +1759,6 @@ export function Insurance() {
                   <span className="font-semibold" style={{ color: colors.brandMaroon }}>{item.label}</span>
                 </div>
               ))}
-            </div>
-          </motion.div>
-
-          {/* 3. Resumo de Cobertura */}
-          <motion.div
-            className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-            whileHover={{
-              scale: 1.03,
-              boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-              y: -4
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <h4 className="text-[12px] font-bold mb-3" style={{ color: colors.brandMaroon }}>Resumo de Cobertura</h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[11px] text-gray-600 dark:text-[#94A3B8]">Cobertura Total Contratada</span>
-                <span className="text-[12px] font-bold" style={{ color: colors.brandMaroon }}>R$ 164M</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-[11px] text-gray-600 dark:text-[#94A3B8]">Sinistros Pagos no Ano</span>
-                <span className="text-[12px] font-bold" style={{ color: colors.brandRed }}>R$ 52,8M</span>
-              </div>
-              <div className="flex justify-between items-center pt-2 border-t" style={{ borderColor: colors.cardBorder }}>
-                <span className="text-[11px] text-gray-600 dark:text-[#94A3B8]">Saldo de Cobertura Disponível</span>
-                <span className="text-[12px] font-bold" style={{ color: colors.forest }}>R$ 111,2M</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* 4. Alertas Críticos */}
-          <motion.div
-            className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-            whileHover={{
-              scale: 1.03,
-              boxShadow: `0 8px 24px ${colors.brandRed}15`,
-              y: -4
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <h4 className="text-[12px] font-bold mb-3" style={{ color: colors.brandMaroon }}>Alertas Críticos</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-2 p-2 rounded-lg border" style={{ backgroundColor: `${colors.brandRed}08`, borderColor: `${colors.brandRed}30` }}>
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: colors.brandRed }} strokeWidth={1.5} />
-                <div>
-                  <div className="text-[11px] font-semibold" style={{ color: colors.brandMaroon }}>Apólice Vencida</div>
-                  <div className="text-[10px] text-gray-600 dark:text-[#94A3B8] mt-0.5">SU-2024-4521 - Alagamento e Infiltração</div>
-                  <button
-                    onClick={() => handleKPICardClick("vencida")}
-                    className="text-[10px] font-medium mt-1 hover:underline"
-                    style={{ color: colors.brandRed }}
-                  >
-                    Ver apólice completa
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-start gap-2 p-2 rounded-lg border" style={{ backgroundColor: `${colors.tan}15`, borderColor: `${colors.tan}40` }}>
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: colors.tan }} strokeWidth={1.5} />
-                <div>
-                  <div className="text-[11px] font-semibold" style={{ color: colors.brandMaroon }}>Risco Alto Detectado</div>
-                  <div className="text-[10px] text-gray-600 dark:text-[#94A3B8] mt-0.5">AL-2025-0034 - Resp. Civil - Elevadores</div>
-                  <button
-                    onClick={() => {
-                      const policy = allPolicies.find(p => p.id === "AL-2025-0034");
-                      if (!policy) return;
-                      setSelectedPolicy(policy);
-                      setShowViewApoliceModal(true);
-                    }}
-                    className="text-[10px] font-medium mt-1 hover:underline"
-                    style={{ color: colors.tan }}
-                  >
-                    Ver detalhes
-                  </button>
-                </div>
-              </div>
             </div>
           </motion.div>
 
