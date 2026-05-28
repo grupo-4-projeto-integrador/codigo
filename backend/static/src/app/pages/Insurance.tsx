@@ -1680,26 +1680,8 @@ export function Insurance() {
 
                 <div className="border-t" style={{ borderColor: colors.cardBorder }} />
 
-                <motion.button
-                  onClick={handleUploadApolice}
-                  className="w-full px-4 py-3 flex items-center gap-3 text-left text-[13px] font-medium"
-                  style={{ color: colors.brandMaroon }}
-                  whileHover={{
-                    scale: 1.02,
-                    backgroundColor: isDarkMode ? '#1A1F2E' : '#F9FAFB'
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                >
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: `${colors.forest}15` }}>
-                    <Upload className="w-4 h-4" style={{ color: colors.forest }} strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <div className="font-semibold">Upload de Apólice</div>
-                    <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Importar arquivo PDF da apólice</div>
-                  </div>
-                </motion.button>
-              </div>
+                
+              </div>z
             </>
           )}
           </div>
@@ -1755,8 +1737,7 @@ export function Insurance() {
               </div>
             ))}
           </div>
-        </motion.div>
-
+        </motion.div>       
 
         {/* 5. Mapa de Localização de Conformidade */}
         <motion.div
@@ -2415,7 +2396,7 @@ export function Insurance() {
                           </div>
                         </div>
                         <div className="col-span-3 text-right">
-                          <motion.button
+                          <motion.b utton
                             onClick={() => {
                               alert(`Notificação enviada para ${store.nome}!\n\nA loja receberá um comunicado sobre a necessidade de regularização da apólice.`);
                             }}

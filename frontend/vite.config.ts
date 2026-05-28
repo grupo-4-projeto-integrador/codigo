@@ -37,10 +37,9 @@ export default defineConfig({
   assetsInclude: ["**/*.svg", "**/*.csv"],
   
   // ─── ADICIONE ESTA SEÇÃO DE BUILD AQUI EMBAIXO ────────────────-------
-  build: {
-    // Sai da pasta frontend e entra em static/dist do seu backend
-    outDir: "../static/dist", 
-    // Limpa a pasta dist antiga antes de gerar os arquivos novos
+build: {
+    // Sai de frontend, entra em backend, depois em static e cria a dist
+    outDir: "../backend/static/dist", 
     emptyOutDir: true, 
   },
   // ─────────────────────────────────────────────────────────────────────-------
