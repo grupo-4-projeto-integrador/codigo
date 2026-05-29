@@ -29,10 +29,24 @@ const CSS_INJECT = `
   .compliance-canvas-viewport::-webkit-scrollbar {
     display: none;
   }
+  .compliance-canvas-viewport:active {
+    cursor: grabbing !important;
+  }
   .compliance-map-grid-bg {
     background-image:
       radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
     background-size: 28px 28px;
+  }
+  /* Responsive canvas height */
+  .compliance-canvas-wrap {
+    height: clamp(320px, 52vh, 580px);
+    position: relative;
+    overflow: hidden;
+  }
+  @media (max-width: 640px) {
+    .compliance-canvas-wrap {
+      height: clamp(260px, 60vw, 380px);
+    }
   }
 `;
 
@@ -232,13 +246,7 @@ export function ComplianceMap() {
         </div>
 
         {/* ── Canvas Viewport ────────────────────────────────────────────── */}
-        <div
-          style={{
-            height: 420,
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
+        <div className="compliance-canvas-wrap">
           {/* Dot grid background */}
           <div
             className="compliance-map-grid-bg"

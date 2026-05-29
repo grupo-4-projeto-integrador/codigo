@@ -4,7 +4,9 @@ import type { CellData, FloorGroup, LegendCount, MapLayoutItem, StatusKey } from
 
 // ─── Status Normalization ────────────────────────────────────────────────────
 
-export function normalizeStatus(status: string): StatusKey {
+// Accepts undefined/null safely — API may return null for status on some rows
+export function normalizeStatus(status?: string | null): StatusKey {
+  if (!status) return "empty";
   const s = status.toLowerCase().trim();
   if (s === "ativa") return "ok";
   if (s === "a vencer") return "warning";

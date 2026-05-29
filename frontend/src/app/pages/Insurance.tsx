@@ -1,9 +1,9 @@
-import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag } from "lucide-react";
+import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
-import { ComplianceMapV2 } from "../components/ComplianceMapV2";
+import { ComplianceMapV2, ComplianceSidePanel } from "../components/ComplianceMapV2";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc } from "../store";
 import { request } from "../../api/client";
 import { motion, AnimatePresence } from "motion/react";
@@ -52,13 +52,13 @@ export function Insurance() {
 
   // Form state para nova apólice
   const [formData, setFormData] = useState({
+    luc: "",
+    lojista: "",
     tipo: "",
     seguradora: "",
     vigencia: "",
     vencimento: "",
-    cobertura: "",
-    premio: "",
-    observacoes: ""
+    cobertura: ""
   });
 
   // Detect dark mode
@@ -148,7 +148,15 @@ export function Insurance() {
   ];
 
   const [allPolicies, setAllPolicies] = useState<any[]>([]);
+  const [selectedMapLuc, setSelectedMapLuc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Derived metrics for KPIs
+  const activePolicies = allPolicies.filter((p) => (p.status ?? "").toLowerCase() === "ativa" || (p.status ?? "").toLowerCase() === "conforme").length;
+  const expiringPolicies = allPolicies.filter((p) => (p.status ?? "").toLowerCase() === "a vencer").length;
+  const expiredPolicies = allPolicies.filter((p) => (p.status ?? "").toLowerCase() === "vencida").length;
+  const totalPolicies = allPolicies.length;
+  const complianceRate = totalPolicies > 0 ? Math.round((activePolicies / totalPolicies) * 100) : 0;
 
   useEffect(() => {
     const fetchPolicies = async () => {
@@ -207,7 +215,7 @@ export function Insurance() {
 
   const filteredPolicies = allPolicies.filter(policy => {
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch =
       String(policy.lojista || '').toLowerCase().includes(searchLower) ||
       String(policy.tipo || '').toLowerCase().includes(searchLower) ||
       String(policy.id || '').toLowerCase().includes(searchLower) ||
@@ -281,13 +289,13 @@ export function Insurance() {
     const policy = allPolicies.find(p => p.id === policyId);
     if (policy) {
       setFormData({
-        tipo: policy.tipo,
-        seguradora: policy.seguradora,
-        vigencia: policy.vigencia,
-        vencimento: policy.vencimento,
-        cobertura: policy.cobertura,
-        premio: policy.premio,
-        observacoes: ""
+        luc: policy.id || policy.luc || "",
+        lojista: policy.lojista || policy.fantasia || "",
+        tipo: policy.tipo || "",
+        seguradora: policy.seguradora || "",
+        vigencia: policy.vigencia || "",
+        vencimento: policy.vencimento || "",
+        cobertura: policy.cobertura || ""
       });
       setSelectedPolicy(policy);
       setShowViewApoliceModal(false);
@@ -575,7 +583,7 @@ export function Insurance() {
   };
 
   const renderStatusBadge = (status: string) => {
-    switch(status) {
+    switch (status) {
       case "Ativa":
       case "Conforme":
         return (
@@ -622,7 +630,7 @@ export function Insurance() {
       }
     }
     return pages;
-  };  const renderSkeleton = () => (
+  }; const renderSkeleton = () => (
     <>
       {[1, 2, 3, 4, 5].map((i) => (
         <tr key={i} className="border-b h-12" style={{ borderColor: colors.cardBorder }}>
@@ -646,7 +654,7 @@ export function Insurance() {
           <h3 className="text-lg font-bold mb-2" style={{ color: colors.brandMaroon }}>Nenhuma apólice encontrada</h3>
           <p className="text-sm text-gray-500 max-w-md mb-4">Não encontramos resultados para os filtros selecionados. Tente limpar os filtros ou buscar por termos diferentes.</p>
           {(activeFiltersCount > 0 || searchQuery) && (
-            <button 
+            <button
               onClick={() => { handleClearFilters(); setSearchQuery(''); }}
               className="px-4 py-2 bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2E3447] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
             >
@@ -672,425 +680,81 @@ export function Insurance() {
             <span className="font-medium" style={{ color: colors.brandRed }}>Dashboard</span>
           </div>
 
-          {/* Top KPI Row - 4 cards com altura fixa 140px */}
+          {/* Top KPI Row - 4 cards com altura fixa 140px (Dados Reais) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-            {/* Card 1 - Apólices Ativas - PRIORIDADE 1 */}
-            <motion.div
-              onClick={() => handleKPICardClick("ativa")}
-              className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
-              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-              whileHover={{
-                scale: 1.02,
-                boxShadow: `0 8px 24px ${colors.forest}20`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <div className="flex items-start justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.forest}15` }}>
-                    <Shield className="w-5 h-5" style={{ color: colors.forest }} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Apólices Ativas</div>
-                </div>
-                <div className="w-20 h-9">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sparklineActive}>
-                      <defs>
-                        <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={colors.cream} stopOpacity={0.4} />
-                          <stop offset="95%" stopColor={colors.cream} stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="value" stroke={colors.forest} strokeWidth={2} fill="url(#colorActive)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+            {/* Card 1 - Taxa de Conformidade */}
+            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex items-center gap-4 p-5" style={{ borderColor: colors.cardBorder }}>
+              <div className="relative w-20 h-20 flex-shrink-0">
+                <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3" className="text-gray-100 dark:text-[#1A1F2E]" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${complianceRate} ${100 - complianceRate}`} strokeDashoffset="0" style={{ transition: "stroke-dasharray 0.8s ease" }} />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900 dark:text-white">
+                  {complianceRate}%
+                </span>
               </div>
-              <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>19</div>
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[11px]" style={{ color: colors.forest }}>▲ 15%</span>
-                <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">
+                  Taxa de Conformidade
+                </p>
+                <p className="text-xl font-bold text-gray-900 dark:text-white mt-0.5">
+                  {activePolicies}/{totalPolicies}
+                </p>
+                <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3" /> em dia
+                </p>
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">em conformidade</div>
-            </motion.div>
+            </div>
 
-            {/* Card 2 - Apólices a Vencer - PRIORIDADE 2 */}
-            <motion.div
-              onClick={() => handleKPICardClick("a vencer")}
-              className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
-              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-              whileHover={{
-                scale: 1.02,
-                boxShadow: `0 8px 24px ${colors.olive}20`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <div className="flex items-start justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.olive}15` }}>
-                    <Bell className="w-5 h-5" style={{ color: colors.olive }} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Apólices a Vencer</div>
+            {/* Card 2 - Ativas */}
+            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group" style={{ borderColor: colors.cardBorder }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
-                <div className="w-20 h-9">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sparklineExpiring}>
-                      <defs>
-                        <linearGradient id="colorExpiring" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={colors.olive} stopOpacity={0.4} />
-                          <stop offset="95%" stopColor={colors.olive} stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="value" stroke={colors.olive} strokeWidth={2} fill="url(#colorExpiring)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                <p className="text-sm font-medium text-gray-500 dark:text-[#94A3B8]">Apólices Ativas</p>
               </div>
-              <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.olive }}>2</div>
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[11px]" style={{ color: colors.brandRed }}>▲ 100%</span>
-                <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
+              <div>
+                <p className="text-4xl font-bold text-gray-900 dark:text-white">{activePolicies}</p>
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">próximas 30 dias</div>
-            </motion.div>
+              <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-green-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+            </div>
 
-            {/* Card 3 - Apólices Vencidas - PRIORIDADE 3 */}
-            <motion.div
-              onClick={() => handleKPICardClick("vencida")}
-              className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
-              style={{
-                borderColor: colors.cardBorder,
-                borderLeftColor: colors.brandRed,
-                borderLeftWidth: '3px',
-                backgroundColor: isDarkMode ? undefined : '#FFF5F5',
-                boxShadow: `0 1px 4px ${colors.brandMaroon}0F`
-              }}
-              whileHover={{
-                scale: 1.02,
-                boxShadow: `0 8px 24px ${colors.brandRed}20`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <div className="flex items-start justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.brandRed}15` }}>
-                    <AlertTriangle className="w-5 h-5" style={{ color: colors.brandRed }} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Apólices Vencidas</div>
+            {/* Card 3 - A Vencer */}
+            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group" style={{ borderColor: colors.cardBorder }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 text-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5" />
                 </div>
-                <div className="w-20 h-9">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sparklineExpired}>
-                      <defs>
-                        <linearGradient id="colorExpired" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={colors.brandRed} stopOpacity={0.4} />
-                          <stop offset="95%" stopColor={colors.brandRed} stopOpacity={0.1} />
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="value" stroke={colors.brandRed} strokeWidth={2} fill="url(#colorExpired)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                <p className="text-sm font-medium text-gray-500 dark:text-[#94A3B8]">A Vencer</p>
               </div>
-              <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.brandMaroon }}>9</div>
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[11px]" style={{ color: colors.brandRed }}>▲ 12%</span>
-                <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
+              <div>
+                <p className="text-4xl font-bold text-gray-900 dark:text-white">{expiringPolicies}</p>
+                <p className="text-xs text-orange-500 mt-1">Requer atenção</p>
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">requerem ação imediata</div>
-            </motion.div>
+              <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-orange-500 opacity-60 group-hover:opacity-100 transition-opacity" />
+            </div>
 
-            {/* Card 4 - Conformidade das Lojas - PRIORIDADE 4 */}
-            <motion.div
-              onClick={() => setShowConformidadeModal(true)}
-              className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex flex-col p-4 md:p-5 cursor-pointer"
-              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-              whileHover={{
-                scale: 1.02,
-                boxShadow: `0 8px 24px ${colors.forest}20`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-              <div className="flex items-start justify-between mb-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${colors.forest}15` }}>
-                    <Shield className="w-5 h-5" style={{ color: colors.forest }} strokeWidth={1.5} />
-                  </div>
-                  <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">Conformidade das Lojas</div>
+            {/* Card 4 - Vencidas */}
+            <div className="bg-white dark:bg-[#242938] rounded-xl border border-red-100 dark:border-[#3A1A1A] h-[140px] p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 text-[#D93030] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <ShieldAlert className="w-5 h-5" />
                 </div>
+                <p className="text-sm font-medium text-[#D93030]">Vencidas</p>
               </div>
-              <div className="text-[32px] font-bold leading-none mb-1" style={{ color: colors.forest }}>70%</div>
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[11px]" style={{ color: colors.brandRed }}>▼ 8%</span>
-                <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">vs mês anterior</span>
+              <div>
+                <p className="text-4xl font-bold text-[#D93030]">{expiredPolicies}</p>
+                <p className="text-xs text-red-500 mt-1">Ação imediata</p>
               </div>
-              <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-auto">9 apólices vencidas</div>
-              <div className="w-full h-1 rounded-sm overflow-hidden mt-auto" style={{ backgroundColor: colors.cardBorder }}>
-                <div className="h-full rounded-sm transition-all" style={{ width: '70%', backgroundColor: colors.forest }} />
-              </div>
-            </motion.div>
-          </div>
-
-          <ComplianceMapV2 />
-
-          {/* Cards de Renovação - Separador Visual */}
-          <div className="space-y-3 lg:space-y-4">
-            {/* Card Urgente - Largura Completa com Layout Horizontal */}
-            <motion.div
-              className="bg-white dark:bg-[#242938] rounded-xl p-4 md:p-5 border cursor-pointer"
-              style={{
-                borderColor: colors.brandRed,
-                borderLeftWidth: '3px',
-                backgroundColor: isDarkMode ? '#1A1F2E' : '#FFF5F5',
-                boxShadow: `0 2px 8px ${colors.brandRed}20`
-              }}
-              whileHover={{
-                scale: 1.01,
-                boxShadow: `0 12px 32px ${colors.brandRed}30`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.99 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                {/* Countdown e Info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold text-white" style={{ backgroundColor: colors.brandRed }}>
-                      ⚠ Urgente
-                    </span>
-                  </div>
-                  <div className="flex items-baseline gap-3 mb-2">
-                    <div className="text-[36px] md:text-[48px] font-bold leading-none" style={{ color: colors.brandRed }}>
-                      19<span className="text-[18px] md:text-[24px] ml-1">dias</span>
-                    </div>
-                    <div className="text-[11px] text-gray-500 dark:text-[#94A3B8]">até vencimento</div>
-                  </div>
-                  <div className="text-[16px] md:text-[18px] font-bold mb-1" style={{ color: colors.brandMaroon }}>Incêndio</div>
-                  <div className="text-[12px] text-gray-600 dark:text-[#94A3B8]">Vence em 20/05/2026 · TM-2024-9012</div>
-                </div>
-
-                {/* Botões de Ação */}
-                <div className="flex md:flex-col gap-2 md:w-[180px]">
-                  <motion.button
-                    onClick={() => handleRenovarApolice("TM-2024-9012")}
-                    className="flex-1 md:w-full text-white px-4 py-2.5 rounded-lg text-[12px] font-semibold bg-[#a0191e] dark:bg-[#E04444]"
-                    whileHover={{
-                      scale: 1.05,
-                      filter: "brightness(1.1)",
-                      boxShadow: "0 8px 20px rgba(160, 25, 30, 0.3)"
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                  >
-                    Renovar agora
-                  </motion.button>
-                  <motion.button
-                    onClick={() => handleVerApoliceCard("TM-2024-9012")}
-                    className="flex-1 md:w-full px-4 py-2.5 rounded-lg text-[12px] font-semibold border flex items-center justify-center gap-1"
-                    style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
-                    whileHover={{
-                      scale: 1.05,
-                      backgroundColor: isDarkMode ? '#1A1F2E' : '#F9FAFB',
-                      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ duration: 0.15, ease: "easeOut" }}
-                  >
-                    Ver apólice completa →
-                  </motion.button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Cards Secundários - Grid 3 Colunas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4">
-              {/* Card B - Renovação Programada */}
-              <motion.div
-                className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-                style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-                whileHover={{
-                  scale: 1.03,
-                  boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-                  y: -4
-                }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: colors.tan, color: 'white' }}>Atenção</span>
-                </div>
-                <div className="text-[28px] font-bold leading-none mb-1" style={{ color: colors.olive }}>
-                  52<span className="text-[14px] ml-1">d</span>
-                </div>
-                <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-3">até vencimento</div>
-                <div className="text-[14px] font-bold mb-1" style={{ color: colors.brandMaroon }}>Resp. Civil</div>
-                <div className="text-[11px] text-gray-600 dark:text-[#94A3B8] mb-3">22/06/2026 · AL-2025-0034</div>
-                <button
-                  onClick={() => handleVerApoliceCard("AL-2025-0034")}
-                  className="w-full px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all hover:bg-gray-50 dark:hover:bg-[#1A1F2E] flex items-center justify-center gap-1"
-                  style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
-                >
-                  Ver apólice →
-                </button>
-              </motion.div>
-
-              {/* Card C - Renovação Programada */}
-              <motion.div
-                className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-                style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-                whileHover={{
-                  scale: 1.03,
-                  boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-                  y: -4
-                }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ backgroundColor: colors.forest }}>Em dia</span>
-                </div>
-                <div className="text-[28px] font-bold leading-none mb-1" style={{ color: colors.forest }}>
-                  90<span className="text-[14px] ml-1">d</span>
-                </div>
-                <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-3">até vencimento</div>
-                <div className="text-[14px] font-bold mb-1" style={{ color: colors.brandMaroon }}>Roubo e Furto</div>
-                <div className="text-[11px] text-gray-600 dark:text-[#94A3B8] mb-3">30/07/2026 · TM-2024-0078</div>
-                <button
-                  onClick={() => handleVerApoliceCard("TM-2024-0078")}
-                  className="w-full px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all hover:bg-gray-50 dark:hover:bg-[#1A1F2E] flex items-center justify-center gap-1"
-                  style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
-                >
-                  Ver apólice →
-                </button>
-              </motion.div>
-
-              {/* Card D - Renovação Programada */}
-              <motion.div
-                className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-                style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-                whileHover={{
-                  scale: 1.03,
-                  boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-                  y: -4
-                }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ backgroundColor: colors.forest }}>Em dia</span>
-                </div>
-                <div className="text-[28px] font-bold leading-none mb-1" style={{ color: colors.forest }}>
-                  106<span className="text-[14px] ml-1">d</span>
-                </div>
-                <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-3">até vencimento</div>
-                <div className="text-[14px] font-bold mb-1" style={{ color: colors.brandMaroon }}>Incêndio</div>
-                <div className="text-[11px] text-gray-600 dark:text-[#94A3B8] mb-3">15/08/2026 · AP-2025-001</div>
-                <button
-                  onClick={() => handleVerApoliceCard("AP-2025-001")}
-                  className="w-full px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all hover:bg-gray-50 dark:hover:bg-[#1A1F2E] flex items-center justify-center gap-1"
-                  style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
-                >
-                  Ver apólice →
-                </button>
-              </motion.div>
+              <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D93030] opacity-60 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
 
-          {/* Cards Operacionais - Linha 2 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-            <motion.div
-              className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-              whileHover={{
-                scale: 1.03,
-                boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg" style={{ backgroundColor: isDarkMode ? '#E0444415' : `${colors.brandDarkRed}15` }}>
-                  <FolderOpen className="w-4 h-4" style={{ color: isDarkMode ? '#E04444' : colors.brandDarkRed }} strokeWidth={1.5} />
-                </div>
-                <div className="text-[12px] text-gray-600 dark:text-[#94A3B8]">Sinistros Abertos</div>
-              </div>
-              <div className="text-[28px] font-bold" style={{ color: colors.brandMaroon }}>5</div>
-              <div className="text-[10px] text-gray-500 dark:text-[#94A3B8]">aguardando resolução</div>
-            </motion.div>
-
-            <motion.div
-              className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-              whileHover={{
-                scale: 1.03,
-                boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg" style={{ backgroundColor: isDarkMode ? '#E0444415' : `${colors.brandDarkRed}15` }}>
-                  <Clock className="w-4 h-4" style={{ color: isDarkMode ? '#E04444' : colors.brandDarkRed }} strokeWidth={1.5} />
-                </div>
-                <div className="text-[12px] text-gray-600 dark:text-[#94A3B8]">Tempo Médio de Resolução</div>
-              </div>
-              <div className="text-[28px] font-bold" style={{ color: colors.brandMaroon }}>12 dias</div>
-              <div className="text-[10px] text-gray-500 dark:text-[#94A3B8]">últimos 90 dias</div>
-            </motion.div>
-
-            <motion.div
-              className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-              whileHover={{
-                scale: 1.03,
-                boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg" style={{ backgroundColor: isDarkMode ? '#E0444415' : `${colors.brandDarkRed}15` }}>
-                  <BarChart3 className="w-4 h-4" style={{ color: isDarkMode ? '#E04444' : colors.brandDarkRed }} strokeWidth={1.5} />
-                </div>
-                <div className="text-[12px] text-gray-600 dark:text-[#94A3B8]">Taxa de Aprovação</div>
-              </div>
-              <div className="text-[28px] font-bold" style={{ color: colors.brandMaroon }}>87%</div>
-              <div className="text-[10px] text-gray-500 dark:text-[#94A3B8]">sinistros aprovados</div>
-            </motion.div>
-
-            <motion.div
-              className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-              whileHover={{
-                scale: 1.03,
-                boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-                y: -4
-              }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 rounded-lg" style={{ backgroundColor: isDarkMode ? '#E0444415' : `${colors.brandDarkRed}15` }}>
-                  <Calendar className="w-4 h-4" style={{ color: isDarkMode ? '#E04444' : colors.brandDarkRed }} strokeWidth={1.5} />
-                </div>
-                <div className="text-[12px] text-gray-600 dark:text-[#94A3B8]">Próxima Vistoria</div>
-              </div>
-              <div className="text-[28px] font-bold" style={{ color: colors.brandMaroon }}>08/05/2026</div>
-              <div className="text-[10px] text-gray-500 dark:text-[#94A3B8]">Setor Alimentação L1</div>
-            </motion.div>
-          </div>
+          <ComplianceMapV2 
+            selectedLuc={selectedMapLuc}
+            onSelectLuc={setSelectedMapLuc}
+          />
 
           {/* Data Table */}
           <motion.div
@@ -1192,7 +856,7 @@ export function Insurance() {
                               ))}
                             </select>
                           </div>
-                          
+
                           {/* Footer Actions */}
                           {activeFiltersCount > 0 && (
                             <div className="pt-2">
@@ -1215,8 +879,9 @@ export function Insurance() {
               </div>
             </div>
 
+            {/* Table wrapper */}
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px]">
+              <table className="w-full min-w-[800px] text-left border-collapse">
                 <thead className="bg-[#F7F8FA] dark:bg-[#1A1F2E]">
                   <tr>
                     <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>LUC</th>
@@ -1232,30 +897,30 @@ export function Insurance() {
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading 
+                  {isLoading
                     ? renderSkeleton()
-                    : paginatedPolicies.length === 0 
+                    : paginatedPolicies.length === 0
                       ? renderEmptyState()
                       : paginatedPolicies.map((policy, index) => (
-                      <tr 
-                        key={index} 
-                        onClick={() => handleVerApolice(policy.id)}
-                        className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md" 
-                        style={{ borderColor: colors.cardBorder }}
-                      >
-                        <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{policy.id}</td>
-                        <td className="px-4 py-3 text-[12px] font-semibold" style={{ color: colors.brandMaroon }}>{policy.lojista}</td>
-                        <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.tipo}</td>
-                        <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.seguradora}</td>
-                        <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vigencia}</td>
-                        <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vencimento}</td>
-                        <td className="px-4 py-3" style={{ minWidth: '110px' }}>
-                          {renderStatusBadge(policy.status)}
-                        </td>
-                        <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
-                        <td className="px-4 py-3 text-[12px] font-bold" style={{ color: getDiasRestantesColor(policy.dias_restantes) }}>{policy.dias_restantes}</td>
-                      </tr>
-                    ))
+                        <tr
+                          key={index}
+                          onClick={() => handleEditarApolice(policy.id)}
+                          className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
+                          style={{ borderColor: colors.cardBorder }}
+                        >
+                          <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{policy.id}</td>
+                          <td className="px-4 py-3 text-[12px] font-semibold" style={{ color: colors.brandMaroon }}>{policy.lojista}</td>
+                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.tipo}</td>
+                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.seguradora}</td>
+                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vigencia}</td>
+                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vencimento}</td>
+                          <td className="px-4 py-3" style={{ minWidth: '110px' }}>
+                            {renderStatusBadge(policy.status)}
+                          </td>
+                          <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
+                          <td className="px-4 py-3 text-[12px] font-bold" style={{ color: getDiasRestantesColor(policy.dias_restantes) }}>{policy.dias_restantes}</td>
+                        </tr>
+                      ))
                   }
                 </tbody>
               </table>
@@ -1294,13 +959,12 @@ export function Insurance() {
                     key={index}
                     onClick={() => typeof page === 'number' && handlePageClick(page)}
                     disabled={typeof page !== 'number'}
-                    className={`w-7 h-7 rounded flex items-center justify-center text-[12px] font-medium transition-all outline-none ${
-                      page === currentPage 
+                    className={`w-7 h-7 rounded flex items-center justify-center text-[12px] font-medium transition-all outline-none ${page === currentPage
                         ? 'bg-[#EFF6FF] text-[#3B82F6] border border-[#3B82F6]'
                         : typeof page === 'number'
                           ? 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#242938] border border-transparent'
                           : 'bg-transparent text-gray-400 cursor-default border border-transparent'
-                    }`}
+                      }`}
                   >
                     {page}
                   </button>
@@ -1318,8 +982,8 @@ export function Insurance() {
           </motion.div>
         </div>
 
-        {/* Right Panel (280px fixed) - SEM PERFIL */}
-        <div className="w-full lg:w-[280px] space-y-3 md:space-y-4 flex-shrink-0 overflow-y-auto rounded-[0px]">
+        {/* Right Panel (350px fixed) - SEM PERFIL */}
+        <div className="w-full lg:w-[350px] space-y-3 md:space-y-4 flex-shrink-0 overflow-y-auto rounded-[0px]">
           {/* 1. Nova Apólice Button com Dropdown - Apenas para Relacionamento */}
           {canEdit && (
             <div className="relative">
@@ -1364,57 +1028,13 @@ export function Insurance() {
             </div>
           )}
 
-          {/* 2. Índice de Conformidade Geral - Donut Segmentado */}
-          <motion.div
-            className="bg-white dark:bg-[#242938] rounded-xl p-4 border cursor-pointer"
-            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-            whileHover={{
-              scale: 1.03,
-              boxShadow: `0 8px 24px ${colors.brandMaroon}15`,
-              y: -4
-            }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-          >
-            <h4 className="text-[12px] font-bold mb-3" style={{ color: colors.brandMaroon }}>Índice de Conformidade Geral</h4>
-            <div className="relative w-32 h-32 mx-auto">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={performanceData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={40}
-                    outerRadius={60}
-                    startAngle={90}
-                    endAngle={-270}
-                    dataKey="value"
-                  >
-                    {performanceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center flex-col">
-                <div className="text-[28px] font-bold" style={{ color: colors.forest }}>{conformidadePercentual}%</div>
-                <div className="text-[10px] text-gray-600 dark:text-[#94A3B8]">Geral</div>
-              </div>
-            </div>
-
-            {/* Legenda Detalhada */}
-            <div className="mt-4 space-y-2">
-              {performanceData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span style={{ color: colors.brandMaroon }}>{item.name}</span>
-                  </div>
-                  <span className="font-semibold" style={{ color: colors.brandMaroon }}>{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+          {/* 2. Compliance Map Side Panel (Fixed) */}
+          <ComplianceSidePanel 
+            selectedLuc={selectedMapLuc}
+            onClose={() => setSelectedMapLuc(null)}
+            onViewApolice={handleVerApolice}
+            onEditApolice={handleEditarApolice}
+          />
 
 
         </div>
@@ -2127,160 +1747,157 @@ export function Insurance() {
       )}
 
       {/* Modal Editar Apólice */}
-      {showEditApoliceModal && selectedPolicy && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(8px)' }}>
-          <div className="bg-white dark:bg-[#242938] rounded-xl w-full max-w-2xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
-            <div className="sticky top-0 bg-white dark:bg-[#242938] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
-              <div>
-                <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Editar Apólice {selectedPolicy.id}</h2>
-                <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Atualize os dados da apólice</p>
-              </div>
-              <motion.button
-                onClick={handleCloseModals}
-                className="text-gray-400 dark:text-[#64748B]"
-                whileHover={{
-                  scale: 1.1,
-                  color: isDarkMode ? '#94A3B8' : '#4B5563'
-                }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </motion.button>
-            </div>
-
-            <form onSubmit={handleSubmitEditApolice} className="p-4 md:p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Tipo de Seguro *</label>
-                  <select
-                    required
-                    value={formData.tipo}
-                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  >
-                    <option value="Seguro Incêndio">Incêndio e Explosão</option>
-                    <option value="Responsabilidade Civil">Responsabilidade Civil</option>
-                    <option value="Roubo e Furto">Roubo e Furto</option>
-                    <option value="Danos Elétricos">Danos Elétricos</option>
-                    <option value="Alagamento e Infiltração">Alagamento e Infiltração</option>
-                    <option value="Vidros e Fachadas">Vidros e Fachadas</option>
-                    <option value="Equipamentos">Equipamentos</option>
-                  </select>
+      <AnimatePresence>
+        {showEditApoliceModal && selectedPolicy && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleCloseModals}
+              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm dark:bg-black/60"
+            />
+            
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ type: 'spring', duration: 0.5, bounce: 0 }}
+              className="relative bg-white dark:bg-[#242938] rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-[#2E3447] flex flex-col max-h-[90vh]"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100 dark:border-[#2E3447] bg-gray-50/50 dark:bg-[#1A1F2E]/50 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#242938] flex items-center justify-center shadow-sm border border-gray-100 dark:border-[#2E3447]">
+                    <Shield className="w-6 h-6 text-[#168821] dark:text-[#22c55e]" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Editar Apólice</h2>
+                    <p className="text-sm text-gray-500 dark:text-[#94A3B8] mt-0.5">LUC: <span className="font-semibold text-gray-700 dark:text-gray-300">{selectedPolicy.id}</span> • {selectedPolicy.lojista}</p>
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Seguradora *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.seguradora}
-                    onChange={(e) => setFormData({ ...formData, seguradora: e.target.value })}
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vigência *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.vigencia}
-                    onChange={(e) => setFormData({ ...formData, vigencia: e.target.value })}
-                    placeholder="DD/MM/AAAA"
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vencimento *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.vencimento}
-                    onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
-                    placeholder="DD/MM/AAAA"
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Valor da Cobertura *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.cobertura}
-                    onChange={(e) => setFormData({ ...formData, cobertura: e.target.value })}
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Prêmio Anual *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.premio}
-                    onChange={(e) => setFormData({ ...formData, premio: e.target.value })}
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Observações</label>
-                <textarea
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  rows={3}
-                  placeholder="Informações adicionais sobre a apólice..."
-                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 resize-none placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t" style={{ borderColor: colors.cardBorder }}>
                 <button
-                  type="button"
                   onClick={handleCloseModals}
-                  className="flex-1 px-4 py-3 border dark:border-[#2E3447] rounded-lg text-[13px] font-semibold transition-all hover:bg-gray-50 dark:hover:bg-[#1A1F2E]"
-                  style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-[#242938] dark:hover:text-gray-300 rounded-lg transition-colors"
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 rounded-lg text-[13px] font-semibold text-white bg-[#D93030] dark:bg-[#E04444] hover:bg-[#b92828] dark:hover:bg-[#F05555] transition-all"
-                >
-                  Salvar Alterações
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </form>
+
+              {/* Form Content */}
+              <form onSubmit={handleSubmitEditApolice} className="flex flex-col flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">LUC *</label>
+                      <input
+                        type="text"
+                        required
+                        disabled
+                        value={formData.luc}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-gray-100 dark:bg-[#1A1F2E] text-gray-500 dark:text-gray-400 outline-none cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">Loja *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.lojista}
+                        onChange={(e) => setFormData({ ...formData, lojista: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">Segmento *</label>
+                      <select
+                        required
+                        value={formData.tipo}
+                        onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                      >
+                        <option value="Seguro Incêndio">Incêndio e Explosão</option>
+                        <option value="Responsabilidade Civil">Responsabilidade Civil</option>
+                        <option value="Roubo e Furto">Roubo e Furto</option>
+                        <option value="Danos Elétricos">Danos Elétricos</option>
+                        <option value="Alagamento e Infiltração">Alagamento e Infiltração</option>
+                        <option value="Vidros e Fachadas">Vidros e Fachadas</option>
+                        <option value="Equipamentos">Equipamentos</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">Seguradora *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.seguradora}
+                        onChange={(e) => setFormData({ ...formData, seguradora: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">Data de Vigência *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.vigencia}
+                        onChange={(e) => setFormData({ ...formData, vigencia: e.target.value })}
+                        placeholder="DD/MM/AAAA"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">Data de Vencimento *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.vencimento}
+                        onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
+                        placeholder="DD/MM/AAAA"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">Cobertura *</label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.cobertura}
+                        onChange={(e) => setFormData({ ...formData, cobertura: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 border-t border-gray-100 dark:border-[#2E3447] bg-gray-50/50 dark:bg-[#1A1F2E]/50 flex items-center justify-end gap-3 mt-auto">
+                  <button
+                    type="button"
+                    onClick={handleCloseModals}
+                    className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-[#2E3447] transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#168821] hover:bg-[#126b1a] shadow-sm shadow-[#168821]/20 transition-all flex items-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Salvar Alterações
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </>
   );
 }

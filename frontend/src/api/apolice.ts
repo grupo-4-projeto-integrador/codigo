@@ -5,18 +5,19 @@ export type ApoliceListResponse = ApoliceRecord[];
 
 export type ApolicePayload = ApoliceFormData;
 
-function mapToRecord(dto: ApoliceDTO): ApoliceRecord {
+function mapToRecord(dto: any): ApoliceRecord {
   return {
-    id: dto.luc,
-    luc: dto.luc,
-    fantasia: dto.fantasia,
-    segmento: dto.segmento,
-    seguradora: dto.seguradora,
-    vigencia: dto.vigencia,
-    vencimento: dto.vencimento,
-    status: dto.status,
-    lojista: dto.fantasia,
-    tipo: dto.segmento,
+    id: dto.id || dto.luc || "",
+    luc: dto.id || dto.luc || "",
+    fantasia: dto.lojista || dto.fantasia || "",
+    segmento: dto.tipo || dto.segmento || "",
+    seguradora: dto.seguradora || "",
+    vigencia: dto.vigencia || "",
+    vencimento: dto.vencimento || "",
+    dias_restantes: dto.dias_restantes,
+    status: dto.status_da_apolice || dto.status || "",
+    lojista: dto.lojista || dto.fantasia || "",
+    tipo: dto.tipo || dto.segmento || "",
   };
 }
 
