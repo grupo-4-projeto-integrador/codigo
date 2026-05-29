@@ -90,7 +90,7 @@ func importSeedDump(db *sql.DB, path string) (err error) {
 		return err
 	}
 
-	const insertStmt = `INSERT INTO seguros (luc, fantasia, segmento, seguradora, vigencia, vencimento, status)
+	const insertStmt = `INSERT INTO seguros (luc, loja, segmento, seguradora, vigencia, vencimento, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7)`
 
 	for scanner.Scan() {

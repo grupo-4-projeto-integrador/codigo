@@ -1,11 +1,12 @@
 CREATE TABLE IF NOT EXISTS seguros (
     luc character varying NOT NULL,
-    fantasia character varying,
+    loja character varying,
     segmento character varying,
     seguradora character varying,
     vigencia date,
     vencimento date,
-    status character varying
+    status character varying,
+    cobertura numeric DEFAULT 0
 );
 
 ALTER TABLE seguros OWNER TO postgres;

@@ -14,11 +14,25 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) List() ([]Apolice, error) {
-	return s.repo.List()
+	items, err := s.repo.List()
+	if err != nil {
+		return nil, err
+	}
+	for i := range items {
+		items[i].DiasRestantes = calculateDaysRemaining(items[i].Vencimento)
+		items[i].Status = calculatePolicyStatus(items[i].Vencimento)
+	}
+	return items, nil
 }
 
 func (s *Service) Get(luc string) (Apolice, error) {
-	return s.repo.Get(luc)
+	item, err := s.repo.Get(luc)
+	if err != nil {
+		return Apolice{}, err
+	}
+	item.DiasRestantes = calculateDaysRemaining(item.Vencimento)
+	item.Status = calculatePolicyStatus(item.Vencimento)
+	return item, nil
 }
 
 func (s *Service) Create(payload Payload) (Apolice, error) {
@@ -44,7 +58,7 @@ func (s *Service) Delete(luc string) error {
 }
 
 func (s *Service) buildModel(payload Payload) (Apolice, error) {
-	if strings.TrimSpace(payload.Luc) == "" || strings.TrimSpace(payload.Fantasia) == "" || strings.TrimSpace(payload.Segmento) == "" || strings.TrimSpace(payload.Seguradora) == "" || strings.TrimSpace(payload.Vigencia) == "" || strings.TrimSpace(payload.Vencimento) == "" {
+	if strings.TrimSpace(payload.Luc) == "" || strings.TrimSpace(payload.Loja) == "" || strings.TrimSpace(payload.Segmento) == "" || strings.TrimSpace(payload.Seguradora) == "" || strings.TrimSpace(payload.Vigencia) == "" || strings.TrimSpace(payload.Vencimento) == "" {
 		return Apolice{}, ErrValidation("Todos os campos são obrigatórios")
 	}
 
@@ -58,14 +72,23 @@ func (s *Service) buildModel(payload Payload) (Apolice, error) {
 	}
 
 	return Apolice{
-		Luc:        strings.TrimSpace(payload.Luc),
-		Fantasia:   strings.TrimSpace(payload.Fantasia),
-		Segmento:   strings.TrimSpace(payload.Segmento),
-		Seguradora: strings.TrimSpace(payload.Seguradora),
-		Vigencia:   vigencia,
-		Vencimento: vencimento,
-		Status:     calculatePolicyStatus(vencimento),
+		Luc:           strings.TrimSpace(payload.Luc),
+		Loja:          strings.TrimSpace(payload.Loja),
+		Segmento:      strings.TrimSpace(payload.Segmento),
+		Seguradora:    strings.TrimSpace(payload.Seguradora),
+		Vigencia:      vigencia,
+		Vencimento:    vencimento,
+		Status:        calculatePolicyStatus(vencimento),
+		Cobertura:     payload.Cobertura,
+		DiasRestantes: calculateDaysRemaining(vencimento),
 	}, nil
+}
+
+func calculateDaysRemaining(vencimento time.Time) int {
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	dueDate := time.Date(vencimento.Year(), vencimento.Month(), vencimento.Day(), 0, 0, 0, 0, now.Location())
+	return int(dueDate.Sub(today).Hours() / 24)
 }
 
 func calculatePolicyStatus(vencimento time.Time) string {

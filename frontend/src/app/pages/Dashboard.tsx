@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { 
-  AlertTriangle, 
   Clock, 
   FileWarning, 
   TrendingUp,
@@ -10,7 +9,9 @@ import {
   ShieldCheck,
   ShieldAlert
 } from "lucide-react";
-import { getClaims, Claim } from "../store";
+import { listApolices } from "../../api/apolice";
+import type { ApoliceRecord } from "../../types/apolice";
+import { ComplianceMap } from "../components/ComplianceMap";
 import { 
   BarChart, 
   Bar, 
@@ -23,21 +24,23 @@ import {
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const [claims, setClaims] = useState<Claim[]>([]);
+  const [apolices, setApolices] = useState<ApoliceRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    setClaims(getClaims());
+    void listApolices().then(setApolices).catch(() => setApolices([]));
   }, []);
 
-  const openClaims = claims.filter(c => c.status === "Aberto" || c.status === "Em Análise").length;
-  const waitingRegulator = claims.filter(c => c.status === "Aguardando Regulador").length;
-  const fraudAlerts = claims.filter(c => c.fraudAlert).length;
+  const activePolicies = apolices.filter((policy) => policy.status === "Ativa").length;
+  const expiringPolicies = apolices.filter((policy) => policy.status === "A Vencer").length;
+  const expiredPolicies = apolices.filter((policy) => policy.status === "Vencida").length;
 
-  const filteredClaims = claims.filter(c => 
-    c.store.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredPolicies = apolices.filter((policy) => {
+    const searchLower = searchQuery.toLowerCase();
+    return String(policy.lojista || '').toLowerCase().includes(searchLower) || 
+      String(policy.id || '').toLowerCase().includes(searchLower) ||
+      String(policy.tipo || '').toLowerCase().includes(searchLower);
+  });
 
   // Mock data for chart
   const chartData = [
@@ -68,21 +71,21 @@ export function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-start justify-between hover:shadow-md transition-shadow">
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Sinistros Abertos</p>
-            <h3 className="text-3xl font-bold text-gray-900">{openClaims}</h3>
+            <p className="text-sm font-medium text-gray-500 mb-1">Apólices Ativas</p>
+            <h3 className="text-3xl font-bold text-gray-900">{activePolicies}</h3>
             <p className="text-xs text-green-600 mt-2 flex items-center font-medium">
               <TrendingUp className="w-3 h-3 mr-1" /> -12% em relação ao mês anterior
             </p>
           </div>
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
-            <FileWarning className="w-6 h-6" />
+          <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6" />
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex items-start justify-between hover:shadow-md transition-shadow">
           <div>
-            <p className="text-sm font-medium text-gray-500 mb-1">Aguardando Regulador</p>
-            <h3 className="text-3xl font-bold text-gray-900">{waitingRegulator}</h3>
+            <p className="text-sm font-medium text-gray-500 mb-1">A Vencer</p>
+            <h3 className="text-3xl font-bold text-gray-900">{expiringPolicies}</h3>
             <p className="text-xs text-orange-600 mt-2 flex items-center font-medium">
               Requer atenção imediata
             </p>
@@ -94,17 +97,19 @@ export function Dashboard() {
 
         <div className="bg-white rounded-xl shadow-sm border border-red-100 p-6 flex items-start justify-between hover:shadow-md transition-shadow">
           <div>
-            <p className="text-sm font-medium text-[#D93030] mb-1">Alertas de Fraude</p>
-            <h3 className="text-3xl font-bold text-[#D93030]">{fraudAlerts}</h3>
+            <p className="text-sm font-medium text-[#D93030] mb-1">Vencidas</p>
+            <h3 className="text-3xl font-bold text-[#D93030]">{expiredPolicies}</h3>
             <p className="text-xs text-[#8B1A1A] mt-2 flex items-center font-medium">
-              Análise rigorosa sugerida
+              Exigem regularização
             </p>
           </div>
           <div className="w-12 h-12 bg-red-50 text-[#D93030] rounded-xl flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6" />
+            <ShieldAlert className="w-6 h-6" />
           </div>
         </div>
       </div>
+
+      <ComplianceMap />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart Section */}
@@ -189,64 +194,50 @@ export function Dashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredClaims?.map((claim) => (
-                <tr key={claim.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => navigate(`/sinistro/${claim.id}`)}>
+              {filteredPolicies?.map((policy) => (
+                <tr key={policy.id} className="hover:bg-gray-50 transition-colors cursor-pointer">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center">
-                    {claim.id}
-                    {claim.fraudAlert && (
-                      <span title="Alerta de Fraude" className="ml-2 text-[#D93030]">
-                        <AlertTriangle className="w-4 h-4" />
-                      </span>
-                    )}
+                    {policy.id}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex flex-col">
-                      <span className="font-medium text-gray-800">{claim.store}</span>
-                      <span className="text-xs">{claim.type}</span>
+                      <span className="font-medium text-gray-800">{policy.lojista}</span>
+                      <span className="text-xs">{policy.tipo}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(claim.date).toLocaleDateString('pt-BR')}
+                    {policy.vigencia}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${claim.status === 'Aberto' ? 'bg-blue-100 text-blue-800' : ''}
-                      ${claim.status === 'Aguardando Regulador' ? 'bg-orange-100 text-orange-800' : ''}
-                      ${claim.status === 'Em Análise' ? 'bg-yellow-100 text-yellow-800' : ''}
-                      ${claim.status === 'Aprovado' ? 'bg-green-100 text-green-800' : ''}
-                      ${claim.status === 'Pago' ? 'bg-gray-100 text-gray-800' : ''}
+                      ${policy.status === 'Ativa' ? 'bg-green-100 text-green-800' : ''}
+                      ${policy.status === 'A Vencer' ? 'bg-orange-100 text-orange-800' : ''}
+                      ${policy.status === 'Vencida' ? 'bg-red-100 text-red-800' : ''}
                     `}>
-                      {claim.status}
+                      {policy.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center text-sm">
-                      <span className={`w-2.5 h-2.5 rounded-full mr-2 
-                        ${claim.severity === 'Alta' ? 'bg-[#D93030]' : ''}
-                        ${claim.severity === 'Média' ? 'bg-yellow-500' : ''}
-                        ${claim.severity === 'Baixa' ? 'bg-green-500' : ''}
-                      `}></span>
-                      {claim.severity}
+                      <span className={`w-2.5 h-2.5 rounded-full mr-2 ${policy.status === 'Vencida' ? 'bg-[#D93030]' : policy.status === 'A Vencer' ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                      {policy.status}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/sinistro/${claim.id}`);
-                      }}
+                      onClick={() => navigate(`/seguros?search=${encodeURIComponent(policy.id)}`)}
                       className="text-[#8B1A1A] hover:text-[#a43030] inline-flex items-center"
                     >
-                      Detalhes <ChevronRight className="w-4 h-4 ml-1" />
+                      Ver apólice <ChevronRight className="w-4 h-4 ml-1" />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filteredClaims.length === 0 && (
+          {filteredPolicies.length === 0 && (
             <div className="py-8 text-center text-gray-500">
-              Nenhum sinistro encontrado com os filtros atuais.
+              Nenhuma apólice encontrada com os filtros atuais.
             </div>
           )}
         </div>

@@ -1,5 +1,4 @@
 # Grupo-4-Projeto-Integrador
-<<<<<<< HEAD
 
 Projeto de Seguros com backend em Go e frontend em React/Vite.
 
@@ -32,7 +31,7 @@ O backend não usa credenciais hard-coded. Defina as variáveis antes de iniciar
 PowerShell:
 
 ```powershell
-Set-Location c:\Users\thays\OneDrive\Documentos\codigo\backend
+Set-Location backend
 $env:PG_HOST = 'localhost'
 $env:PG_PORT = '5432'
 $env:PG_USER = 'postgres'
@@ -44,7 +43,7 @@ $env:PG_SSLMODE = 'disable'
 Linux / macOS:
 
 ```bash
-cd codigo/backend
+cd backend
 export PG_HOST=localhost
 export PG_PORT=5432
 export PG_USER=postgres
@@ -56,7 +55,7 @@ export PG_SSLMODE=disable
 ### 4. Iniciar o backend
 
 ```powershell
-Set-Location c:\Users\thays\OneDrive\Documentos\codigo\backend
+Set-Location backend
 go run ./cmd/api
 ```
 
@@ -69,7 +68,7 @@ Se você abrir `http://localhost:8082`, verá uma página simples de status do b
 ### 5. Iniciar o frontend
 
 ```powershell
-Set-Location c:\Users\thays\OneDrive\Documentos\codigo\frontend
+Set-Location frontend
 corepack pnpm install
 corepack pnpm dev
 ```
@@ -83,7 +82,7 @@ Se quiser abrir a interface pelo endereço simples `http://localhost`, use o Doc
 Backend:
 
 ```powershell
-Set-Location c:\Users\thays\OneDrive\Documentos\codigo\backend
+Set-Location backend
 go test ./...
 go build ./...
 ```
@@ -91,7 +90,7 @@ go build ./...
 Frontend:
 
 ```powershell
-Set-Location c:\Users\thays\OneDrive\Documentos\codigo\frontend
+Set-Location frontend
 corepack pnpm test
 corepack pnpm build
 ```
@@ -106,10 +105,10 @@ Siga este passo a passo:
 
 ```bash
 git clone <URL_DO_SEU_REPOSITORIO>
-cd <NOME_DA_PASTA>/codigo
+cd <NOME_DA_PASTA>
 ```
 
-*(Se você já tem os arquivos baixados, apenas certifique-se de estar dentro da pasta `codigo/`)*
+*(Se você já tem os arquivos baixados, apenas certifique-se de estar dentro da pasta raiz)*
 
 ### 2. Subir o ambiente completo
 
@@ -168,6 +167,3 @@ Se preferir, o [Makefile](../Makefile) continua disponível para ambientes com G
 
 - Se quiser popular o banco manualmente fora do CI, siga o [guia de migrations](backend/MIGRATIONS_README.md).
 - Se preferir usar um `.env`, copie `backend/.env.example` para `backend/.env` e ajuste os valores.
-=======
-Repositório a ser empregado para software no escopo de Seguros
->>>>>>> eb54f6375754fa7b6e31d38e3f9bb4a010c606f4

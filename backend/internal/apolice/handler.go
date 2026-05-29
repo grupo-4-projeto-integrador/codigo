@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"grupo4/seguros/internal/middleware"
@@ -14,8 +17,49 @@ type Handler struct {
 	service *Service
 }
 
+type MapLayoutItem struct {
+	Luc      string `json:"luc"`
+	Floor    int    `json:"floor"`
+	Position int    `json:"position"`
+}
+
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
+}
+
+func (h *Handler) GetMapLayout(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodGet {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	mapLayoutPath, err := resolveMapLayoutPath()
+	if err != nil {
+		_ = response.Fail(w, http.StatusInternalServerError, "Falha ao localizar o layout do mapa", requestID, nil)
+		return
+	}
+
+	content, err := os.ReadFile(mapLayoutPath)
+	if err != nil {
+		_ = response.Fail(w, http.StatusInternalServerError, "Falha ao ler o layout do mapa", requestID, nil)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(content)
+}
+
+func resolveMapLayoutPath() (string, error) {
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", errors.New("não foi possível resolver o caminho do arquivo")
+	}
+
+	baseDir := filepath.Dir(currentFile)
+	return filepath.Clean(filepath.Join(baseDir, "..", "..", "pkg", "mapconfig", "map_config.json")), nil
 }
 
 func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +167,7 @@ func decodePayload(r *http.Request) (Payload, error) {
 	}
 
 	payload.Luc = strings.TrimSpace(payload.Luc)
-	payload.Fantasia = strings.TrimSpace(payload.Fantasia)
+	payload.Loja = strings.TrimSpace(payload.Loja)
 	payload.Segmento = strings.TrimSpace(payload.Segmento)
 	payload.Seguradora = strings.TrimSpace(payload.Seguradora)
 	payload.Vigencia = strings.TrimSpace(payload.Vigencia)

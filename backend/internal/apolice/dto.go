@@ -3,32 +3,36 @@ package apolice
 import "time"
 
 type Payload struct {
-	Luc        string `json:"luc"`
-	Fantasia   string `json:"fantasia"`
-	Segmento   string `json:"segmento"`
-	Seguradora string `json:"seguradora"`
-	Vigencia   string `json:"vigencia"`
-	Vencimento string `json:"vencimento"`
+	Luc        string  `json:"luc"`
+	Loja       string  `json:"loja"`
+	Segmento   string  `json:"segmento"`
+	Seguradora string  `json:"seguradora"`
+	Vigencia   string  `json:"vigencia"`
+	Vencimento string  `json:"vencimento"`
+	Cobertura  float64 `json:"cobertura"`
 }
 
 type Response struct {
-	Luc             string `json:"luc"`
-	Fantasia        string `json:"fantasia"`
-	Segmento        string `json:"segmento"`
-	Seguradora      string `json:"seguradora"`
-	Vigencia        string `json:"vigencia"`
-	Vencimento      string `json:"vencimento"`
-	Status          string `json:"status"`
-	StatusDaApolice string `json:"status_da_apolice"`
+	Luc           string  `json:"id"`
+	Loja          string  `json:"lojista"`
+	Segmento      string  `json:"tipo"`
+	Seguradora    string  `json:"seguradora"`
+	Vigencia      string  `json:"vigencia"`
+	Vencimento    string  `json:"vencimento"`
+	Status        string  `json:"status"`
+	Cobertura     float64 `json:"cobertura"`
+	DiasRestantes int     `json:"dias_restantes"`
 }
 
 func ToResponse(model Apolice) Response {
 	response := Response{
-		Luc:        model.Luc,
-		Fantasia:   model.Fantasia,
-		Segmento:   model.Segmento,
-		Seguradora: model.Seguradora,
-		Status:     model.Status,
+		Luc:           model.Luc,
+		Loja:          model.Loja,
+		Segmento:      model.Segmento,
+		Seguradora:    model.Seguradora,
+		Status:        model.Status,
+		Cobertura:     model.Cobertura,
+		DiasRestantes: model.DiasRestantes,
 	}
 
 	if !model.Vigencia.IsZero() {
@@ -38,7 +42,6 @@ func ToResponse(model Apolice) Response {
 		response.Vencimento = model.Vencimento.Format("02/01/2006")
 	}
 
-	response.StatusDaApolice = model.Status
 	return response
 }
 

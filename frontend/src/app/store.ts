@@ -78,3 +78,21 @@ export const addClaim = (claim: Claim) => {
 export const updateClaim = (id: string, updates: Partial<Claim>) => {
   claims = claims.map(c => c.id === id ? { ...c, ...updates } : c);
 };
+
+let selectedApoliceLuc = "";
+const selectedApoliceLucListeners = new Set<() => void>();
+
+export const getSelectedApoliceLuc = () => selectedApoliceLuc;
+
+export const setSelectedApoliceLuc = (luc: string) => {
+  selectedApoliceLuc = luc;
+  selectedApoliceLucListeners.forEach((listener) => listener());
+};
+
+export const subscribeSelectedApoliceLuc = (listener: () => void) => {
+  selectedApoliceLucListeners.add(listener);
+
+  return () => {
+    selectedApoliceLucListeners.delete(listener);
+  };
+};
