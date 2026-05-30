@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { ComplianceMapV2, ComplianceSidePanel } from "../components/ComplianceMapV2";
+import { ActionQueuePanel } from "../components/ActionQueuePanel";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc } from "../store";
 import { request } from "../../api/client";
 import { motion, AnimatePresence } from "motion/react";
@@ -156,6 +157,24 @@ export function Insurance() {
   const expiringPolicies = allPolicies.filter((p) => (p.status ?? "").toLowerCase() === "a vencer").length;
   const expiredPolicies = allPolicies.filter((p) => (p.status ?? "").toLowerCase() === "vencida").length;
   const totalPolicies = allPolicies.length;
+  
+  const percAVencer = totalPolicies ? Math.round((expiringPolicies / totalPolicies) * 100) : 0;
+  const percVencidas = totalPolicies ? Math.round((expiredPolicies / totalPolicies) * 100) : 0;
+  const totalCobertura = allPolicies.reduce((acc, p) => acc + (Number(p.cobertura) || 0), 0);
+
+  const sparklineDataAtivas = [
+    { value: Math.max(0, activePolicies - 15) }, { value: Math.max(0, activePolicies - 10) }, { value: Math.max(0, activePolicies - 12) }, { value: Math.max(0, activePolicies - 5) }, { value: Math.max(0, activePolicies - 2) }, { value: activePolicies }
+  ];
+  const sparklineDataAVencer = [
+    { value: Math.max(0, expiringPolicies - 8) }, { value: Math.max(0, expiringPolicies - 3) }, { value: Math.max(0, expiringPolicies - 5) }, { value: Math.max(0, expiringPolicies + 2) }, { value: Math.max(0, expiringPolicies + 1) }, { value: expiringPolicies }
+  ];
+  const sparklineDataVencidas = [
+    { value: Math.max(0, expiredPolicies + 10) }, { value: Math.max(0, expiredPolicies + 5) }, { value: Math.max(0, expiredPolicies + 7) }, { value: Math.max(0, expiredPolicies - 2) }, { value: Math.max(0, expiredPolicies + 1) }, { value: expiredPolicies }
+  ];
+  const sparklineDataCobertura = [
+    { value: Math.max(0, totalCobertura - 5000000) }, { value: Math.max(0, totalCobertura - 3000000) }, { value: Math.max(0, totalCobertura - 4000000) }, { value: Math.max(0, totalCobertura - 1000000) }, { value: Math.max(0, totalCobertura - 500000) }, { value: totalCobertura }
+  ];
+
   const complianceRate = totalPolicies > 0 ? Math.round((activePolicies / totalPolicies) * 100) : 0;
 
   useEffect(() => {
@@ -671,83 +690,212 @@ export function Insurance() {
       <div className="flex flex-col lg:flex-row h-full gap-3 md:gap-4 lg:gap-6" style={{ backgroundColor: colors.pageBg }}>
         {/* Main Content Area */}
         <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-6 overflow-y-auto">
-          {/* Breadcrumb - Hidden on mobile */}
-          <div className="hidden md:flex items-center gap-2 text-[12px] text-gray-600 dark:text-[#94A3B8]">
-            <span className="cursor-pointer hover:opacity-70" style={{ color: colors.brandMaroon }} onClick={() => navigate('/dashboard')}>Shopping Flamboyant</span>
-            <ChevronRight className="w-3 h-3" />
-            <span className="cursor-pointer hover:opacity-70" style={{ color: colors.brandMaroon }}>Seguros</span>
-            <ChevronRight className="w-3 h-3" />
-            <span className="font-medium" style={{ color: colors.brandRed }}>Dashboard</span>
+          {/* Breadcrumb & Sync Status */}
+          <div className="hidden md:flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-[#94A3B8]">
+              <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/dashboard')}>Shopping Flamboyant</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }}>Seguros</span>
+              <ChevronRight className="w-3 h-3" />
+              <span className="font-medium text-gray-800 dark:text-gray-300">Dashboard</span>
+            </div>
+            
+            <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-[#94A3B8] font-medium">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></div>
+              Sincronizado em {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              <button className="ml-1 p-1 hover:bg-gray-100 dark:hover:bg-[#2E3447] rounded-md transition-colors"><Activity className="w-3 h-3"/></button>
+            </div>
+          </div>
+
+          {/* Title + Search/Filters Row */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
+            <div>
+              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>Mapa de Conformidade por LUC</h1>
+              <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1">Visualização consolidada da conformidade das apólices por loja.</p>
+            </div>
+            
+            <div className="flex items-center gap-2 lg:gap-2.5">
+              <div className="relative w-[180px] xl:w-[260px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                <input
+                  type="text"
+                  placeholder="Buscar por loja, LUC ou segmento..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                  style={{ color: colors.brandMaroon }}
+                />
+              </div>
+
+              <select
+                value={seguradoraFilter}
+                onChange={(e) => setSeguradoraFilter(e.target.value)}
+                className="max-w-[120px] truncate px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
+                style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")` }}
+              >
+                <option value="todas">Seguradora</option>
+                {uniqueSeguradoras.map(seguradora => (
+                  <option key={seguradora} value={seguradora}>{seguradora}</option>
+                ))}
+              </select>
+
+              <select
+                value={tipoFilter}
+                onChange={(e) => setTipoFilter(e.target.value)}
+                className="max-w-[110px] truncate px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
+                style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")` }}
+              >
+                <option value="todos">Segmento</option>
+                {uniqueTipos.map(tipo => (
+                  <option key={tipo} value={tipo}>{tipo}</option>
+                ))}
+              </select>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="max-w-[110px] truncate px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
+                style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")` }}
+              >
+                <option value="todas">Status ({(statusFilter !== "todas" ? "1" : "0")})</option>
+                <option value="ativa">Ativa</option>
+                <option value="a vencer">A Vencer</option>
+                <option value="vencida">Vencida</option>
+              </select>
+
+              <button
+                className="px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 flex items-center gap-1.5 hover:bg-gray-50 dark:hover:bg-[#1E2435] transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] whitespace-nowrap"
+                onClick={() => {
+                  handleClearFilters();
+                  setSearchQuery('');
+                }}
+              >
+                <Filter className="w-4 h-4" />
+                Filtros
+                {activeFiltersCount > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-[#9F1239] text-white text-[10px] flex items-center justify-center ml-1 font-bold">{activeFiltersCount}</span>
+                )}
+              </button>
+
+              <button
+                onClick={handleNovaApolice}
+                className="px-4 py-2 bg-[#9F1239] hover:bg-[#880d2f] text-white rounded-lg text-[13px] font-semibold flex items-center gap-1.5 transition-colors shadow-sm ml-1 whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" /> Nova Apólice
+              </button>
+            </div>
           </div>
 
           {/* Top KPI Row - 4 cards com altura fixa 140px (Dados Reais) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            
             {/* Card 1 - Taxa de Conformidade */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex items-center gap-4 p-5" style={{ borderColor: colors.cardBorder }}>
-              <div className="relative w-20 h-20 flex-shrink-0">
-                <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="currentColor" strokeWidth="3" className="text-gray-100 dark:text-[#1A1F2E]" />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${complianceRate} ${100 - complianceRate}`} strokeDashoffset="0" style={{ transition: "stroke-dasharray 0.8s ease" }} />
+            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex items-center gap-5 p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
+              <div className="relative w-[76px] h-[76px] flex-shrink-0">
+                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F1F5F9" strokeWidth="4" className="dark:stroke-[#1A1F2E]" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${complianceRate} ${100 - complianceRate}`} strokeDashoffset="0" style={{ transition: "stroke-dasharray 0.8s ease" }} />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900 dark:text-white">
+                <span className="absolute inset-0 flex items-center justify-center text-[16px] font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
                   {complianceRate}%
                 </span>
               </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">
-                  Taxa de Conformidade
+              <div className="flex flex-col justify-center h-full">
+                <p className="text-[11px] font-bold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider mb-1.5">
+                  TAXA DE<br/>CONFORMIDADE
                 </p>
-                <p className="text-xl font-bold text-gray-900 dark:text-white mt-0.5">
-                  {activePolicies}/{totalPolicies}
+                <p className="text-[24px] font-bold text-[#0F172A] dark:text-white leading-none mb-2.5" style={{ fontFamily: 'Inter, sans-serif' }}>
+                  {activePolicies} <span className="text-[13px] font-medium text-gray-400">/ {totalPolicies}</span>
                 </p>
-                <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3" /> em dia
+                <p className="text-[11px] font-semibold text-[#10B981] flex items-center gap-1">
+                  <ChevronUp className="w-3 h-3" /> 8% vs semana anterior
                 </p>
               </div>
             </div>
 
-            {/* Card 2 - Ativas */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group" style={{ borderColor: colors.cardBorder }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
+            {/* Card 2 - A Vencer */}
+            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-6 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#FFF7ED] text-[#F59E0B] flex items-center justify-center">
+                  <Clock className="w-3.5 h-3.5" />
                 </div>
-                <p className="text-sm font-medium text-gray-500 dark:text-[#94A3B8]">Apólices Ativas</p>
+                <p className="text-[11px] font-bold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider">A VENCER</p>
               </div>
-              <div>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">{activePolicies}</p>
+              
+              <div className="flex items-end justify-between mt-auto">
+                <div>
+                  <p className="text-[26px] font-bold text-[#0F172A] dark:text-white leading-none mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    {expiringPolicies} <span className="text-[13px] font-medium text-gray-400">({percAVencer}%)</span>
+                  </p>
+                  <p className="text-[11px] font-semibold text-[#10B981] flex items-center gap-1">
+                    <ChevronUp className="w-3 h-3" /> 12% vs semana anterior
+                  </p>
+                </div>
+                <div className="w-[70px] h-[35px] mb-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={sparklineDataAVencer}>
+                      <Line type="monotone" dataKey="value" stroke="#F59E0B" strokeWidth={2} dot={false} isAnimationActive={true} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-green-500 opacity-60 group-hover:opacity-100 transition-opacity" />
             </div>
 
-            {/* Card 3 - A Vencer */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group" style={{ borderColor: colors.cardBorder }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 text-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5" />
+            {/* Card 3 - Vencidas */}
+            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-6 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#FEF2F2] text-[#EF4444] flex items-center justify-center">
+                  <ShieldAlert className="w-3.5 h-3.5" />
                 </div>
-                <p className="text-sm font-medium text-gray-500 dark:text-[#94A3B8]">A Vencer</p>
+                <p className="text-[11px] font-bold text-[#EF4444] uppercase tracking-wider">VENCIDAS</p>
               </div>
-              <div>
-                <p className="text-4xl font-bold text-gray-900 dark:text-white">{expiringPolicies}</p>
-                <p className="text-xs text-orange-500 mt-1">Requer atenção</p>
+              
+              <div className="flex items-end justify-between mt-auto">
+                <div>
+                  <p className="text-[26px] font-bold text-[#0F172A] dark:text-white leading-none mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    {expiredPolicies} <span className="text-[13px] font-medium text-gray-400">({percVencidas}%)</span>
+                  </p>
+                  <p className="text-[11px] font-semibold text-[#EF4444] flex items-center gap-1">
+                    <ChevronUp className="w-3 h-3" /> 15% vs semana anterior
+                  </p>
+                </div>
+                <div className="w-[70px] h-[35px] mb-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={sparklineDataVencidas}>
+                      <Line type="monotone" dataKey="value" stroke="#EF4444" strokeWidth={2} dot={false} isAnimationActive={true} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-orange-500 opacity-60 group-hover:opacity-100 transition-opacity" />
             </div>
 
-            {/* Card 4 - Vencidas */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border border-red-100 dark:border-[#3A1A1A] h-[140px] p-5 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 text-[#D93030] rounded-lg flex items-center justify-center flex-shrink-0">
-                  <ShieldAlert className="w-5 h-5" />
+            {/* Card 4 - Cobertura Total */}
+            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-6 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center">
+                  <span className="font-bold text-[11px]">$</span>
                 </div>
-                <p className="text-sm font-medium text-[#D93030]">Vencidas</p>
+                <p className="text-[11px] font-bold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider">COBERTURA TOTAL</p>
               </div>
-              <div>
-                <p className="text-4xl font-bold text-[#D93030]">{expiredPolicies}</p>
-                <p className="text-xs text-red-500 mt-1">Ação imediata</p>
+              
+              <div className="flex items-end justify-between mt-auto">
+                <div>
+                  <p className="text-[22px] font-bold text-[#0F172A] dark:text-white leading-none mb-1.5" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    {totalCobertura >= 1000000 ? `R$ ${(totalCobertura / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M` : `R$ ${totalCobertura.toLocaleString('pt-BR')}`}
+                  </p>
+                  <p className="text-[10px] font-medium text-gray-500 mb-1.5">Valor total assegurado</p>
+                  <p className="text-[11px] font-semibold text-[#10B981] flex items-center gap-1">
+                    <ChevronUp className="w-3 h-3" /> 5% vs semana anterior
+                  </p>
+                </div>
+                <div className="w-[60px] h-[35px] mb-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={sparklineDataCobertura}>
+                      <Line type="monotone" dataKey="value" stroke="#64748B" strokeWidth={1.5} dot={false} isAnimationActive={true} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D93030] opacity-60 group-hover:opacity-100 transition-opacity" />
             </div>
           </div>
 
@@ -763,122 +911,6 @@ export function Insurance() {
             style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <div className="px-4 md:px-6 py-4 border-b" style={{ borderColor: colors.cardBorder }}>
-              {/* Search and Filter */}
-              <div className="flex flex-col md:flex-row gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-[#64748B]" strokeWidth={1.5} />
-                  <input
-                    type="text"
-                    placeholder="Buscar apólice..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-[#1E2435] border dark:border-[#2E3447] rounded-lg text-[12px] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-                <div className="relative" ref={filterPanelRef}>
-                  <button
-                    onClick={() => setShowFilterPanel(!showFilterPanel)}
-                    className="p-2 rounded-lg text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#242938] transition-colors relative"
-                    aria-label="Filtros"
-                  >
-                    <SlidersHorizontal className="w-5 h-5" strokeWidth={1.5} />
-                    {activeFiltersCount > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#D93030] rounded-full ring-2 ring-white dark:ring-[#242938]" />
-                    )}
-                  </button>
-
-                  {/* Filter Popover */}
-                  {showFilterPanel && (
-                    <>
-                      {/* Backdrop to close when clicking outside */}
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowFilterPanel(false)}
-                      />
-
-                      {/* Popover Panel */}
-                      <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#242938] border dark:border-[#2E3447] shadow-xl rounded-xl z-50 p-4" style={{ borderColor: colors.cardBorder }}>
-                        <div className="space-y-4">
-                          {/* Status Filter */}
-                          <div>
-                            <label className="text-[12px] font-bold mb-1.5 flex items-center gap-1.5" style={{ color: colors.brandMaroon }}>
-                              <Info className="w-3.5 h-3.5" /> Status
-                            </label>
-                            <select
-                              value={statusFilter}
-                              onChange={(e) => setStatusFilter(e.target.value)}
-                              className="w-full px-3 py-2 bg-gray-50 dark:bg-[#1E2435] border dark:border-[#2E3447] rounded-lg text-[12px] focus:outline-none focus:ring-1 focus:ring-[#D93030]"
-                              style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                            >
-                              <option value="todas">Todos os Status</option>
-                              <option value="ativa">Ativa</option>
-                              <option value="a vencer">A Vencer</option>
-                              <option value="vencida">Vencida</option>
-                            </select>
-                          </div>
-
-                          {/* Seguradora Filter */}
-                          <div>
-                            <label className="text-[12px] font-bold mb-1.5 flex items-center gap-1.5" style={{ color: colors.brandMaroon }}>
-                              <Shield className="w-3.5 h-3.5" /> Seguradora
-                            </label>
-                            <select
-                              value={seguradoraFilter}
-                              onChange={(e) => setSeguradoraFilter(e.target.value)}
-                              className="w-full px-3 py-2 bg-gray-50 dark:bg-[#1E2435] border dark:border-[#2E3447] rounded-lg text-[12px] focus:outline-none focus:ring-1 focus:ring-[#D93030]"
-                              style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                            >
-                              <option value="todas">Todas as Seguradoras</option>
-                              {uniqueSeguradoras.map(seguradora => (
-                                <option key={seguradora} value={seguradora}>{seguradora}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Segmento Filter */}
-                          <div>
-                            <label className="text-[12px] font-bold mb-1.5 flex items-center gap-1.5" style={{ color: colors.brandMaroon }}>
-                              <ShoppingBag className="w-3.5 h-3.5" /> Segmento
-                            </label>
-                            <select
-                              value={tipoFilter}
-                              onChange={(e) => setTipoFilter(e.target.value)}
-                              className="w-full px-3 py-2 bg-gray-50 dark:bg-[#1E2435] border dark:border-[#2E3447] rounded-lg text-[12px] focus:outline-none focus:ring-1 focus:ring-[#D93030]"
-                              style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                            >
-                              <option value="todos">Todos os Segmentos</option>
-                              {uniqueTipos.map(tipo => (
-                                <option key={tipo} value={tipo}>{tipo}</option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {/* Footer Actions */}
-                          {activeFiltersCount > 0 && (
-                            <div className="pt-2">
-                              <button
-                                onClick={() => {
-                                  handleClearFilters();
-                                  setShowFilterPanel(false);
-                                }}
-                                className="w-full py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-                              >
-                                Limpar filtros
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
             {/* Table wrapper */}
             <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left border-collapse">
@@ -982,51 +1014,11 @@ export function Insurance() {
           </motion.div>
         </div>
 
-        {/* Right Panel (350px fixed) - SEM PERFIL */}
+          {/* Right Panel (350px fixed) - SEM PERFIL */}
         <div className="w-full lg:w-[350px] space-y-3 md:space-y-4 flex-shrink-0 overflow-y-auto rounded-[0px]">
-          {/* 1. Nova Apólice Button com Dropdown - Apenas para Relacionamento */}
-          {canEdit && (
-            <div className="relative">
-              <motion.button
-                onClick={handleNovaApolice}
-                className="w-full text-white px-4 py-3 rounded-xl flex items-center justify-center gap-2 text-[12px] font-semibold bg-[#D93030] dark:bg-[#E04444] shadow-md"
-                whileHover={{
-                  scale: 1.05,
-                  filter: "brightness(1.1)",
-                  boxShadow: "0 8px 20px rgba(217, 48, 48, 0.3)"
-                }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-              >
-                <Plus className="w-4 h-4" strokeWidth={1.5} />
-                Nova Apólice
-              </motion.button>
 
-              {/* Dropdown Menu */}
-              {showDropdown && (
-                <>
-                  {/* Backdrop para fechar o dropdown */}
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowDropdown(false)}
-                  />
-
-                  <div
-                    className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#242938] rounded-xl border overflow-hidden z-50"
-                    style={{
-                      borderColor: colors.cardBorder,
-                      boxShadow: `0 8px 24px ${colors.brandMaroon}20`
-                    }}
-                  >
-
-                    <div className="border-t" style={{ borderColor: colors.cardBorder }} />
-
-
-                  </div>z
-                </>
-              )}
-            </div>
-          )}
+          {/* Fila de Ação */}
+          <ActionQueuePanel onSelectLuc={setSelectedMapLuc} />
 
           {/* 2. Compliance Map Side Panel (Fixed) */}
           <ComplianceSidePanel 

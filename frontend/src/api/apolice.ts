@@ -26,6 +26,11 @@ export async function listApolices(): Promise<ApoliceListResponse> {
   return data.map(mapToRecord);
 }
 
+export async function getFilaDeAcao(): Promise<ApoliceListResponse> {
+  const data = await request<ApoliceDTO[]>('/fila-de-acao');
+  return data.map(mapToRecord);
+}
+
 export async function createApolice(payload: ApolicePayload): Promise<ApoliceRecord> {
   const data = await request<ApoliceDTO>('/apolices', {
     method: 'POST',

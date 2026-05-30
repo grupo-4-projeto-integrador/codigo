@@ -1,6 +1,8 @@
 package apolice
 
 import (
+	"math"
+	"sort"
 	"strings"
 	"time"
 )
@@ -23,6 +25,58 @@ func (s *Service) List() ([]Apolice, error) {
 		items[i].Status = calculatePolicyStatus(items[i].Vencimento)
 	}
 	return items, nil
+}
+
+func (s *Service) GetFilaDeAcao() ([]Apolice, error) {
+	items, err := s.List()
+	if err != nil {
+		return nil, err
+	}
+
+	// Calcula score de urgência: Valor x Prazo (Risco temporal)
+	// Vencidas ganham risco alto, próximas do vencimento ganham risco moderado.
+	type scoredApolice struct {
+		policy Apolice
+		score  float64
+	}
+
+	scored := make([]scoredApolice, 0, len(items))
+	for _, item := range items {
+		// Pular apólices ativas sem urgência (mais de 90 dias)
+		if item.Status == "Ativa" && item.DiasRestantes > 90 {
+			continue
+		}
+
+		risk := 0.0
+		if item.DiasRestantes < 0 {
+			// Vencida: base 100 + dias de atraso (ex: 105 dias = risco 205)
+			risk = 100.0 + float64(-item.DiasRestantes)
+		} else {
+			// A Vencer ou Ativa (0 a 90 dias): base 100 menos dias restantes (ex: 5 dias = risco 95)
+			risk = math.Max(1.0, 100.0-float64(item.DiasRestantes))
+		}
+
+		score := item.Cobertura * risk
+		scored = append(scored, scoredApolice{policy: item, score: score})
+	}
+
+	// Ordena por score decrescente
+	sort.Slice(scored, func(i, j int) bool {
+		return scored[i].score > scored[j].score
+	})
+
+	// Retorna top 10
+	limit := 10
+	if len(scored) < limit {
+		limit = len(scored)
+	}
+
+	result := make([]Apolice, 0, limit)
+	for i := 0; i < limit; i++ {
+		result = append(result, scored[i].policy)
+	}
+
+	return result, nil
 }
 
 func (s *Service) Get(luc string) (Apolice, error) {

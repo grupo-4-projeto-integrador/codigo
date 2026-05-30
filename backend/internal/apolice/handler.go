@@ -62,6 +62,27 @@ func resolveMapLayoutPath() (string, error) {
 	return filepath.Clean(filepath.Join(baseDir, "..", "..", "pkg", "mapconfig", "map_config.json")), nil
 }
 
+func (h *Handler) FilaDeAcao(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodGet {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	items, err := h.service.GetFilaDeAcao()
+	if err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	responses := make([]Response, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, ToResponse(item))
+	}
+	_ = response.Success(w, http.StatusOK, responses, requestID)
+}
+
 func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 

@@ -624,7 +624,7 @@ export function Layout() {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto scroll-smooth p-4 md:p-6 bg-[#F7F4EF] dark:bg-[#0F1117]">
-          <div className="max-w-7xl mx-auto">
+          <div className="w-full">
             <UserProfileProvider value={{ userProfile, canEdit }}>
               <Outlet />
             </UserProfileProvider>
