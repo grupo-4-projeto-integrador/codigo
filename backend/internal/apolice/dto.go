@@ -22,6 +22,7 @@ type Response struct {
 	Status        string  `json:"status"`
 	Cobertura     float64 `json:"cobertura"`
 	DiasRestantes int     `json:"dias_restantes"`
+	Responsavel   string  `json:"responsavel"`
 }
 
 func ToResponse(model Apolice) Response {
@@ -33,6 +34,7 @@ func ToResponse(model Apolice) Response {
 		Status:        model.Status,
 		Cobertura:     model.Cobertura,
 		DiasRestantes: model.DiasRestantes,
+		Responsavel:   model.Responsavel,
 	}
 
 	if !model.Vigencia.IsZero() {

@@ -96,3 +96,23 @@ export const subscribeSelectedApoliceLuc = (listener: () => void) => {
     selectedApoliceLucListeners.delete(listener);
   };
 };
+
+// ── Map dim filters ──────────────────────────────────────────────────────────
+let filtroSegmento = "";
+let filtroSeguradora = "";
+let filtroStatus = "";
+const mapFilterListeners = new Set<() => void>();
+
+export const getMapFilters = () => ({ filtroSegmento, filtroSeguradora, filtroStatus });
+
+export const setMapFilters = (segmento: string, seguradora: string, status: string) => {
+  filtroSegmento = segmento;
+  filtroSeguradora = seguradora;
+  filtroStatus = status;
+  mapFilterListeners.forEach((l) => l());
+};
+
+export const subscribeMapFilters = (listener: () => void) => {
+  mapFilterListeners.add(listener);
+  return () => mapFilterListeners.delete(listener);
+};

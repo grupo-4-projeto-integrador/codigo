@@ -12,11 +12,11 @@ export default function InsuranceTableHeader({ colors, sortColumn, sortDirection
   return (
     <thead className="bg-[#F7F8FA] dark:bg-[#1A1F2E]">
       <tr>
-        <th className="px-4 py-3 text-left text-[13px] font-bold bg-[#F0F1F3] dark:bg-[#242938]" style={{ color: colors.brandMaroon }}>LUC</th>
+        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>LUC</th>
 
         <th
-          className="px-4 py-3 text-left text-[13px] font-bold cursor-pointer select-none"
-          style={{ color: colors.brandMaroon }}
+          className="px-4 py-3 text-left cursor-pointer select-none"
+          style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}
           onClick={() => onSort('lojista')}
         >
           <div className="flex items-center gap-2">
@@ -32,8 +32,8 @@ export default function InsuranceTableHeader({ colors, sortColumn, sortDirection
         </th>
 
         <th
-          className="px-4 py-3 text-left text-[13px] font-bold cursor-pointer select-none"
-          style={{ color: colors.brandMaroon }}
+          className="px-4 py-3 text-left cursor-pointer select-none"
+          style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}
           onClick={() => onSort('tipo')}
         >
           <div className="flex items-center gap-2">
@@ -49,8 +49,8 @@ export default function InsuranceTableHeader({ colors, sortColumn, sortDirection
         </th>
 
         <th
-          className="px-4 py-3 text-left text-[13px] font-bold cursor-pointer select-none"
-          style={{ color: colors.brandMaroon }}
+          className="px-4 py-3 text-left cursor-pointer select-none"
+          style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}
           onClick={() => onSort('seguradora')}
         >
           <div className="flex items-center gap-2">
@@ -66,8 +66,8 @@ export default function InsuranceTableHeader({ colors, sortColumn, sortDirection
         </th>
 
         <th
-          className="px-4 py-3 text-left text-[13px] font-bold cursor-pointer select-none"
-          style={{ color: colors.brandMaroon }}
+          className="px-4 py-3 text-left cursor-pointer select-none"
+          style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}
           onClick={() => onSort('vigencia')}
         >
           <div className="flex items-center gap-2">
@@ -99,8 +99,8 @@ export default function InsuranceTableHeader({ colors, sortColumn, sortDirection
           </div>
         </th>
 
-        <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon, minWidth: '110px' }}>Status</th>
-        <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Ações</th>
+        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
+        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Ações</th>
       </tr>
     </thead>
   )

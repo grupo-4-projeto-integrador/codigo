@@ -20,12 +20,12 @@ export default function InsuranceList({ policies, colors, isDarkMode, onView, on
     <tbody>
       {policies?.map((policy, index) => (
         <tr key={index} className="border-b h-12 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]" style={{ borderColor: colors.cardBorder }}>
-          <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{policy.luc}</td>
-          <td className="px-4 py-3 text-[12px] font-semibold" style={{ color: colors.brandMaroon }}>{policy.fantasia}</td>
-          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.segmento}</td>
-          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.seguradora}</td>
-          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vigencia}</td>
-          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vencimento}</td>
+          <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.luc}</td>
+          <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.fantasia}</td>
+          <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.segmento}</td>
+          <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.seguradora}</td>
+          <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.vigencia}</td>
+          <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.vencimento}</td>
           <td className="px-4 py-3" style={{ minWidth: '110px' }}>
             <span className="inline-block px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap" style={getStatusBadgeStyle(policy.status, colors)}>
               {policy.status}

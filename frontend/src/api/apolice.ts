@@ -1,23 +1,26 @@
 import type { ApoliceFormData, ApoliceRecord, ApoliceDTO } from '../types/apolice';
 import { request } from './client';
+import { normalizeSegmentName } from '../app/utils/segment';
 
 export type ApoliceListResponse = ApoliceRecord[];
 
 export type ApolicePayload = ApoliceFormData;
 
 function mapToRecord(dto: any): ApoliceRecord {
+  const segmento = normalizeSegmentName(dto.tipo || dto.segmento || "");
   return {
     id: dto.id || dto.luc || "",
     luc: dto.id || dto.luc || "",
     fantasia: dto.lojista || dto.fantasia || "",
-    segmento: dto.tipo || dto.segmento || "",
+    segmento,
     seguradora: dto.seguradora || "",
     vigencia: dto.vigencia || "",
     vencimento: dto.vencimento || "",
     dias_restantes: dto.dias_restantes,
     status: dto.status_da_apolice || dto.status || "",
     lojista: dto.lojista || dto.fantasia || "",
-    tipo: dto.tipo || dto.segmento || "",
+    tipo: segmento,
+    cobertura: dto.cobertura,
   };
 }
 

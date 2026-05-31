@@ -47,7 +47,7 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
         </button>
       </div>
 
-      <div className="flex flex-col">
+      <div className="flex flex-col relative before:content-[''] before:absolute before:left-[48px] before:top-[20px] before:bottom-[20px] before:w-[1px] before:border-l before:border-dashed before:border-[rgba(196,21,31,0.25)]">
         {loading && items.length === 0 ? (
           <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8B1A1A]"></div>
@@ -81,11 +81,11 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
               <button 
                 key={lucStr}
                 onClick={() => onSelectLuc(lucStr)}
-                className={`flex items-start p-3 gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left dark:border-[#2E3447] dark:hover:bg-[#2A3143] ${index === items.length - 1 ? 'border-b-0' : ''}`}
+                className={`group flex items-start p-3 gap-3 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left dark:border-[#2E3447] dark:hover:bg-[#2A3143] ${index === items.length - 1 ? 'border-b-0' : ''}`}
               >
                 <div className="font-bold text-gray-400 dark:text-[#64748B] w-4 text-center mt-0.5">{index + 1}</div>
                 
-                <div className={`mt-0.5 ${isVencida ? 'text-[#D93030]' : 'text-orange-500'}`}>
+                <div className={`mt-0.5 relative z-[1] bg-white group-hover:bg-gray-50 dark:bg-[#242938] dark:group-hover:bg-[#2A3143] ${isVencida ? 'text-[#D93030]' : 'text-orange-500'}`}>
                   <Clock className="w-4 h-4" />
                 </div>
                 

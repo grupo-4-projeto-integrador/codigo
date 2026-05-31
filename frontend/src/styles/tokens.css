@@ -3,10 +3,23 @@
   --color-surface-2: #ffffff;
   --color-text-primary: #1f2937;
   --color-text-secondary: #4b5563;
-  --color-brand: #6e150e;
-  --color-status-ok: #168821;
-  --color-status-warning: #f9e4a0;
-  --color-status-critical: #a0191e;
+  
+  /* Status — paleta Flamboyant */
+  --color-status-ok-bg:   #1c3d32;   /* floresta escuro */
+  --color-status-ok-text: #788033;   /* oliva */
+
+  --color-status-warn-bg:   #2a1f00; /* âmbar queimado */
+  --color-status-warn-text: #f9e4a0; /* ouro claro */
+
+  --color-status-err-bg:   #3e0000;  /* vermelho profundo */
+  --color-status-err-text: #c4151f;  /* vermelho marca */
+
+  /* Cores de Marca */
+  --color-brand:      #c4151f;
+  --color-brand-dark: #a0191e;
+  --color-brand-deep: #6e150e;
+  --color-brand-tan:  #bc9b7c;
+
   --border-width: 0px;
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.06), 0 10px 30px rgba(15, 23, 42, 0.06);
 }

@@ -73,11 +73,14 @@ export function Layout() {
   const currentProfile = profileConfig[userProfile];
 
   useEffect(() => {
-    // Check localStorage for dark mode preference
     const savedMode = localStorage.getItem('darkMode');
     if (savedMode === 'true') {
       setDarkMode(true);
       document.documentElement.classList.add('dark');
+      document.documentElement.dataset.theme = 'dark';
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.dataset.theme = 'light';
     }
   }, []);
 
@@ -136,9 +139,11 @@ export function Layout() {
 
     if (newMode) {
       document.documentElement.classList.add('dark');
+      document.documentElement.dataset.theme = 'dark';
       localStorage.setItem('darkMode', 'true');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.dataset.theme = 'light';
       localStorage.setItem('darkMode', 'false');
     }
   };

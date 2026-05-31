@@ -1,13 +1,36 @@
 import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { ComplianceMapV2, ComplianceSidePanel } from "../components/ComplianceMapV2";
+import { SegmentRiskChart } from "../components/SegmentRiskChart";
 import { ActionQueuePanel } from "../components/ActionQueuePanel";
-import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc } from "../store";
+import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, setMapFilters } from "../store";
+import { formatLargeCurrency } from "../utils/currency";
 import { request } from "../../api/client";
 import { motion, AnimatePresence } from "motion/react";
+import { Tooltip as ShadcnTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu";
+import { IconDownload } from '@tabler/icons-react';
+import { exportToCSV, exportToXLSX } from '../utils/exportUtils';
+type KPIHistoryPoint = {
+  label: string;
+  value: number;
+};
+
+type KPIHistoryResponse = {
+  metric: string;
+  total: number;
+  current: number;
+  weekly_change_percent: number;
+  points: KPIHistoryPoint[];
+};
+
+type CoverageHistoryResponse = {
+  disponivel: number[];
+  pago: number[];
+};
 
 export function Insurance() {
   const navigate = useNavigate();
@@ -151,6 +174,13 @@ export function Insurance() {
   const [allPolicies, setAllPolicies] = useState<any[]>([]);
   const [selectedMapLuc, setSelectedMapLuc] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [conformesHistory, setConformesHistory] = useState<KPIHistoryResponse | null>(null);
+  const [vencidasHistoryData, setVencidasHistoryData] = useState<KPIHistoryResponse | null>(null);
+  const [coverageHistory, setCoverageHistory] = useState<CoverageHistoryResponse | null>(null);
+  const sparklineGradientId = useId().replace(/:/g, "-");
+  const expiringSparklineId = useId().replace(/:/g, "-");
+  const expiredSparklineId = useId().replace(/:/g, "-");
+  const coverageSparklineId = useId().replace(/:/g, "-");
 
   // Derived metrics for KPIs
   const activePolicies = allPolicies.filter((p) => (p.status ?? "").toLowerCase() === "ativa" || (p.status ?? "").toLowerCase() === "conforme").length;
@@ -171,11 +201,72 @@ export function Insurance() {
   const sparklineDataVencidas = [
     { value: Math.max(0, expiredPolicies + 10) }, { value: Math.max(0, expiredPolicies + 5) }, { value: Math.max(0, expiredPolicies + 7) }, { value: Math.max(0, expiredPolicies - 2) }, { value: Math.max(0, expiredPolicies + 1) }, { value: expiredPolicies }
   ];
-  const sparklineDataCobertura = [
-    { value: Math.max(0, totalCobertura - 5000000) }, { value: Math.max(0, totalCobertura - 3000000) }, { value: Math.max(0, totalCobertura - 4000000) }, { value: Math.max(0, totalCobertura - 1000000) }, { value: Math.max(0, totalCobertura - 500000) }, { value: totalCobertura }
-  ];
+  const coverageDisponivelValues = coverageHistory?.disponivel?.length ? coverageHistory.disponivel : Array.from({ length: 8 }, () => totalCobertura);
+  const coveragePagoValues = coverageHistory?.pago?.length ? coverageHistory.pago : Array.from({ length: 8 }, () => 0);
+  const coverageGlobalMax = Math.max(...coverageDisponivelValues, ...coveragePagoValues, 1);
 
-  const complianceRate = totalPolicies > 0 ? Math.round((activePolicies / totalPolicies) * 100) : 0;
+  const buildCoveragePath = (values: number[]) => {
+    const width = 280;
+    const height = 44;
+    const minY = 36;
+    const maxY = 8;
+    const stepX = values.length > 1 ? width / (values.length - 1) : 0;
+
+    const points = values.map((value, index) => {
+      const normalized = value / coverageGlobalMax;
+      const y = minY - normalized * (minY - maxY);
+      return { x: index * stepX, y };
+    });
+
+    const line = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+    const area = `${line} L 280 44 L 0 44 Z`;
+    return { line, area };
+  };
+
+  const { line: coverageDisponivelLine, area: coverageDisponivelArea } = buildCoveragePath(coverageDisponivelValues);
+  const { line: coveragePagoLine, area: coveragePagoArea } = buildCoveragePath(coveragePagoValues);
+  const formattedCoverageTotal = formatLargeCurrency(totalCobertura);
+
+  const conformidadeCount = conformesHistory?.current ?? activePolicies;
+  const conformidadeTotal = conformesHistory?.total ?? 290;
+  const complianceRate = conformidadeTotal > 0 ? (conformidadeCount / conformidadeTotal) * 100 : 0;
+  const weeklyVariation = conformesHistory?.weekly_change_percent ?? 0;
+  const sparklineValues = (conformesHistory?.points?.length)
+    ? conformesHistory.points.map((point) => point.value)
+    : Array.from({ length: 8 }, () => conformidadeCount);
+  const expiringSparklineValues = sparklineDataAVencer.map((point) => point.value);
+  const vencidasHistory = vencidasHistoryData?.points?.length
+    ? vencidasHistoryData.points.map((point) => point.value)
+    : Array.from({ length: 8 }, () => expiredPolicies);
+
+  const buildSparklinePath = (values: number[]) => {
+    if (values.length === 0) {
+      return { line: "", area: "" };
+    }
+
+    const width = 280;
+    const height = 44;
+    const minY = 36;
+    const maxY = 8;
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const range = Math.max(maxValue - minValue, 1);
+    const stepX = values.length > 1 ? width / (values.length - 1) : 0;
+
+    const points = values.map((value, index) => {
+      const normalized = (value - minValue) / range;
+      const y = minY - normalized * (minY - maxY);
+      return { x: index * stepX, y };
+    });
+
+    const line = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+    const area = `${line} L 280 44 L 0 44 Z`;
+    return { line, area };
+  };
+
+  const { line: sparklineLine, area: sparklineArea } = buildSparklinePath(sparklineValues);
+  const { line: expiringLine, area: expiringArea } = buildSparklinePath(expiringSparklineValues);
+  const { line: vencidasLine, area: vencidasArea } = buildSparklinePath(vencidasHistory);
 
   useEffect(() => {
     const fetchPolicies = async () => {
@@ -191,6 +282,85 @@ export function Insurance() {
     };
     fetchPolicies();
   }, []);
+
+  // Sync active filters to the map store so tiles dim accordingly
+  useEffect(() => {
+    setMapFilters(
+      tipoFilter !== 'todos' ? tipoFilter : '',
+      seguradoraFilter !== 'todas' ? seguradoraFilter : '',
+      statusFilter !== 'todas' ? statusFilter.toLowerCase() : ''
+    );
+  }, [tipoFilter, seguradoraFilter, statusFilter]);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchHistory = async () => {
+      try {
+        const data = await request<KPIHistoryResponse>('/kpis/history?metric=conformes&weeks=8');
+        if (active) {
+          setConformesHistory(data);
+        }
+      } catch {
+        if (active) {
+          setConformesHistory(null);
+        }
+      }
+    };
+
+    fetchHistory();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchCoverageHistory = async () => {
+      try {
+        const data = await request<CoverageHistoryResponse>('/kpis/coverage-history?weeks=8');
+        if (active) {
+          setCoverageHistory(data);
+        }
+      } catch {
+        if (active) {
+          setCoverageHistory(null);
+        }
+      }
+    };
+
+    fetchCoverageHistory();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchHistory = async () => {
+      try {
+        const data = await request<KPIHistoryResponse>('/kpis/history?metric=vencidas&weeks=8');
+        if (active) {
+          setVencidasHistoryData(data);
+        }
+      } catch {
+        if (active) {
+          setVencidasHistoryData(null);
+        }
+      }
+    };
+
+    fetchHistory();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -727,55 +897,105 @@ export function Insurance() {
                 />
               </div>
 
-              <select
-                value={seguradoraFilter}
-                onChange={(e) => setSeguradoraFilter(e.target.value)}
-                className="max-w-[120px] truncate px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
-                style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")` }}
-              >
-                <option value="todas">Seguradora</option>
-                {uniqueSeguradoras.map(seguradora => (
-                  <option key={seguradora} value={seguradora}>{seguradora}</option>
-                ))}
-              </select>
-
-              <select
-                value={tipoFilter}
-                onChange={(e) => setTipoFilter(e.target.value)}
-                className="max-w-[110px] truncate px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
-                style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")` }}
-              >
-                <option value="todos">Segmento</option>
-                {uniqueTipos.map(tipo => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-              </select>
-
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="max-w-[110px] truncate px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px]"
-                style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")` }}
-              >
-                <option value="todas">Status ({(statusFilter !== "todas" ? "1" : "0")})</option>
-                <option value="ativa">Ativa</option>
-                <option value="a vencer">A Vencer</option>
-                <option value="vencida">Vencida</option>
-              </select>
-
-              <button
-                className="px-3 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] font-medium text-gray-700 dark:text-gray-200 flex items-center gap-1.5 hover:bg-gray-50 dark:hover:bg-[#1E2435] transition-colors shadow-[0_1px_2px_rgba(0,0,0,0.03)] whitespace-nowrap"
-                onClick={() => {
-                  handleClearFilters();
-                  setSearchQuery('');
-                }}
-              >
-                <Filter className="w-4 h-4" />
-                Filtros
-                {activeFiltersCount > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-[#9F1239] text-white text-[10px] flex items-center justify-center ml-1 font-bold">{activeFiltersCount}</span>
+              <div className="relative flex items-center">
+                <select
+                  value={seguradoraFilter}
+                  onChange={(e) => setSeguradoraFilter(e.target.value)}
+                  className={`max-w-[120px] truncate px-3 py-2 border rounded-lg text-[13px] font-medium focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px] transition-colors ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200'}`}
+                  style={{
+                    backgroundColor: seguradoraFilter !== 'todas' ? 'var(--color-brand)' : undefined,
+                    backgroundImage: seguradoraFilter !== 'todas' ? 'none' : `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`
+                  }}
+                >
+                  <option value="todas" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Seguradora</option>
+                  {uniqueSeguradoras.map(seguradora => (
+                    <option key={seguradora} value={seguradora} className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">{seguradora}</option>
+                  ))}
+                </select>
+                {seguradoraFilter !== 'todas' && (
+                  <button onClick={() => setSeguradoraFilter('todas')} className="absolute right-2 text-white/80 hover:text-white z-10 pointer-events-auto">
+                    <X className="w-4 h-4" />
+                  </button>
                 )}
-              </button>
+              </div>
+
+              <div className="relative flex items-center">
+                <select
+                  value={tipoFilter}
+                  onChange={(e) => setTipoFilter(e.target.value)}
+                  className={`max-w-[110px] truncate px-3 py-2 border rounded-lg text-[13px] font-medium focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px] transition-colors ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200'}`}
+                  style={{
+                    backgroundColor: tipoFilter !== 'todos' ? 'var(--color-brand)' : undefined,
+                    backgroundImage: tipoFilter !== 'todos' ? 'none' : `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`
+                  }}
+                >
+                  <option value="todos" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Segmento</option>
+                  {uniqueTipos.map(tipo => (
+                    <option key={tipo} value={tipo} className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">{tipo}</option>
+                  ))}
+                </select>
+                {tipoFilter !== 'todos' && (
+                  <button onClick={() => setTipoFilter('todos')} className="absolute right-2 text-white/80 hover:text-white z-10 pointer-events-auto">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="relative flex items-center">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`max-w-[110px] truncate px-3 py-2 border rounded-lg text-[13px] font-medium focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px] transition-colors ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200'}`}
+                  style={{
+                    backgroundColor: statusFilter !== 'todas' ? 'var(--color-brand)' : undefined,
+                    backgroundImage: statusFilter !== 'todas' ? 'none' : `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`
+                  }}
+                >
+                  <option value="todas" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Status</option>
+                  <option value="ativa" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Ativa</option>
+                  <option value="a vencer" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">A Vencer</option>
+                  <option value="vencida" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Vencida</option>
+                </select>
+                {statusFilter !== 'todas' && (
+                  <button onClick={() => setStatusFilter('todas')} className="absolute right-2 text-white/80 hover:text-white z-10 pointer-events-auto">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Export Button */}
+              <DropdownMenu>
+                <TooltipProvider>
+                  <ShadcnTooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#242938] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors shadow-sm ml-1">
+                          <IconDownload size={18} stroke={1.5} />
+                        </button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Exportar filtro atual</p>
+                    </TooltipContent>
+                  </ShadcnTooltip>
+                </TooltipProvider>
+                <DropdownMenuContent align="end" className="w-40 z-50">
+                  <DropdownMenuItem onClick={() => {
+                    const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    exportToCSV(sortedPolicies, `apolices-${statusName}-${dateStr}.csv`);
+                  }}>
+                    Baixar CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    exportToXLSX(sortedPolicies, `apolices-${statusName}-${dateStr}.xlsx`);
+                  }}>
+                    Baixar XLSX
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <button
                 onClick={handleNovaApolice}
@@ -790,119 +1010,381 @@ export function Insurance() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
             
             {/* Card 1 - Taxa de Conformidade */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] flex items-center gap-5 p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
-              <div className="relative w-[76px] h-[76px] flex-shrink-0">
-                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F1F5F9" strokeWidth="4" className="dark:stroke-[#1A1F2E]" />
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${complianceRate} ${100 - complianceRate}`} strokeDashoffset="0" style={{ transition: "stroke-dasharray 0.8s ease" }} />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[16px] font-bold text-gray-900 dark:text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  {complianceRate}%
-                </span>
+            <div
+              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              style={{ border: 'none' }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                    TAXA DE CONFORMIDADE
+                  </p>
+
+                  <div className="mt-2 flex items-end gap-1 leading-none">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white">
+                      {conformidadeCount}
+                    </span>
+                    <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
+                      / {conformidadeTotal}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                      apólices conformes
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-[#639922]">
+                      {weeklyVariation >= 0 ? '↑' : '↓'} {Math.abs(weeklyVariation)}% vs semana anterior
+                    </span>
+                  </div>
+                </div>
+
+                <div className="relative h-[44px] w-[44px] flex-shrink-0">
+                  <svg viewBox="0 0 44 44" width="44" height="44" className="block -rotate-90">
+                    <circle cx="22" cy="22" r="17" fill="none" stroke="var(--color-border-tertiary)" strokeWidth="4" />
+                    <circle
+                      cx="22"
+                      cy="22"
+                      r="17"
+                      fill="none"
+                      stroke="#639922"
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeDasharray={`${(complianceRate / 100) * 106.8} ${106.8 - (complianceRate / 100) * 106.8}`}
+                      strokeDashoffset="0"
+                    />
+                  </svg>
+                  <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-[#0F172A] dark:text-white">
+                    {Math.round(complianceRate)}%
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col justify-center h-full">
-                <p className="text-[11px] font-bold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider mb-1.5">
-                  TAXA DE<br/>CONFORMIDADE
-                </p>
-                <p className="text-[24px] font-bold text-[#0F172A] dark:text-white leading-none mb-2.5" style={{ fontFamily: 'Inter, sans-serif' }}>
-                  {activePolicies} <span className="text-[13px] font-medium text-gray-400">/ {totalPolicies}</span>
-                </p>
-                <p className="text-[11px] font-semibold text-[#10B981] flex items-center gap-1">
-                  <ChevronUp className="w-3 h-3" /> 8% vs semana anterior
-                </p>
+
+              <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                Evolução 8 semanas
+              </div>
+
+              <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                <svg
+                  width="100%"
+                  height="44"
+                  viewBox="0 0 280 44"
+                  preserveAspectRatio="none"
+                  className="block overflow-hidden"
+                  aria-label="Evolução de conformidade nas últimas 8 semanas"
+                >
+                  <defs>
+                    <linearGradient id={`kpi-history-gradient-${sparklineGradientId}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#639922" stopOpacity="0.18" />
+                      <stop offset="100%" stopColor="#639922" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+
+                  {sparklineArea && <path d={sparklineArea} fill={`url(#kpi-history-gradient-${sparklineGradientId})`} />}
+
+                  {sparklineLine && (
+                    <path
+                      d={sparklineLine}
+                      fill="none"
+                      stroke="#639922"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+                </svg>
               </div>
             </div>
 
             {/* Card 2 - A Vencer */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-6 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#FFF7ED] text-[#F59E0B] flex items-center justify-center">
-                  <Clock className="w-3.5 h-3.5" />
+            <div
+              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              style={{ border: 'none' }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                    A VENCER
+                  </p>
+
+                  <div className="mt-2 flex items-end gap-1 leading-none">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#BA7517]">
+                      {expiringPolicies}
+                    </span>
+                    <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
+                      apólices
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                      nos próximos 30 dias
+                    </span>
+                    <span className="text-[11px] font-medium text-[#BA7517]">
+                      {percAVencer}% do total
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[11px] font-bold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider">A VENCER</p>
+
+                <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#BA7517]">
+                  <Clock className="h-[15px] w-[15px]" />
+                </div>
               </div>
-              
-              <div className="flex items-end justify-between mt-auto">
-                <div>
-                  <p className="text-[26px] font-bold text-[#0F172A] dark:text-white leading-none mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    {expiringPolicies} <span className="text-[13px] font-medium text-gray-400">({percAVencer}%)</span>
-                  </p>
-                  <p className="text-[11px] font-semibold text-[#10B981] flex items-center gap-1">
-                    <ChevronUp className="w-3 h-3" /> 12% vs semana anterior
-                  </p>
-                </div>
-                <div className="w-[70px] h-[35px] mb-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sparklineDataAVencer}>
-                      <Line type="monotone" dataKey="value" stroke="#F59E0B" strokeWidth={2} dot={false} isAnimationActive={true} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+
+              <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                Vencimentos por semana
+              </div>
+
+              <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                <svg
+                  width="100%"
+                  height="44"
+                  viewBox="0 0 280 44"
+                  preserveAspectRatio="none"
+                  className="block overflow-hidden"
+                  aria-label="Vencimentos por semana"
+                >
+                  <defs>
+                    <linearGradient id={`expiring-history-gradient-${expiringSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#BA7517" stopOpacity="0.20" />
+                      <stop offset="100%" stopColor="#BA7517" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+
+                  {expiringArea && <path d={expiringArea} fill={`url(#expiring-history-gradient-${expiringSparklineId})`} />}
+
+                  {expiringLine && (
+                    <>
+                      <path
+                        d={expiringLine}
+                        fill="none"
+                        stroke="#BA7517"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="280" cy={(() => {
+                        const values = expiringSparklineValues;
+                        const minY = 36;
+                        const maxY = 8;
+                        const minValue = Math.min(...values);
+                        const maxValue = Math.max(...values);
+                        const range = Math.max(maxValue - minValue, 1);
+                        const normalized = (values[values.length - 1] - minValue) / range;
+                        return minY - normalized * (minY - maxY);
+                      })()} r="2.5" fill="#BA7517" />
+                    </>
+                  )}
+                </svg>
               </div>
             </div>
 
             {/* Card 3 - Vencidas */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-6 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#FEF2F2] text-[#EF4444] flex items-center justify-center">
-                  <ShieldAlert className="w-3.5 h-3.5" />
+            <div
+              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              style={{ border: 'none' }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                    VENCIDAS
+                  </p>
+
+                  <div className="mt-2 flex items-end gap-1 leading-none">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#A32D2D]">
+                      {expiredPolicies}
+                    </span>
+                    <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
+                      apólices
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                      requerem ação imediata
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-[#A32D2D]">
+                      ↑ {percVencidas}% do total
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[11px] font-bold text-[#EF4444] uppercase tracking-wider">VENCIDAS</p>
+
+                <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#A32D2D]">
+                  <AlertCircle className="h-[15px] w-[15px]" />
+                </div>
               </div>
-              
-              <div className="flex items-end justify-between mt-auto">
-                <div>
-                  <p className="text-[26px] font-bold text-[#0F172A] dark:text-white leading-none mb-2" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    {expiredPolicies} <span className="text-[13px] font-medium text-gray-400">({percVencidas}%)</span>
-                  </p>
-                  <p className="text-[11px] font-semibold text-[#EF4444] flex items-center gap-1">
-                    <ChevronUp className="w-3 h-3" /> 15% vs semana anterior
-                  </p>
-                </div>
-                <div className="w-[70px] h-[35px] mb-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sparklineDataVencidas}>
-                      <Line type="monotone" dataKey="value" stroke="#EF4444" strokeWidth={2} dot={false} isAnimationActive={true} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+
+              <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                Acumulado 8 semanas
+              </div>
+
+              <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                <svg
+                  width="100%"
+                  height="44"
+                  viewBox="0 0 280 44"
+                  preserveAspectRatio="none"
+                  className="block overflow-hidden"
+                  aria-label="Acumulado de vencidas nas últimas 8 semanas"
+                >
+                  <defs>
+                    <linearGradient id={`expired-history-gradient-${expiredSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.22" />
+                      <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+
+                  {vencidasArea && <path d={vencidasArea} fill={`url(#expired-history-gradient-${expiredSparklineId})`} />}
+
+                  {vencidasLine && (
+                    <>
+                      <path
+                        d={vencidasLine}
+                        fill="none"
+                        stroke="#A32D2D"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle
+                        cx="280"
+                        cy={(() => {
+                          const values = vencidasHistory;
+                          const minY = 36;
+                          const maxY = 8;
+                          const minValue = Math.min(...values);
+                          const maxValue = Math.max(...values);
+                          const range = Math.max(maxValue - minValue, 1);
+                          const normalized = (values[values.length - 1] - minValue) / range;
+                          return minY - normalized * (minY - maxY);
+                        })()}
+                        r="2.5"
+                        fill="#A32D2D"
+                      />
+                    </>
+                  )}
+                </svg>
               </div>
             </div>
 
             {/* Card 4 - Cobertura Total */}
-            <div className="bg-white dark:bg-[#242938] rounded-xl border h-[140px] p-6 flex flex-col justify-between shadow-[0_2px_10px_rgba(0,0,0,0.02)]" style={{ borderColor: '#F1F5F9' }}>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center">
-                  <span className="font-bold text-[11px]">$</span>
+            <div
+              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              style={{ border: 'none' }}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                    COBERTURA TOTAL
+                  </p>
+
+                  <div className="mt-2 flex items-end gap-1 leading-none">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white">
+                      {formattedCoverageTotal.value}
+                    </span>
+                    {formattedCoverageTotal.suffix && (
+                      <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
+                        {formattedCoverageTotal.suffix}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                      valor total assegurado
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-[#639922]">
+                      <ChevronUp className="w-3 h-3" /> {Math.abs(Math.round(((coverageDisponivelValues[coverageDisponivelValues.length - 1] ?? totalCobertura) - (coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura)) / Math.max(coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura, 1) * 100))}% vs semana anterior
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[11px] font-bold text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider">COBERTURA TOTAL</p>
+
+                <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#94A3B8]">
+                  <ShieldCheck className="h-[15px] w-[15px]" />
+                </div>
               </div>
-              
-              <div className="flex items-end justify-between mt-auto">
-                <div>
-                  <p className="text-[22px] font-bold text-[#0F172A] dark:text-white leading-none mb-1.5" style={{ fontFamily: 'Inter, sans-serif' }}>
-                    {totalCobertura >= 1000000 ? `R$ ${(totalCobertura / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M` : `R$ ${totalCobertura.toLocaleString('pt-BR')}`}
-                  </p>
-                  <p className="text-[10px] font-medium text-gray-500 mb-1.5">Valor total assegurado</p>
-                  <p className="text-[11px] font-semibold text-[#10B981] flex items-center gap-1">
-                    <ChevronUp className="w-3 h-3" /> 5% vs semana anterior
-                  </p>
-                </div>
-                <div className="w-[60px] h-[35px] mb-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sparklineDataCobertura}>
-                      <Line type="monotone" dataKey="value" stroke="#64748B" strokeWidth={1.5} dot={false} isAnimationActive={true} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+
+              <div className="mt-3 flex items-center gap-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                <span>Cobertura disponível vs. sinistros</span>
+                <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
+                  <span className="inline-block h-2 w-2 rounded-full bg-[#639922]" />
+                  <span>Disponível</span>
+                </span>
+                <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
+                  <span className="inline-block h-2 w-2 rounded-full border-2 border-dashed border-[#A32D2D]" />
+                  <span>Sinistros pagos</span>
+                </span>
+              </div>
+
+              <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                <svg
+                  width="100%"
+                  height="44"
+                  viewBox="0 0 280 44"
+                  preserveAspectRatio="none"
+                  className="block overflow-hidden"
+                  aria-label="Cobertura disponível versus sinistros pagos nas últimas 8 semanas"
+                >
+                  <defs>
+                    <linearGradient id={`coverage-available-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#1c3d32" stopOpacity="0.35" />
+                      <stop offset="100%" stopColor="#1c3d32" stopOpacity="0" />
+                    </linearGradient>
+                    <linearGradient id={`coverage-paid-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.20" />
+                      <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+
+                  {coverageDisponivelArea && <path d={coverageDisponivelArea} fill={`url(#coverage-available-gradient-${coverageSparklineId})`} />}
+                  {coveragePagoArea && <path d={coveragePagoArea} fill={`url(#coverage-paid-gradient-${coverageSparklineId})`} />}
+
+                  {coverageDisponivelLine && (
+                    <path
+                      d={coverageDisponivelLine}
+                      fill="none"
+                      stroke="#639922"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+
+                  {coveragePagoLine && (
+                    <path
+                      d={coveragePagoLine}
+                      fill="none"
+                      stroke="#A32D2D"
+                      strokeWidth="1.5"
+                      strokeDasharray="4 3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+                </svg>
               </div>
             </div>
           </div>
 
-          <ComplianceMapV2 
-            selectedLuc={selectedMapLuc}
-            onSelectLuc={setSelectedMapLuc}
-          />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "60fr 40fr",
+              gap: "16px",
+            }}
+          >
+            <div style={{ minHeight: 0 }}>
+              <ComplianceMapV2
+                selectedLuc={selectedMapLuc}
+                onSelectLuc={setSelectedMapLuc}
+              />
+            </div>
+            <div style={{ position: 'relative', minHeight: 0 }}>
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <SegmentRiskChart />
+              </div>
+            </div>
+          </div>
 
           {/* Data Table */}
           <motion.div
@@ -916,16 +1398,16 @@ export function Insurance() {
               <table className="w-full min-w-[800px] text-left border-collapse">
                 <thead className="bg-[#F7F8FA] dark:bg-[#1A1F2E]">
                   <tr>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>LUC</th>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Loja</th>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Segmento</th>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Seguradora</th>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Vigência</th>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Vencimento</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>LUC</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
 
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon, minWidth: '110px' }}>Status</th>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Cobertura</th>
-                    <th className="px-4 py-3 text-left text-[13px] font-bold" style={{ color: colors.brandMaroon }}>Dias rest.</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
+                    <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -940,17 +1422,17 @@ export function Insurance() {
                           className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
                           style={{ borderColor: colors.cardBorder }}
                         >
-                          <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{policy.id}</td>
-                          <td className="px-4 py-3 text-[12px] font-semibold" style={{ color: colors.brandMaroon }}>{policy.lojista}</td>
-                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.tipo}</td>
-                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.seguradora}</td>
-                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vigencia}</td>
-                          <td className="px-4 py-3 text-[12px]" style={{ color: colors.brandMaroon }}>{policy.vencimento}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.id}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.lojista}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.tipo}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.seguradora}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.vigencia}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.vencimento}</td>
                           <td className="px-4 py-3" style={{ minWidth: '110px' }}>
                             {renderStatusBadge(policy.status)}
                           </td>
-                          <td className="px-4 py-3 text-[12px] font-medium" style={{ color: colors.brandMaroon }}>{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
-                          <td className="px-4 py-3 text-[12px] font-bold" style={{ color: getDiasRestantesColor(policy.dias_restantes) }}>{policy.dias_restantes}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.dias_restantes}</td>
                         </tr>
                       ))
                   }

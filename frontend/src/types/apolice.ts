@@ -23,9 +23,11 @@ export type ApoliceRecord = ApoliceFormData & {
   lojista: string;
   tipo: string;
   status: string;
+  dias_restantes?: number;
   cobertura?: string;
   premio?: string;
   observacoes?: string;
+  responsavel?: string;
 };
 
 export type Gravidade = 'alta' | 'media' | 'baixa';

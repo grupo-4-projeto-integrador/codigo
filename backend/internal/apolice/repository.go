@@ -25,7 +25,7 @@ func NewRepository(db *sql.DB) *PostgresRepository {
 }
 
 func (r *PostgresRepository) List() ([]Apolice, error) {
-	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura FROM %s ORDER BY luc`, tableName))
+	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, '') FROM %s ORDER BY luc`, tableName))
 	if err != nil {
 		return nil, err
 	}
@@ -44,15 +44,15 @@ func (r *PostgresRepository) List() ([]Apolice, error) {
 }
 
 func (r *PostgresRepository) Get(luc string) (Apolice, error) {
-	row := r.db.QueryRow(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura FROM %s WHERE luc = $1`, tableName), luc)
+	row := r.db.QueryRow(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, '') FROM %s WHERE luc = $1`, tableName), luc)
 	return scanApolice(row)
 }
 
 func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 	row := r.db.QueryRow(
-		fmt.Sprintf(`INSERT INTO %s (luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura`, tableName),
+		fmt.Sprintf(`INSERT INTO %s (luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, responsavel)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, '')`, tableName),
 		model.Luc,
 		model.Loja,
 		model.Segmento,
@@ -61,6 +61,7 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 		model.Vencimento,
 		model.Status,
 		model.Cobertura,
+		model.Responsavel,
 	)
 
 	return scanApolice(row)
@@ -69,9 +70,9 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) {
 	row := r.db.QueryRow(
 		fmt.Sprintf(`UPDATE %s
-		 SET luc = $1, loja = $2, segmento = $3, seguradora = $4, vigencia = $5, vencimento = $6, status = $7, cobertura = $8
-		 WHERE luc = $9
-		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura`, tableName),
+		 SET luc = $1, loja = $2, segmento = $3, seguradora = $4, vigencia = $5, vencimento = $6, status = $7, cobertura = $8, responsavel = $9
+		 WHERE luc = $10
+		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, '')`, tableName),
 		model.Luc,
 		model.Loja,
 		model.Segmento,
@@ -80,6 +81,7 @@ func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) 
 		model.Vencimento,
 		model.Status,
 		model.Cobertura,
+		model.Responsavel,
 		luc,
 	)
 
@@ -112,8 +114,9 @@ func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {
 	var seguradora sql.NullString
 	var status sql.NullString
 	var cobertura sql.NullFloat64
+	var responsavel sql.NullString
 
-	if err := scanner.Scan(&item.Luc, &loja, &segmento, &seguradora, &vigencia, &vencimento, &status, &cobertura); err != nil {
+	if err := scanner.Scan(&item.Luc, &loja, &segmento, &seguradora, &vigencia, &vencimento, &status, &cobertura, &responsavel); err != nil {
 		return Apolice{}, err
 	}
 
@@ -124,6 +127,7 @@ func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {
 	item.Vencimento = vencimento.Time
 	item.Status = strings.TrimSpace(status.String)
 	item.Cobertura = cobertura.Float64
+	item.Responsavel = strings.TrimSpace(responsavel.String)
 
 	return item, nil
 }
