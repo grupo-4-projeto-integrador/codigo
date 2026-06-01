@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS historico_apolice (
     ator VARCHAR(100) NOT NULL
 );
 
+TRUNCATE TABLE coberturas, historico_apolice RESTART IDENTITY;
+
 -- Inserir alguns dados para as coberturas
 INSERT INTO coberturas (apolice_luc, nome, descricao, valor)
 SELECT luc, 'Incêndio, Raio e Explosão', 'Cobertura básica para danos físicos', cobertura * 1.0 FROM seguros;

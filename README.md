@@ -6,66 +6,53 @@ Projeto de Seguros com backend em Go e frontend em React/Vite.
 
 - `backend/`: API em Go, migrations e utilitário de importação de seed.
 - `frontend/`: frontend React/Vite (pnpm).
-- `legacy/`: módulo Go legado; hoje o fluxo principal usa `backend/`.
-- `legacy/seguros.sql`: dump com dados para seed local e no CI.
+- `backend/seguros.sql`: dump base com as apólices reais para seed local e no CI.
+- `backend/seed_apolices.sql`: script complementar que popula `coberturas` e `historico_apolice`.
 - `database/`: scripts SQL legados e referências históricas.
 
 ## Como rodar do zero
 
-### 1. Pré-requisitos
+### Pré-requisitos
 
 - Go 1.26+.
 - Node.js 18+.
 - PostgreSQL 15+.
 
-### 2. Preparar o banco
+### Passo a passo mais simples
 
-As instruções completas de migration estão em [backend/MIGRATIONS_README.md](backend/MIGRATIONS_README.md).
+1. Inicie o PostgreSQL e crie o banco.
 
-No mínimo, você precisa criar o banco `seguros` e aplicar a migration inicial.
+```powershell
+createdb -U postgres seguros
+```
 
-### 3. Configurar variáveis de ambiente
-
-O backend não usa credenciais hard-coded. Defina as variáveis antes de iniciar a API.
-
-PowerShell:
+1. Aplique a migration inicial.
 
 ```powershell
 Set-Location backend
-$env:PG_HOST = 'localhost'
-$env:PG_PORT = '5432'
-$env:PG_USER = 'postgres'
-$env:PG_PASSWORD = 'sua_senha'
-$env:PG_DBNAME = 'seguros'
-$env:PG_SSLMODE = 'disable'
+psql -U postgres -d seguros -f migrations/initial_schema.sql
 ```
 
-Linux / macOS:
+1. Configure as variáveis de ambiente do backend.
 
-```bash
-cd backend
-export PG_HOST=localhost
-export PG_PORT=5432
-export PG_USER=postgres
-export PG_PASSWORD=sua_senha
-export PG_DBNAME=seguros
-export PG_SSLMODE=disable
+Crie um arquivo `.env` na pasta `backend/` com o seguinte conteúdo (ajuste a senha se necessário):
+
+```env
+PG_HOST=localhost
+PG_PORT=5432
+PG_USER=postgres
+PG_PASSWORD=sua_senha
+PG_DBNAME=postgres
+PG_SSLMODE=disable
 ```
 
-### 4. Iniciar o backend
+1. Suba o backend.
 
 ```powershell
-Set-Location backend
 go run ./cmd/api
 ```
 
-O servidor sobe em `http://localhost:8082` por padrão.
-
-Se você abrir `http://localhost:8082`, verá uma página simples de status do backend. Para checar a API de forma objetiva, use `http://localhost:8082/api/health`.
-
-> **Dica:** O backend expõe apenas ` /api/* `. Rotas como `/seguros` e `/dashboard` são do frontend.
-
-### 5. Iniciar o frontend
+1. Em outro terminal, instale dependências e suba o frontend.
 
 ```powershell
 Set-Location frontend
@@ -73,11 +60,13 @@ corepack pnpm install
 corepack pnpm dev
 ```
 
-O frontend de desenvolvimento roda em `http://localhost:5173`.
+Se quiser tudo junto sem configurar manualmente, use Docker:
 
-Se quiser abrir a interface pelo endereço simples `http://localhost`, use o Docker Compose, que sobe o Nginx na porta 80 e encaminha `/api/*` para o backend.
+```powershell
+docker-compose up --build -d
+```
 
-### 6. Build e testes
+### Build e testes
 
 Backend:
 
@@ -95,47 +84,17 @@ corepack pnpm test
 corepack pnpm build
 ```
 
-## Como rodar o projeto via Docker (Recomendado)
+## Docker
 
-A maneira mais simples, rápida e padronizada de rodar o sistema inteiro (seja no PC da faculdade, no trabalho ou em casa) é usando o Docker Compose.
+Subir tudo de uma vez:
 
-Siga este passo a passo:
-
-### 1. Clonar o Repositório
-
-```bash
-git clone <URL_DO_SEU_REPOSITORIO>
-cd <NOME_DA_PASTA>
-```
-
-*(Se você já tem os arquivos baixados, apenas certifique-se de estar dentro da pasta raiz)*
-
-### 2. Subir o ambiente completo
-
-Esse comando fará o download das imagens necessárias (Node, Go, Postgres) e executará o build simultâneo do Backend e Frontend:
-
-```bash
+```powershell
 docker-compose up --build -d
 ```
 
-*(A flag `-d` deixa rodando em segundo plano. Se quiser ver os logs em tempo real, basta tirar o `-d`)*
+Encerrar o ambiente:
 
-### 3. Acessar a aplicação
-
-O Docker cuidará de todo o roteamento. Basta abrir o seu navegador em:
-
-- **Frontend / Aplicação Completa**: [http://localhost](http://localhost) (Nginx na porta 80).
-
-> **Atenção (Rotas Frontend vs Backend):** Se você tentar acessar `http://localhost/seguros` ou `http://localhost:8082/seguros`, ainda pode ver 404. Isso é esperado: `/seguros` e `/dashboard` pertencem ao frontend (SPA). O backend em Go serve a API em `/api/*` e também uma página simples em `/` para confirmar que ele iniciou.
-> Para testar o backend independentemente do frontend, use **`http://localhost:8082/api/health`**.
-
-A API do backend estará rodando internamente na porta **8082** e o banco de dados Postgres na porta **5432**, todos interligados automaticamente. O frontend também direcionará todas as rotas `/api/*` para o backend sem necessidade de configuração adicional.
-
-### 4. Parar e desligar tudo
-
-Quando terminar o trabalho, para encerrar e remover os contêineres graciosamente, execute:
-
-```bash
+```powershell
 docker-compose down
 ```
 
@@ -146,7 +105,7 @@ docker-compose down
 O workflow está em [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 - O job de integração usa o secret `POSTGRES_PASSWORD`.
-- O passo de migrations roda com seed via `go run ./cmd/migrate -seed`.
+- O passo de migrations roda com seed via `go run ./cmd/migrate -seed`, que importa o dump base `seguros.sql` e depois gera `coberturas` e `historico_apolice`.
 
 ## Atalhos de desenvolvimento
 

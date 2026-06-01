@@ -1,16 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
-import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw } from "lucide-react";
 import { motion } from "motion/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getMapFilters, subscribeMapFilters } from "../store";
+import { useNavigate } from "react-router";
 
 type MapLayoutItem = {
   luc: string;
   floor: number;
   position: number;
+};
+
+type ActivityRecentItem = {
+  id: string;
+  luc: string;
+  nome_loja: string;
+  acao: string;
+  responsavel: string;
+  timestamp: string;
 };
 
 // Colors based on user requirements
@@ -63,6 +75,7 @@ export interface ComplianceMapV2Props {
 }
 
 export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Props) {
+  const navigate = useNavigate();
   const [apolices, setApolices] = useState<ApoliceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -332,7 +345,9 @@ export interface ComplianceSidePanelProps {
 }
 
 export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEditApolice }: ComplianceSidePanelProps) {
+  const navigate = useNavigate();
   const [apolices, setApolices] = useState<ApoliceRecord[]>([]);
+  const [recentActivities, setRecentActivities] = useState<ActivityRecentItem[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -340,6 +355,29 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
       if (active) setApolices(policyList);
     }).catch(console.error);
     return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadRecentActivities = async () => {
+      try {
+        const data = await request<ActivityRecentItem[]>('/apolices/atividade-recente?limit=5');
+        if (active) {
+          setRecentActivities(data);
+        }
+      } catch {
+        if (active) {
+          setRecentActivities([]);
+        }
+      }
+    };
+
+    loadRecentActivities();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (!selectedLuc) {
@@ -591,6 +629,54 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
                   ) : (
                     <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Não atribuído</p>
                   )}
+
+                  <div style={{ borderTop: '0.5px solid var(--color-border-tertiary)', margin: '14px 0' }} />
+                  <p style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '10px' }}>
+                    ATIVIDADE RECENTE
+                  </p>
+                  <div className="recent-activity-list" style={{ position: 'relative', paddingLeft: '40px' }}>
+                    <style>{`\n                      .recent-activity-list::before {\n                        content: '';\n                        position: absolute;\n                        left: 19px;\n                        top: 20px;\n                        bottom: 20px;\n                        border-left: 1.5px dashed rgba(188,155,124,0.15);\n                        pointer-events: none;\n                      }\n                    `}</style>
+
+                    {recentActivities.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {recentActivities.map((item) => {
+                          const Icon = item.acao === 'criada' ? FilePlus2 : item.acao === 'editada' ? PencilLine : RefreshCw;
+                          const relativeTime = formatDistanceToNow(new Date(item.timestamp), { locale: ptBR, addSuffix: true });
+
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => navigate(`/seguros/apolice/${encodeURIComponent(item.id)}`)}
+                              type="button"
+                              className="w-full text-left"
+                              style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: '10px', padding: 0 }}
+                            >
+                              <div style={{ position: 'absolute', left: '-22px', top: '1px', zIndex: 1, color: 'rgba(188,155,124,0.5)' }}>
+                                <Icon size={12} strokeWidth={2} />
+                              </div>
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                                  <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-primary)', flexShrink: 0 }}>
+                                    {item.luc}
+                                  </span>
+                                  <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                                    {item.nome_loja}
+                                  </span>
+                                </div>
+                                <div style={{ marginTop: '2px', fontSize: '10px', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                  <span>{item.responsavel}</span>
+                                  <span>•</span>
+                                  <span>{relativeTime}</span>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Nenhuma atividade recente encontrada.</p>
+                    )}
+                  </div>
                 </div>
               );
             })()}

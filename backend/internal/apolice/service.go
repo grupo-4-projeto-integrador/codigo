@@ -119,6 +119,14 @@ func (s *Service) GetHistorico(luc string) ([]HistoricoApolice, error) {
 	return s.repo.GetHistorico(luc)
 }
 
+func (s *Service) GetHistoricoGlobal(limit int) ([]HistoricoApolice, error) {
+	return s.repo.GetHistoricoGlobal(limit)
+}
+
+func (s *Service) GetAtividadesRecentes(limit int) ([]AtividadeRecente, error) {
+	return s.repo.GetAtividadesRecentes(limit)
+}
+
 func (s *Service) UpdateObservacoes(luc string, observacoes string) error {
 	return s.repo.UpdateObservacoes(luc, observacoes)
 }

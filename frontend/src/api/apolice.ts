@@ -1,4 +1,4 @@
-﻿import type { ApoliceFormData, ApoliceRecord, ApoliceDTO } from '../types/apolice';
+import type { ApoliceFormData, ApoliceRecord, ApoliceDTO } from '../types/apolice';
 import { request } from './client';
 import { normalizeSegmentName } from '../app/utils/segment';
 
@@ -88,3 +88,8 @@ export async function renovarApolice(luc: string, payload: { nova_vigencia: stri
     body: JSON.stringify(payload),
   });
 }
+
+export async function getAtividadesRecentes(limit: number = 10): Promise<any[]> {
+  return request<any[]>(`/atividades?limit=${limit}`);
+}
+

@@ -17,9 +17,20 @@ type Repository interface {
 	Delete(luc string) error
 	GetCoberturas(luc string) ([]Cobertura, error)
 	GetHistorico(luc string) ([]HistoricoApolice, error)
+	GetHistoricoGlobal(limit int) ([]HistoricoApolice, error)
+	GetAtividadesRecentes(limit int) ([]AtividadeRecente, error)
 	UpdateObservacoes(luc string, observacoes string) error
 	Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error
 	GetLojas() ([]LojaInfo, error)
+}
+
+type AtividadeRecente struct {
+	ID          string    `json:"id"`
+	Luc         string    `json:"luc"`
+	NomeLoja    string    `json:"nome_loja"`
+	Acao        string    `json:"acao"`
+	Responsavel string    `json:"responsavel"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 type PostgresRepository struct {
@@ -55,7 +66,13 @@ func (r *PostgresRepository) Get(luc string) (Apolice, error) {
 }
 
 func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
-	row := r.db.QueryRow(
+	tx, err := r.db.Begin()
+	if err != nil {
+		return Apolice{}, err
+	}
+	defer tx.Rollback()
+
+	row := tx.QueryRow(
 		fmt.Sprintf(`INSERT INTO %s (luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, responsavel, observacoes)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, '')`, tableName),
@@ -71,11 +88,30 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 		model.Observacoes,
 	)
 
-	return scanApolice(row)
+	created, err := scanApolice(row)
+	if err != nil {
+		return Apolice{}, err
+	}
+
+	if err := r.insertHistoricoTx(tx, model.Luc, "Apólice criada", "Sistema"); err != nil {
+		return Apolice{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return Apolice{}, err
+	}
+
+	return created, nil
 }
 
 func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) {
-	row := r.db.QueryRow(
+	tx, err := r.db.Begin()
+	if err != nil {
+		return Apolice{}, err
+	}
+	defer tx.Rollback()
+
+	row := tx.QueryRow(
 		fmt.Sprintf(`UPDATE %s
 		 SET luc = $1, loja = $2, segmento = $3, seguradora = $4, vigencia = $5, vencimento = $6, status = $7, cobertura = $8, responsavel = $9, observacoes = $10
 		 WHERE luc = $11
@@ -93,11 +129,30 @@ func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) 
 		luc,
 	)
 
-	return scanApolice(row)
+	updated, err := scanApolice(row)
+	if err != nil {
+		return Apolice{}, err
+	}
+
+	if err := r.insertHistoricoTx(tx, updated.Luc, "Apólice atualizada", "Sistema"); err != nil {
+		return Apolice{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return Apolice{}, err
+	}
+
+	return updated, nil
 }
 
 func (r *PostgresRepository) Delete(luc string) error {
-	res, err := r.db.Exec(fmt.Sprintf(`UPDATE %s SET deleted_at = CURRENT_TIMESTAMP WHERE luc = $1 AND deleted_at IS NULL`, tableName), luc)
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(fmt.Sprintf(`UPDATE %s SET deleted_at = CURRENT_TIMESTAMP WHERE luc = $1 AND deleted_at IS NULL`, tableName), luc)
 	if err != nil {
 		return err
 	}
@@ -110,7 +165,11 @@ func (r *PostgresRepository) Delete(luc string) error {
 		return ErrNotFound
 	}
 
-	return nil
+	if err := r.insertHistoricoTx(tx, luc, "Apólice excluída", "Sistema"); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (r *PostgresRepository) GetCoberturas(luc string) ([]Cobertura, error) {
@@ -151,8 +210,82 @@ func (r *PostgresRepository) GetHistorico(luc string) ([]HistoricoApolice, error
 	return items, nil
 }
 
+func (r *PostgresRepository) GetHistoricoGlobal(limit int) ([]HistoricoApolice, error) {
+	if limit < 1 {
+		limit = 10
+	}
+
+	rows, err := r.db.Query(`SELECT id, apolice_luc, data, descricao, ator FROM historico_apolice ORDER BY data DESC LIMIT $1`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]HistoricoApolice, 0, limit)
+	for rows.Next() {
+		var item HistoricoApolice
+		if err := rows.Scan(&item.ID, &item.ApoliceLuc, &item.Data, &item.Descricao, &item.Ator); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+func (r *PostgresRepository) GetAtividadesRecentes(limit int) ([]AtividadeRecente, error) {
+	if limit < 1 {
+		limit = 5
+	}
+
+	query := `
+		SELECT
+			h.id,
+			h.apolice_luc,
+			COALESCE(s.loja, h.apolice_luc) AS nome_loja,
+			CASE
+				WHEN lower(h.descricao) LIKE '%criada%' THEN 'criada'
+				WHEN lower(h.descricao) LIKE '%atualizada%' OR lower(h.descricao) LIKE '%edi%' THEN 'editada'
+				WHEN lower(h.descricao) LIKE '%renov%' THEN 'renovada'
+				WHEN lower(h.descricao) LIKE '%exclu%' THEN 'excluida'
+				WHEN lower(h.descricao) LIKE '%observa%' THEN 'observacoes'
+				ELSE 'editada'
+			END AS acao,
+			h.ator,
+			h.data
+		FROM historico_apolice h
+		LEFT JOIN seguros s ON s.luc = h.apolice_luc
+		ORDER BY h.data DESC
+		LIMIT $1`
+	rows, err := r.db.Query(query, limit)
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), "does not exist") {
+			return []AtividadeRecente{}, nil
+		}
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]AtividadeRecente, 0, limit)
+	for rows.Next() {
+		var item AtividadeRecente
+		if err := rows.Scan(&item.ID, &item.Luc, &item.NomeLoja, &item.Acao, &item.Responsavel, &item.Timestamp); err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
 func (r *PostgresRepository) UpdateObservacoes(luc string, observacoes string) error {
-	res, err := r.db.Exec(fmt.Sprintf(`UPDATE %s SET observacoes = $1 WHERE luc = $2`, tableName), observacoes, luc)
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(fmt.Sprintf(`UPDATE %s SET observacoes = $1 WHERE luc = $2`, tableName), observacoes, luc)
 	if err != nil {
 		return err
 	}
@@ -163,7 +296,12 @@ func (r *PostgresRepository) UpdateObservacoes(luc string, observacoes string) e
 	if rowsAffected == 0 {
 		return ErrNotFound
 	}
-	return nil
+
+	if err := r.insertHistoricoTx(tx, luc, "Observações atualizadas", "Sistema"); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (r *PostgresRepository) Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error {
@@ -185,12 +323,20 @@ func (r *PostgresRepository) Renovar(luc string, novoVencimento time.Time, novoV
 		return ErrNotFound
 	}
 
-	_, err = tx.Exec(`INSERT INTO historico_apolice (apolice_luc, data, descricao, ator) VALUES ($1, NOW(), $2, $3)`, luc, descricao, ator)
-	if err != nil {
+	if err := r.insertHistoricoTx(tx, luc, descricao, ator); err != nil {
 		return err
 	}
 
 	return tx.Commit()
+}
+
+func (r *PostgresRepository) insertHistoricoTx(tx *sql.Tx, luc string, descricao string, ator string) error {
+	if strings.TrimSpace(ator) == "" {
+		ator = "Usuário Logado"
+	}
+
+	_, err := tx.Exec(`INSERT INTO historico_apolice (apolice_luc, data, descricao, ator) VALUES ($1, NOW(), $2, $3)`, luc, descricao, ator)
+	return err
 }
 
 func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {

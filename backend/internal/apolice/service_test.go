@@ -60,6 +60,18 @@ func (m *MockRepository) GetHistorico(luc string) ([]HistoricoApolice, error) {
 	return nil, m.Err
 }
 
+func (m *MockRepository) GetHistoricoGlobal(limit int) ([]HistoricoApolice, error) {
+	return nil, m.Err
+}
+
+func (m *MockRepository) GetAtividadesRecentes(limit int) ([]AtividadeRecente, error) {
+	return nil, m.Err
+}
+
+func (m *MockRepository) GetLojas() ([]LojaInfo, error) {
+	return nil, m.Err
+}
+
 func (m *MockRepository) UpdateObservacoes(luc string, observacoes string) error {
 	return m.Err
 }

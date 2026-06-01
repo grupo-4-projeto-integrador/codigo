@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -30,6 +32,8 @@ type FrontendConfig struct {
 }
 
 func Load() (Config, error) {
+	_ = godotenv.Load() // Ignore error if .env doesn't exist
+
 	cfg := Config{
 		HTTP: HTTPConfig{
 			Port: getEnv("PORT", "8082"),

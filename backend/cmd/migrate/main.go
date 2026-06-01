@@ -16,6 +16,8 @@ import (
 
 func main() {
 	withSeed := flag.Bool("seed", false, "Import seed data after applying migrations")
+	seedFile := flag.String("seed-file", "seguros.sql", "Main SQL dump to import into seguros")
+	extraSeedFile := flag.String("extra-seed-file", "seed_apolices.sql", "Additional seed script for coberturas and historico_apolice")
 	flag.Parse()
 
 	db := database.MustConnect()
@@ -29,12 +31,19 @@ func main() {
 	fmt.Println("Migration aplicada com sucesso")
 
 	if *withSeed {
-		seedPath := filepath.Join("..", "seguros-app", "seguros.sql")
-		fmt.Println("Importando seed:", seedPath)
+		seedPath := filepath.Clean(*seedFile)
+		fmt.Println("Importando seed principal:", seedPath)
 		if err := importSeedDump(db, seedPath); err != nil {
-			log.Fatalf("falha ao importar seed: %v", err)
+			log.Fatalf("falha ao importar seed principal: %v", err)
 		}
-		fmt.Println("Seed importada com sucesso")
+		fmt.Println("Seed principal importada com sucesso")
+
+		extraPath := filepath.Clean(*extraSeedFile)
+		fmt.Println("Importando seed complementar:", extraPath)
+		if err := runSQLFile(db, extraPath); err != nil {
+			log.Fatalf("falha ao importar seed complementar: %v", err)
+		}
+		fmt.Println("Seed complementar importada com sucesso")
 	}
 }
 
@@ -76,7 +85,7 @@ func importSeedDump(db *sql.DB, path string) (err error) {
 		}
 	}()
 
-	if _, err = tx.Exec(`TRUNCATE TABLE seguros`); err != nil {
+	if _, err = tx.Exec(`TRUNCATE TABLE seguros RESTART IDENTITY CASCADE`); err != nil {
 		return err
 	}
 

@@ -51,6 +51,15 @@ type SegmentRiskItem struct {
 	DiasMedioAtraso int    `json:"dias_medio_atraso"`
 }
 
+type AtividadeRecenteResponse struct {
+	ID          string    `json:"id"`
+	Luc         string    `json:"luc"`
+	NomeLoja    string    `json:"nome_loja"`
+	Acao        string    `json:"acao"`
+	Responsavel string    `json:"responsavel"`
+	Timestamp   time.Time `json:"timestamp"`
+}
+
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
@@ -635,4 +644,28 @@ func decodePayload(r *http.Request) (Payload, error) {
 	payload.Vencimento = strings.TrimSpace(payload.Vencimento)
 
 	return payload, nil
+}
+
+func (h *Handler) GetAtividadesRecentes(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodGet {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Mtodo no permitido", requestID, nil)
+		return
+	}
+
+	limit := 10
+	if limStr := r.URL.Query().Get("limit"); limStr != "" {
+		if l, err := strconv.Atoi(limStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	items, err := h.service.GetAtividadesRecentes(limit)
+	if err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, items, requestID)
 }

@@ -3,7 +3,8 @@
 This folder contains a minimal initial migration for the project's PostgreSQL schema.
 
 Files
-- `initial_schema.sql`: creates the `seguros` table used by the backend.
+- `initial_schema.sql`: creates the base `seguros` table used by the backend.
+- `seed_apolices.sql`: creates and repopulates `coberturas` and `historico_apolice` from the base policies.
 
 Apply the migration locally (example):
 
@@ -14,8 +15,11 @@ createdb -U postgres seguros_db
 # apply migration
 psql -U postgres -d seguros_db -f migrations/initial_schema.sql
 
-# (optional) restore seed data from the dump
-psql -U postgres -d seguros_db -f ../legacy/seguros.sql
+# optional: load your base dump into `seguros`
+psql -U postgres -d seguros_db -f seguros.sql
+
+# optional: generate the derived tables used by the UI and API
+psql -U postgres -d seguros_db -f seed_apolices.sql
 ```
 
 After applying the migration and (optionally) the seed data, run the backend and test the endpoints:
@@ -58,7 +62,7 @@ To allow the workflow to use a non-default database password in your organizatio
 
 3. Seed data during CI:
 
-   The integration job runs the migration with seed import enabled:
+   The integration job runs the migration with seed import enabled, which now imports the base dump and then generates `coberturas` and `historico_apolice`:
 
    ```bash
    go run ./cmd/migrate -seed
