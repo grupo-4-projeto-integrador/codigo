@@ -18,8 +18,34 @@ import {
   AlertTriangle
 } from "lucide-react";
 import logo from "../../imports/image-4.png";
+import joaoCarlosImg from "../../assets/joao-carlos.jpg";
 import { useEffect, useState, useRef } from "react";
 import { UserProfileProvider, type UserProfile } from "../contexts/UserProfileContext";
+
+const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
+  const [error, setError] = useState(false);
+
+  if (profile.avatarUrl && !error) {
+    return (
+      <img
+        src={profile.avatarUrl}
+        alt={profile.userName}
+        className={`${sizeClass} rounded-full object-cover flex-shrink-0`}
+        style={{ ...sizeStyle }}
+        onError={() => setError(true)}
+      />
+    );
+  }
+
+  return (
+    <div
+      className={`${sizeClass} rounded-full font-bold flex items-center justify-center flex-shrink-0`}
+      style={{ backgroundColor: profile.color, color: profile.textColor, ...sizeStyle }}
+    >
+      {profile.initials}
+    </div>
+  );
+};
 
 export function Layout() {
   const navigate = useNavigate();
@@ -45,7 +71,8 @@ export function Layout() {
       userName: 'João Carlos',
       initials: 'JC',
       color: '#bc9b7c',
-      textColor: '#6e150e'
+      textColor: '#6e150e',
+      avatarUrl: joaoCarlosImg
     },
     marketing: {
       name: 'Marketing',
@@ -208,9 +235,7 @@ export function Layout() {
               <Bell className="w-4 h-4" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-[#D93030] rounded-full"></span>
             </button>
-            <div className="w-8 h-8 rounded-full font-bold flex items-center justify-center text-xs" style={{ backgroundColor: currentProfile.color, color: currentProfile.textColor }}>
-              {currentProfile.initials}
-            </div>
+            <UserAvatar profile={currentProfile} sizeClass="w-8 h-8 text-xs" />
           </div>
         </div>
 
@@ -579,10 +604,9 @@ export function Layout() {
               </div>
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="w-9 h-9 rounded-full font-bold flex items-center justify-center transition-transform hover:scale-105"
-                style={{ backgroundColor: currentProfile.color, color: currentProfile.textColor }}
+                className="transition-transform hover:scale-105"
               >
-                {currentProfile.initials}
+                <UserAvatar profile={currentProfile} sizeClass="w-9 h-9 text-sm" sizeStyle={{ width: '36px', height: '36px' }} />
               </button>
 
               {/* Profile Dropdown Menu */}
@@ -603,12 +627,7 @@ export function Layout() {
                               : 'hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'
                           }`}
                         >
-                          <div
-                            className="w-10 h-10 rounded-full font-bold flex items-center justify-center flex-shrink-0"
-                            style={{ backgroundColor: profile.color, color: profile.textColor }}
-                          >
-                            {profile.initials}
-                          </div>
+                          <UserAvatar profile={profile} sizeClass="w-10 h-10 text-base" sizeStyle={{ width: '40px', height: '40px' }} />
                           <div className="flex flex-col items-start flex-1">
                             <span className="text-sm font-medium text-gray-900 dark:text-[#F1F5F9]">
                               {profile.userName}

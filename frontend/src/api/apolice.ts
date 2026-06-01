@@ -1,4 +1,4 @@
-import type { ApoliceFormData, ApoliceRecord, ApoliceDTO } from '../types/apolice';
+﻿import type { ApoliceFormData, ApoliceRecord, ApoliceDTO } from '../types/apolice';
 import { request } from './client';
 import { normalizeSegmentName } from '../app/utils/segment';
 
@@ -21,6 +21,8 @@ function mapToRecord(dto: any): ApoliceRecord {
     lojista: dto.lojista || dto.fantasia || "",
     tipo: segmento,
     cobertura: dto.cobertura,
+    responsavel: dto.responsavel || "",
+    observacoes: dto.observacoes || "",
   };
 }
 
@@ -53,5 +55,36 @@ export async function updateApolice(luc: string, payload: ApolicePayload): Promi
 export async function deleteApolice(luc: string): Promise<{ message: string }> {
   return request<{ message: string }>(`/apolices/${encodeURIComponent(luc)}`, {
     method: 'DELETE',
+  });
+}
+
+export async function getApolice(luc: string): Promise<ApoliceRecord> {
+  const data = await request<ApoliceDTO>(`/apolices/${encodeURIComponent(luc)}`);
+  return mapToRecord(data);
+}
+
+export async function getCoberturas(luc: string): Promise<any[]> {
+  return request<any[]>(`/apolices/${encodeURIComponent(luc)}/coberturas`);
+}
+
+export async function getHistorico(luc: string): Promise<any[]> {
+  return request<any[]>(`/apolices/${encodeURIComponent(luc)}/historico`);
+}
+
+export async function updateObservacoes(luc: string, observacoes: string): Promise<{ message: string }> {
+  return request<{ message: string }>(`/apolices/${encodeURIComponent(luc)}/observacoes`, {
+    method: 'PATCH',
+    body: JSON.stringify({ observacoes }),
+  });
+}
+
+export async function getLojas(): Promise<any[]> {
+  return request<any[]>('/lojas');
+}
+
+export async function renovarApolice(luc: string, payload: { nova_vigencia: string, novo_valor: number }): Promise<{ message: string }> {
+  return request<{ message: string }>(/apolices//renovar, {
+    method: 'POST',
+    body: JSON.stringify(payload),
   });
 }

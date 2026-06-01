@@ -20,4 +20,10 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("/api/map-layout", handler.GetMapLayout)
 	mux.HandleFunc("/apolices", handler.Collection)
 	mux.HandleFunc("/apolices/", handler.Item("/apolices"))
+
+	mux.HandleFunc("GET /api/apolices/{id}/coberturas", handler.GetCoberturas)
+	mux.HandleFunc("GET /api/apolices/{id}/historico", handler.GetHistorico)
+	mux.HandleFunc("PATCH /api/apolices/{id}/observacoes", handler.UpdateObservacoes)
+	mux.HandleFunc("POST /api/apolices/{id}/renovar", handler.RenovarApolice)
+	mux.HandleFunc("GET /api/lojas", handler.GetLojas)
 }

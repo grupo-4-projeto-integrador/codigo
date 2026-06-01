@@ -14,7 +14,7 @@ func TestSmokeIntegration(t *testing.T) {
 		apiURL = "http://localhost:8082"
 	}
 
-	payload := []byte(`{"luc":"SMOKE1","fantasia":"Smoke Test","segmento":"TEST","seguradora":"TestIns","vigencia":"2024-01-01","vencimento":"2026-12-31"}`)
+	payload := []byte(`{"luc":"SMOKE1","loja":"Smoke Test","segmento":"TEST","seguradora":"TestIns","vigencia":"2024-01-01","vencimento":"2026-12-31"}`)
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	res, err := client.Post(apiURL+"/api/apolices", "application/json", bytes.NewReader(payload))

@@ -16,6 +16,8 @@ export type ApoliceDTO = {
   vencimento: string;
   status: string;
   status_da_apolice: string;
+  responsavel?: string;
+  observacoes?: string;
 };
 
 export type ApoliceRecord = ApoliceFormData & {

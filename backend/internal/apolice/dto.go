@@ -10,6 +10,7 @@ type Payload struct {
 	Vigencia   string  `json:"vigencia"`
 	Vencimento string  `json:"vencimento"`
 	Cobertura  float64 `json:"cobertura"`
+	Observacoes string `json:"observacoes"`
 }
 
 type Response struct {
@@ -23,6 +24,7 @@ type Response struct {
 	Cobertura     float64 `json:"cobertura"`
 	DiasRestantes int     `json:"dias_restantes"`
 	Responsavel   string  `json:"responsavel"`
+	Observacoes   string  `json:"observacoes"`
 }
 
 func ToResponse(model Apolice) Response {
@@ -35,6 +37,7 @@ func ToResponse(model Apolice) Response {
 		Cobertura:     model.Cobertura,
 		DiasRestantes: model.DiasRestantes,
 		Responsavel:   model.Responsavel,
+		Observacoes:   model.Observacoes,
 	}
 
 	if !model.Vigencia.IsZero() {
@@ -56,4 +59,9 @@ func ParseDate(value string) (time.Time, error) {
 	}
 
 	return time.Time{}, ErrValidation("data inválida: " + value)
+}
+
+type RenovacaoPayload struct {
+	NovaVigencia string  `json:"nova_vigencia"`
+	NovoValor    float64 `json:"novo_valor"`
 }

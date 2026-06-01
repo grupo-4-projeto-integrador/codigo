@@ -50,7 +50,7 @@ export function Insurance() {
   const [vencimentoFilter, setVencimentoFilter] = useState("");
 
   // Modal states
-  const [showNovaApoliceModal, setShowNovaApoliceModal] = useState(false);
+
   const [showViewApoliceModal, setShowViewApoliceModal] = useState(false);
   const [showEditApoliceModal, setShowEditApoliceModal] = useState(false);
   const [showRenovarModal, setShowRenovarModal] = useState(false);
@@ -456,40 +456,15 @@ export function Insurance() {
 
   // Handlers
   const handleNovaApolice = () => {
-    setFormData({
-      tipo: "",
-      seguradora: "",
-      vigencia: "",
-      vencimento: "",
-      cobertura: "",
-      premio: "",
-      observacoes: ""
-    });
-    setShowNovaApoliceModal(true);
+    navigate('/seguros/apolice/nova');
   };
 
   const handleVerApolice = (policyId: string) => {
-    const policy = allPolicies.find(p => p.id === policyId);
-    setSelectedPolicy(policy);
-    setShowViewApoliceModal(true);
+    navigate(`/seguros/apolice/${encodeURIComponent(policyId)}`);
   };
 
   const handleEditarApolice = (policyId: string) => {
-    const policy = allPolicies.find(p => p.id === policyId);
-    if (policy) {
-      setFormData({
-        luc: policy.id || policy.luc || "",
-        lojista: policy.lojista || policy.fantasia || "",
-        tipo: policy.tipo || "",
-        seguradora: policy.seguradora || "",
-        vigencia: policy.vigencia || "",
-        vencimento: policy.vencimento || "",
-        cobertura: policy.cobertura || ""
-      });
-      setSelectedPolicy(policy);
-      setShowViewApoliceModal(false);
-      setShowEditApoliceModal(true);
-    }
+    navigate(`/seguros/apolice/${encodeURIComponent(policyId)}/editar`);
   };
 
   const handleSort = (column: string) => {
@@ -504,11 +479,7 @@ export function Insurance() {
     setCurrentPage(1); // Reset to first page when sorting
   };
 
-  const handleSubmitNovaApolice = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert(`Nova apólice criada com sucesso!\n\nTipo: ${formData.tipo}\nSeguradora: ${formData.seguradora}`);
-    setShowNovaApoliceModal(false);
-  };
+
 
   const handleSubmitEditApolice = (e: React.FormEvent) => {
     e.preventDefault();
@@ -517,7 +488,7 @@ export function Insurance() {
   };
 
   const handleCloseModals = () => {
-    setShowNovaApoliceModal(false);
+
     setShowViewApoliceModal(false);
     setShowEditApoliceModal(false);
     setShowRenovarModal(false);
@@ -1514,177 +1485,7 @@ export function Insurance() {
         </div>
       </div>
 
-      {/* Modal Nova Apólice */}
-      {showNovaApoliceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(8px)' }}>
-          <div className="bg-white dark:bg-[#242938] rounded-xl w-full max-w-2xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
-            <div className="sticky top-0 bg-white dark:bg-[#242938] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
-              <div>
-                <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Nova Apólice</h2>
-                <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Preencha os dados da nova apólice de seguro</p>
-              </div>
-              <motion.button
-                onClick={handleCloseModals}
-                className="text-gray-400 dark:text-[#64748B]"
-                whileHover={{
-                  scale: 1.1,
-                  color: isDarkMode ? '#94A3B8' : '#4B5563'
-                }}
-                whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </motion.button>
-            </div>
 
-            <form onSubmit={handleSubmitNovaApolice} className="p-4 md:p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Tipo de Seguro *</label>
-                  <select
-                    required
-                    value={formData.tipo}
-                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  >
-                    <option value="">Selecione...</option>
-                    <option value="Seguro Incêndio">Incêndio e Explosão</option>
-                    <option value="Responsabilidade Civil">Responsabilidade Civil</option>
-                    <option value="Roubo e Furto">Roubo e Furto</option>
-                    <option value="Danos Elétricos">Danos Elétricos</option>
-                    <option value="Alagamento e Infiltração">Alagamento e Infiltração</option>
-                    <option value="Vidros e Fachadas">Vidros e Fachadas</option>
-                    <option value="Equipamentos">Equipamentos</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Seguradora *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.seguradora}
-                    onChange={(e) => setFormData({ ...formData, seguradora: e.target.value })}
-                    placeholder="Ex: Porto Seguro"
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vigência *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.vigencia}
-                    onChange={(e) => setFormData({ ...formData, vigencia: e.target.value })}
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Data de Vencimento *</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.vencimento}
-                    onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Valor da Cobertura *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.cobertura}
-                    onChange={(e) => setFormData({ ...formData, cobertura: e.target.value })}
-                    placeholder="R$ 10.000.000,00"
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Prêmio Anual *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.premio}
-                    onChange={(e) => setFormData({ ...formData, premio: e.target.value })}
-                    placeholder="R$ 45.000,00"
-                    className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                    style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                    onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                    onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold mb-2" style={{ color: colors.brandMaroon }}>Observações</label>
-                <textarea
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  rows={3}
-                  placeholder="Informações adicionais sobre a apólice..."
-                  className="w-full px-4 py-2.5 border dark:border-[#2E3447] rounded-lg text-[13px] bg-gray-50 dark:bg-[#1E2435] focus:outline-none focus:ring-2 resize-none placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
-                  style={{ borderColor: colors.cardBorder, color: colors.brandMaroon }}
-                  onFocus={(e) => e.target.style.borderColor = colors.brandRed}
-                  onBlur={(e) => e.target.style.borderColor = colors.cardBorder}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t" style={{ borderColor: colors.cardBorder }}>
-                <motion.button
-                  type="button"
-                  onClick={handleCloseModals}
-                  className="flex-1 px-4 py-3 border dark:border-[#2E3447] rounded-lg text-[13px] font-semibold"
-                  style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
-                  whileHover={{
-                    scale: 1.05,
-                    backgroundColor: isDarkMode ? '#1A1F2E' : '#F9FAFB',
-                    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                >
-                  Cancelar
-                </motion.button>
-                <motion.button
-                  type="submit"
-                  className="flex-1 px-4 py-3 rounded-lg text-[13px] font-semibold text-white bg-[#D93030] dark:bg-[#E04444]"
-                  whileHover={{
-                    scale: 1.05,
-                    filter: "brightness(1.1)",
-                    boxShadow: "0 8px 20px rgba(217, 48, 48, 0.3)"
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15, ease: "easeOut" }}
-                >
-                  Criar Apólice
-                </motion.button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Modal Ver Apólice */}
       {showViewApoliceModal && selectedPolicy && (

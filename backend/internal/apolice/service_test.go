@@ -3,6 +3,7 @@ package apolice
 import (
 	"errors"
 	"testing"
+	"time"
 )
 
 type MockRepository struct {
@@ -51,13 +52,29 @@ func (m *MockRepository) Delete(luc string) error {
 	return m.Err
 }
 
+func (m *MockRepository) GetCoberturas(luc string) ([]Cobertura, error) {
+	return nil, m.Err
+}
+
+func (m *MockRepository) GetHistorico(luc string) ([]HistoricoApolice, error) {
+	return nil, m.Err
+}
+
+func (m *MockRepository) UpdateObservacoes(luc string, observacoes string) error {
+	return m.Err
+}
+
+func (m *MockRepository) Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error {
+	return m.Err
+}
+
 func TestService_Create(t *testing.T) {
 	repo := &MockRepository{}
 	svc := NewService(repo)
 
 	payload := Payload{
 		Luc:        "TEST_LUC",
-		Fantasia:   "TEST_FANTASIA",
+		Loja:       "TEST_FANTASIA",
 		Segmento:   "TEST_SEGMENTO",
 		Seguradora: "TEST_SEGURADORA",
 		Vigencia:   "2024-01-01",

@@ -80,6 +80,23 @@ func (h *Handler) GetMapLayout(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(content)
 }
 
+func (h *Handler) GetLojas(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodGet {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	items, err := h.service.GetLojas()
+	if err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, items, requestID)
+}
+
 func (h *Handler) GetKPIHistory(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
@@ -461,7 +478,7 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 			}
 			_ = response.Success(w, http.StatusOK, ToResponse(item), requestID)
 
-		case http.MethodPut:
+		case http.MethodPut, http.MethodPatch:
 			payload, err := decodePayload(r)
 			if err != nil {
 				_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
@@ -486,6 +503,110 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 			_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
 		}
 	}
+}
+
+func (h *Handler) GetCoberturas(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodGet {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	itemID := r.PathValue("id")
+	if itemID == "" {
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		return
+	}
+
+	items, err := h.service.GetCoberturas(itemID)
+	if err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, items, requestID)
+}
+
+func (h *Handler) GetHistorico(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodGet {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	itemID := r.PathValue("id")
+	if itemID == "" {
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		return
+	}
+
+	items, err := h.service.GetHistorico(itemID)
+	if err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, items, requestID)
+}
+
+func (h *Handler) UpdateObservacoes(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodPatch {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	itemID := r.PathValue("id")
+	if itemID == "" {
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		return
+	}
+
+	var payload struct {
+		Observacoes string `json:"observacoes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+		return
+	}
+
+	if err := h.service.UpdateObservacoes(itemID, payload.Observacoes); err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Observações atualizadas com sucesso"}, requestID)
+}
+
+func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodPost {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	itemID := r.PathValue("id")
+	if itemID == "" {
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		return
+	}
+
+	var payload RenovacaoPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+		return
+	}
+
+	if err := h.service.Renovar(itemID, payload.NovaVigencia, payload.NovoValor, "Usuário Logado"); err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice renovada com sucesso"}, requestID)
 }
 
 func (h *Handler) writeError(w http.ResponseWriter, requestID string, err error) {

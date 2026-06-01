@@ -111,6 +111,35 @@ func (s *Service) Delete(luc string) error {
 	return s.repo.Delete(luc)
 }
 
+func (s *Service) GetCoberturas(luc string) ([]Cobertura, error) {
+	return s.repo.GetCoberturas(luc)
+}
+
+func (s *Service) GetHistorico(luc string) ([]HistoricoApolice, error) {
+	return s.repo.GetHistorico(luc)
+}
+
+func (s *Service) UpdateObservacoes(luc string, observacoes string) error {
+	return s.repo.UpdateObservacoes(luc, observacoes)
+}
+
+func (s *Service) Renovar(luc string, novaVigenciaStr string, novoValor float64, ator string) error {
+	if strings.TrimSpace(luc) == "" {
+		return ErrValidation("LUC não pode estar vazio")
+	}
+
+	novaVigencia, err := ParseDate(novaVigenciaStr)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.Renovar(luc, novaVigencia, novoValor, ator, "Renovação realizada")
+}
+
+func (s *Service) GetLojas() ([]LojaInfo, error) {
+	return s.repo.GetLojas()
+}
+
 func (s *Service) buildModel(payload Payload) (Apolice, error) {
 	if strings.TrimSpace(payload.Luc) == "" || strings.TrimSpace(payload.Loja) == "" || strings.TrimSpace(payload.Segmento) == "" || strings.TrimSpace(payload.Seguradora) == "" || strings.TrimSpace(payload.Vigencia) == "" || strings.TrimSpace(payload.Vencimento) == "" {
 		return Apolice{}, ErrValidation("Todos os campos são obrigatórios")
