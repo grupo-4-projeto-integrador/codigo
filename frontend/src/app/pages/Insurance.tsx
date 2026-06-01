@@ -1389,7 +1389,7 @@ export function Insurance() {
                       : paginatedPolicies.map((policy, index) => (
                         <tr
                           key={index}
-                          onClick={() => handleEditarApolice(policy.id)}
+                          onClick={() => handleVerApolice(policy.id)}
                           className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
                           style={{ borderColor: colors.cardBorder }}
                         >
