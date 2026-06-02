@@ -60,6 +60,14 @@ func (m *MockRepository) GetHistorico(luc string) ([]HistoricoApolice, error) {
 	return nil, m.Err
 }
 
+func (m *MockRepository) GetDocumentoByID(id string) (Documento, error) {
+	return Documento{}, m.Err
+}
+
+func (m *MockRepository) GetDocumentosByApolice(luc string) ([]Documento, error) {
+	return nil, m.Err
+}
+
 func (m *MockRepository) GetHistoricoGlobal(limit int) ([]HistoricoApolice, error) {
 	return nil, m.Err
 }
