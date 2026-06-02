@@ -7,7 +7,7 @@ import {
   FileText, 
   Download, 
   Clock, 
-  Save, 
+  Check,
   User, 
   AlertTriangle,
   Trash2,
@@ -49,9 +49,11 @@ export function PolicyDetail() {
   const [coberturas, setCoberturas] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
   const [documentos, setDocumentos] = useState<any[]>([]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
   const [isDownloading, setIsDownloading] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [observacoes, setObservacoes] = useState("");
+  const [isAssigning, setIsAssigning] = useState(false);
 
   const { canEdit } = useUserProfile();
   const [savingObs, setSavingObs] = useState(false);
@@ -81,6 +83,7 @@ export function PolicyDetail() {
       setCoberturas(coberturasData);
       setHistorico(historicoData);
       setDocumentos(documentosData);
+      request<any[]>('/usuarios').then(d => setUsuarios(d || [])).catch(() => setUsuarios([{id:1, nome: "João Carlos"}]));
       setObservacoes(policyData.observacoes || "");
       setLoading(false);
     })
@@ -141,6 +144,22 @@ export function PolicyDetail() {
     }
   };
 
+  const handleAssignResponsible = async (userId: string, userName: string) => {
+    if (!id) return;
+    try {
+      await request(`/apolices/${id}`, {
+        method: "PUT", // Usando PUT por padrão ou se houver rota PATCH use PATCH. O form manda PUT inteiro, então mando um payload parcial se aceitar ou apenas atualizo via UI.
+        body: JSON.stringify({ responsavel: userName, responsavel_id: userId }) // adapt to mock/real behavior
+      });
+      setPolicy(prev => prev ? { ...prev, responsavel: userName } : prev);
+      toast.success("Responsável atribuído!");
+    } catch (e) {
+      toast.error("Falha ao atribuir responsável");
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
   const handleSaveObservacoes = async () => {
     if (!id) return;
     setSavingObs(true);
@@ -190,8 +209,15 @@ export function PolicyDetail() {
   }
 
   // Cálculos da vigência
-  const start = new Date(policy.vigencia);
-  const end = new Date(policy.vencimento);
+  const parseDateString = (str: string) => {
+    if (!str) return new Date();
+    const parts = str.split('/');
+    if (parts.length === 3) return new Date(+parts[2], +parts[1] - 1, +parts[0]);
+    return new Date(str);
+  };
+
+  const start = parseDateString(policy.vigencia);
+  const end = parseDateString(policy.vencimento);
   const now = new Date();
   
   const totalDays = Math.max(1, Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
@@ -209,8 +235,9 @@ export function PolicyDetail() {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
   };
 
-  const statusColor = isVencida ? 'bg-[#D93030] text-white' : 
-                      (diasRestantes <= 30 ? 'bg-orange-500 text-white' : 'bg-[#788033] text-white');
+  const statusLabel = isVencida ? 'Vencida' : (diasRestantes <= 30 ? 'A Vencer' : 'Conforme');
+  const statusColor = isVencida ? 'bg-[#c4151f]/10 text-[#c4151f]' : 
+                      (diasRestantes <= 30 ? 'bg-amber-100 text-amber-700' : 'bg-[#788033]/10 text-[#788033]');
 
   return (
     <div className="max-w-7xl mx-auto flex flex-col h-full">
@@ -219,8 +246,6 @@ export function PolicyDetail() {
         <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/')}>Flamboyant Shopping</span>
         <ChevronRight className="w-3 h-3" />
         <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/seguros')}>Seguros</span>
-        <ChevronRight className="w-3 h-3" />
-        <span className="cursor-pointer hover:opacity-70 font-medium text-gray-700 dark:text-gray-300" onClick={() => navigate('/seguros')}>{policy.lojista}</span>
         <ChevronRight className="w-3 h-3" />
         <span className="font-semibold text-gray-900 dark:text-white">Apólice {policy.luc}</span>
       </div>
@@ -236,18 +261,20 @@ export function PolicyDetail() {
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{policy.luc}</h1>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
-                    {policy.status}
+                    {statusLabel}
                   </span>
                 </div>
-                <p className="text-gray-500 dark:text-[#94A3B8] text-lg">{policy.lojista}</p>
-              </div>
-              <div className="flex gap-2">
-                <span className="px-3 py-1 bg-gray-100 dark:bg-[#1A1F2E] text-gray-600 dark:text-[#94A3B8] rounded-lg text-xs font-medium">
-                  {policy.tipo}
-                </span>
-                <span className="px-3 py-1 bg-gray-100 dark:bg-[#1A1F2E] text-gray-600 dark:text-[#94A3B8] rounded-lg text-xs font-medium">
-                  {policy.seguradora}
-                </span>
+                <p className="text-gray-500 dark:text-[#94A3B8] text-lg mb-1">{policy.lojista}</p>
+                <div className="flex gap-2 mt-1">
+                  {policy.tipo && policy.tipo.split(',').map((t, i) => (
+                    <span key={i} className="px-3 py-1 bg-gray-100 dark:bg-[#1A1F2E] text-gray-600 dark:text-[#94A3B8] rounded-lg text-xs font-medium">
+                      {t.trim()}
+                    </span>
+                  ))}
+                  <span className="px-3 py-1 bg-gray-100 dark:bg-[#1A1F2E] text-gray-600 dark:text-[#94A3B8] rounded-lg text-xs font-medium">
+                    {policy.seguradora}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -287,17 +314,27 @@ export function PolicyDetail() {
           <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
             <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-4">Coberturas Contratadas</h3>
             <div className="flex flex-col gap-3">
-              {coberturas.length > 0 ? coberturas.map(c => (
-                <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-[#2E3447] bg-gray-50/50 dark:bg-[#1A1F2E]/50">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{c.nome}</p>
-                    {c.descricao && <p className="text-xs text-gray-500 dark:text-[#94A3B8] mt-0.5">{c.descricao}</p>}
+              {coberturas.length > 0 ? (
+                <>
+                  {coberturas.map(c => (
+                    <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border border-gray-100 dark:border-[#2E3447] bg-gray-50/50 dark:bg-[#1A1F2E]/50">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{c.nome}</p>
+                        {c.descricao && <p className="text-xs text-gray-500 dark:text-[#94A3B8] mt-0.5">{c.descricao}</p>}
+                      </div>
+                      <div className="mt-2 sm:mt-0 font-medium text-sm text-[#788033]">
+                        {formatCurrency(c.valor)}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center pt-3 mt-1 border-t border-gray-200 dark:border-[#2E3447]" style={{ borderTopWidth: '0.5px' }}>
+                    <span className="text-[11px] uppercase text-gray-500 font-bold">Total coberto</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                      {formatCurrency(coberturas.reduce((acc, c) => acc + (Number(c.valor) || 0), 0))}
+                    </span>
                   </div>
-                  <div className="mt-2 sm:mt-0 font-medium text-sm text-[#788033]">
-                    {formatCurrency(c.valor)}
-                  </div>
-                </div>
-              )) : (
+                </>
+              ) : (
                 <p className="text-sm text-gray-500">Nenhuma cobertura detalhada encontrada.</p>
               )}
             </div>
@@ -325,17 +362,39 @@ export function PolicyDetail() {
                   <p className="text-sm font-medium text-gray-900 dark:text-white">Corretora Padrão</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 relative">
                 {policy.responsavel === "João Carlos" ? (
                   <img src={joaoCarlosImg} alt="Responsável" className="w-10 h-10 rounded-full object-cover" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-[#3e0000] text-[#bc9b7c] flex items-center justify-center font-bold text-sm">
+                  <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400 flex items-center justify-center font-bold text-sm">
                     {policy.responsavel ? policy.responsavel.substring(0, 2).toUpperCase() : "NA"}
                   </div>
                 )}
                 <div>
                   <p className="text-xs text-gray-500 dark:text-[#94A3B8]">Responsável Interno</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={policy.responsavel || "Não atribuído"}>{policy.responsavel || "Não atribuído"}</p>
+                  {policy.responsavel ? (
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={policy.responsavel}>{policy.responsavel}</p>
+                  ) : (
+                    <div>
+                      {isAssigning ? (
+                        <select 
+                          className="text-xs p-1 mt-1 border rounded bg-white dark:bg-[#1A1F2E] border-gray-200 dark:border-gray-700 outline-none"
+                          autoFocus
+                          onBlur={() => setIsAssigning(false)}
+                          onChange={(e) => handleAssignResponsible(e.target.value, e.target.options[e.target.selectedIndex].text)}
+                        >
+                          <option value="">Selecione...</option>
+                          {usuarios.map(u => (
+                            <option key={u.id} value={u.id}>{u.nome || u.id}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button onClick={() => setIsAssigning(true)} className="text-[11px] text-[#c4151f] hover:underline font-medium p-0 m-0">
+                          Atribuir responsável &rarr;
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -344,13 +403,13 @@ export function PolicyDetail() {
           {/* Histórico da Apólice */}
           <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
             <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-4">Histórico da Apólice</h3>
-            <div className="relative pl-6 before:content-[''] before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200 dark:before:bg-[#2E3447]">
+            <div className="relative pl-6 before:content-[''] before:absolute before:left-[6px] before:top-[10px] before:bottom-[10px] before:border-l-[1.5px] before:border-dashed before:border-gray-300 dark:before:border-gray-600">
               {historico.length > 0 ? historico.map((h, i) => (
                 <div key={h.id} className="relative mb-6 last:mb-0">
-                  <div className="absolute -left-[30px] w-3.5 h-3.5 rounded-full bg-white dark:bg-[#242938] border-2 border-[#788033] z-10 top-1.5" />
+                  <div className="absolute -left-[24.5px] w-2.5 h-2.5 rounded-full bg-white dark:bg-[#242938] border-[1.5px] border-gray-400 dark:border-gray-500 z-10 top-1" />
                   <div className="flex flex-col">
-                    <p className="text-xs text-gray-400 dark:text-[#64748B] font-medium mb-1">
-                      {new Date(h.data).toLocaleDateString('pt-BR')} - {h.ator}
+                    <p className="text-[10px] text-gray-400 dark:text-[#64748B] font-medium mb-1">
+                      {new Date(h.data).toLocaleDateString('pt-BR')} · {h.ator}
                     </p>
                     <p className="text-sm text-gray-900 dark:text-[#F1F5F9]">{h.descricao}</p>
                   </div>
@@ -411,7 +470,7 @@ export function PolicyDetail() {
                   disabled={savingObs}
                   className="text-xs font-medium bg-[#6e150e] hover:bg-[#5a110b] text-white px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors disabled:opacity-50"
                 >
-                  {savingObs ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-3 h-3" />}
+                  {savingObs ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-3 h-3" />}
                   Salvar
                 </button>
               )}
@@ -435,7 +494,7 @@ export function PolicyDetail() {
             <p className="text-xs font-medium text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider mb-2">Dias Restantes</p>
             
             <div className="flex justify-center items-center mb-6">
-              <span className={`text-[42px] leading-none font-light ${isVencida ? 'text-[#D93030]' : (diasRestantes <= 30 ? 'text-orange-500' : 'text-gray-900 dark:text-white')}`}>
+              <span className={`text-[42px] leading-none font-light ${isVencida ? 'text-[#D93030]' : (diasRestantes <= 15 ? 'text-orange-500' : 'text-gray-900 dark:text-white')}`}>
                 {isVencida ? Math.abs(diasRestantes) : diasRestantes}
               </span>
             </div>
@@ -443,7 +502,7 @@ export function PolicyDetail() {
             {/* Progress Bar */}
             <div className="w-full h-2 bg-gray-100 dark:bg-[#1A1F2E] rounded-full overflow-hidden mb-2">
               <div 
-                className={`h-full rounded-full transition-all duration-1000 ease-out ${isVencida ? 'bg-[#D93030]' : (diasRestantes <= 30 ? 'bg-orange-500' : 'bg-[#788033]')}`} 
+                className={`h-full rounded-full transition-all duration-1000 ease-out ${isVencida ? 'bg-[#D93030]' : (diasRestantes <= 15 ? 'bg-orange-500' : 'bg-[#788033]')}`} 
                 style={{ width: `${progress}%` }} 
               />
             </div>
@@ -470,7 +529,7 @@ export function PolicyDetail() {
             <div className="mt-8 flex flex-col gap-2">
               {canEdit && (
                 <>
-                  <button onClick={openRenewDialog} className="w-full bg-[#6e150e] hover:bg-[#5a110b] text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
+                  <button onClick={openRenewDialog} className="w-full bg-[#c4151f] hover:bg-[#a01119] text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
                     Renovar Apólice
                   </button>
                   <button onClick={() => navigate(`/seguros/apolice/${id}/editar`)} className="w-full bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] font-medium text-sm py-2.5 rounded-lg transition-colors">

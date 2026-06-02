@@ -33,7 +33,7 @@ func main() {
 	if *withSeed {
 		seedPath := filepath.Clean(*seedFile)
 		fmt.Println("Importando seed principal:", seedPath)
-		if err := importSeedDump(db, seedPath); err != nil {
+		if err := runSQLFile(db, seedPath); err != nil {
 			log.Fatalf("falha ao importar seed principal: %v", err)
 		}
 		fmt.Println("Seed principal importada com sucesso")

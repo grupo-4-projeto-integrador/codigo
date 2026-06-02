@@ -1,13 +1,13 @@
 import type { ApoliceFormData, ApoliceRecord, ApoliceDTO } from '../types/apolice';
 import { request } from './client';
-import { normalizeSegmentName } from '../app/utils/segment';
+import { normalizarSegmento } from '../app/utils/segment';
 
 export type ApoliceListResponse = ApoliceRecord[];
 
 export type ApolicePayload = ApoliceFormData;
 
 function mapToRecord(dto: any): ApoliceRecord {
-  const segmento = normalizeSegmentName(dto.tipo || dto.segmento || "");
+  const segmento = normalizarSegmento(dto.tipo || dto.segmento || "");
   return {
     id: dto.id || dto.luc || "",
     luc: dto.id || dto.luc || "",

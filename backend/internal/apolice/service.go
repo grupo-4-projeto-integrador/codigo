@@ -191,7 +191,7 @@ func calculatePolicyStatus(vencimento time.Time) string {
 	if daysRemaining < 0 {
 		return "Vencida"
 	}
-	if daysRemaining <= 30 {
+	if daysRemaining <= 15 {
 		return "A Vencer"
 	}
 	return "Ativa"

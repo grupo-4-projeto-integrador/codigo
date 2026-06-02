@@ -856,7 +856,7 @@ export function Insurance() {
 
   const getDiasRestantesColor = (dias: number) => {
     if (dias < 0) return colors.brandRed;
-    if (dias <= 30) return colors.olive;
+    if (dias <= 15) return colors.olive;
     return colors.forest;
   };
 
@@ -1236,7 +1236,7 @@ export function Insurance() {
 
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
-                      nos próximos 30 dias
+                      nos próximos 15 dias
                     </span>
                     <span className="text-[11px] font-medium text-[#BA7517]">
                       {percAVencer}% do total

@@ -66,7 +66,7 @@ SELECT
     (NOW() + (days_until_expiry * INTERVAL '1 day'))::date AS vencimento,
     CASE
         WHEN days_until_expiry < 0 THEN 'vencida'
-        WHEN days_until_expiry <= 30 THEN 'a vencer'
+        WHEN days_until_expiry <= 15 THEN 'a vencer'
         ELSE 'ativa'
     END AS status,
     cobertura

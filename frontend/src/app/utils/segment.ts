@@ -1,10 +1,13 @@
 const SEGMENT_NORMALIZATION_MAP: Record<string, string> = {
   'alimentacao': 'Alimentação',
+  'vestuario': 'Vestuário',
+  'servicos': 'Serviços',
   'eletronicos': 'Eletrônicos',
+  'calcados': 'Calçados',
   'acessorios': 'Acessórios',
 };
 
-export function normalizeSegmentName(value: string) {
+export function normalizarSegmento(value: string): string {
   const trimmed = (value || '').trim();
   if (!trimmed) {
     return '';

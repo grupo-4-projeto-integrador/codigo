@@ -23,7 +23,9 @@ import logo from "../../imports/image-4.png";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
 import { useEffect, useState, useRef } from "react";
 import { UserProfileProvider, type UserProfile } from "../contexts/UserProfileContext";
-
+import { request } from "../../api/client";
+import { listApolices } from "../../api/apolice";
+import { motion, AnimatePresence } from "motion/react";
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
 
@@ -189,27 +191,73 @@ export function Layout() {
     }
   };
 
-  // Notificações - Apólices vencidas e a vencer
-  const notifications = [
-    {
-      id: 1,
-      type: 'vencida',
-      title: 'Apólice Vencida',
-      policy: 'SU-2024-4521',
-      description: 'Alagamento e Infiltração',
-      date: 'Vencida há 49 dias',
-      priority: 'high'
-    },
-    {
-      id: 2,
-      type: 'atencao',
-      title: 'Atenção: Vence em Breve',
-      policy: 'TM-2024-9012',
-      description: 'Seguro Incêndio',
-      date: 'Vence em 18 dias',
-      priority: 'medium'
+  // Notificações reais baseadas nas apólices
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    listApolices().then(data => {
+      const vencidas = data
+        .filter(d => (d.dias_restantes ?? 0) < 0)
+        .map(d => ({
+          id: `notif-v-${d.luc}`,
+          type: 'vencida',
+          loja: d.fantasia || d.lojista || 'Loja',
+          luc: d.luc,
+          cobertura: d.segmento || d.tipo || 'Geral',
+          dias: Math.abs(d.dias_restantes!),
+          lida: false
+        }));
+      const aVencer = data
+        .filter(d => (d.dias_restantes ?? 0) >= 0 && (d.dias_restantes ?? 0) <= 30)
+        .map(d => ({
+          id: `notif-a-${d.luc}`,
+          type: 'a_vencer',
+          loja: d.fantasia || d.lojista || 'Loja',
+          luc: d.luc,
+          cobertura: d.segmento || d.tipo || 'Geral',
+          dias: d.dias_restantes!,
+          lida: false
+        }));
+      setNotifications([...vencidas, ...aVencer]);
+    }).catch(e => console.error("Erro ao carregar notificações", e));
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.lida).length;
+  const vencidas = notifications.filter(n => n.type === 'vencida').sort((a, b) => b.dias - a.dias);
+  const aVencer = notifications.filter(n => n.type === 'a_vencer').sort((a, b) => a.dias - b.dias);
+
+  const [bellAnimate, setBellAnimate] = useState(false);
+  const prevUnreadRef = useRef(unreadCount);
+
+  useEffect(() => {
+    if (unreadCount > prevUnreadRef.current) {
+      setBellAnimate(true);
+      setTimeout(() => setBellAnimate(false), 300);
     }
-  ];
+    prevUnreadRef.current = unreadCount;
+  }, [unreadCount]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await request('/notificacoes/marcar-lidas', { method: 'PATCH' });
+    } catch (e) { console.error(e); }
+    setNotifications(prev => prev.map(n => ({ ...n, lida: true })));
+  };
+
+  const handleArchiveRead = async () => {
+    try {
+      await request('/notificacoes/arquivadas', { method: 'DELETE' });
+    } catch (e) { console.error(e); }
+    setNotifications(prev => prev.filter(n => !n.lida));
+  };
+
+  const handleArchiveSingle = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await request(`/notificacoes/${id}`, { method: 'DELETE' });
+    } catch (e) { console.error(e); }
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
   
   return (
     <div className="flex flex-col md:flex-row h-screen w-full bg-[#F7F4EF] dark:bg-[#0F1117]">
@@ -234,8 +282,10 @@ export function Layout() {
               className="relative p-1.5 text-white/80 hover:text-white rounded-full transition-colors"
               title="Notificações"
             >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#D93030] rounded-full"></span>
+              <motion.div animate={bellAnimate ? { rotate: [0, 3, -3, 3, 0] } : { rotate: 0 }} transition={{ duration: 0.3 }}>
+                <Bell className="w-4 h-4" />
+              </motion.div>
+              {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#D93030] rounded-full"></span>}
             </button>
             <UserAvatar profile={currentProfile} sizeClass="w-8 h-8 text-xs" />
           </div>
@@ -513,81 +563,151 @@ export function Layout() {
                 onClick={() => setIsNotificationOpen(!isNotificationOpen)}
                 className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-[#D93030] rounded-full"></span>
+                <motion.div animate={bellAnimate ? { rotate: [0, 3, -3, 3, 0] } : { rotate: 0 }} transition={{ duration: 0.3 }}>
+                  <Bell className="w-5 h-5" />
+                </motion.div>
+                {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#D93030] rounded-full"></span>}
               </button>
 
               {/* Notification Dropdown - Desktop */}
+              <AnimatePresence>
               {isNotificationOpen && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg shadow-lg overflow-hidden z-50">
-                  <div className="p-4 border-b border-gray-200 dark:border-[#2E3447]">
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-[#F1F5F9]">Notificações</h3>
-                    <p className="text-xs text-gray-500 dark:text-[#94A3B8] mt-0.5">{notifications.length} alertas pendentes</p>
+                <motion.div 
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.18 }}
+                  className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg shadow-xl overflow-hidden z-50"
+                >
+                  <div className="p-3 border-b border-gray-200 dark:border-[#2E3447] flex justify-between items-center bg-white dark:bg-[#242938]">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs font-bold text-gray-900 dark:text-[#F1F5F9]">Notificações</h3>
+                      <AnimatePresence mode="popLayout">
+                        {unreadCount > 0 && (
+                          <motion.span 
+                            key={unreadCount}
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.5, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="bg-[#3e0000] text-[#c4151f] text-[10px] px-1.5 py-0.5 rounded-full font-bold"
+                          >
+                            {unreadCount}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button onClick={handleMarkAllRead} className="text-[10px] font-medium text-[#c4151f] hover:underline">
+                        Marcar todas como lidas
+                      </button>
+                    )}
                   </div>
 
-                  {/* Apólices Vencidas */}
-                  <div className="border-b border-gray-200 dark:border-[#2E3447]">
-                    <div className="px-4 py-2 bg-gray-50 dark:bg-[#1A1F2E]">
-                      <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices Vencidas (1)</h4>
-                    </div>
-                    <div
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer"
-                      onClick={() => {
-                        setIsNotificationOpen(false);
-                        navigate('/seguros');
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg flex-shrink-0 bg-red-100 dark:bg-red-900/20">
-                          <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {/* Apólices Vencidas */}
+                    {vencidas.length > 0 && (
+                      <div className="border-b border-gray-100 dark:border-[#2E3447]">
+                        <div className="px-3 py-1.5 bg-gray-50/50 dark:bg-[#1A1F2E]/50">
+                          <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Vencidas ({vencidas.length})</h4>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">Apólice Vencida</p>
-                          <p className="text-xs text-gray-600 dark:text-[#94A3B8] mt-1">SU-2024-4521 - Alagamento e Infiltração</p>
-                          <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1">Vencida há 49 dias</p>
-                        </div>
+                        <AnimatePresence>
+                        {vencidas.map(n => {
+                          const isUnread = !n.lida;
+                          const dotClass = n.lida ? 'border border-gray-300 dark:border-gray-600 bg-transparent' : 'bg-[#c4151f]';
+                          const bgClass = isUnread ? 'bg-[rgba(196,21,31,0.03)] dark:bg-[rgba(196,21,31,0.05)]' : 'opacity-55';
+                          
+                          return (
+                            <motion.div 
+                              key={n.id} 
+                              layout
+                              initial={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              transition={{ duration: 0.2 }}
+                              onClick={() => {
+                                setIsNotificationOpen(false);
+                                navigate(`/seguros?search=${n.luc}`);
+                              }}
+                              className={`group flex items-start gap-2 p-2.5 border-b border-gray-50 dark:border-[#2E3447]/50 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] cursor-pointer transition-colors ${bgClass}`}
+                            >
+                              <div className={`w-[6px] h-[6px] rounded-full mt-1.5 flex-shrink-0 ${dotClass}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline">
+                                  <p className="text-[12px] font-medium text-gray-900 dark:text-gray-100 truncate pr-2">
+                                    {n.loja} <span className="text-gray-400 font-normal ml-1">{n.luc}</span>
+                                  </p>
+                                  <span className="text-[10px] flex-shrink-0 text-[#c4151f] font-medium group-hover:hidden">-{n.dias}d</span>
+                                  <button onClick={(e) => handleArchiveSingle(e, n.id)} className="text-[10px] text-gray-400 hover:text-red-500 hidden group-hover:block" title="Arquivar">
+                                    ✕
+                                  </button>
+                                </div>
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                  {n.cobertura} • Vencida há {n.dias} dias
+                                </p>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                        </AnimatePresence>
                       </div>
-                    </div>
-                  </div>
+                    )}
 
-                  {/* Apólices a Vencer */}
-                  <div>
-                    <div className="px-4 py-2 bg-gray-50 dark:bg-[#1A1F2E]">
-                      <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices a Vencer (1)</h4>
-                    </div>
-                    <div
-                      className="p-4 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer"
-                      onClick={() => {
-                        setIsNotificationOpen(false);
-                        navigate('/seguros');
-                      }}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-lg flex-shrink-0 bg-orange-100 dark:bg-orange-900/20">
-                          <AlertTriangle className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                    {/* Apólices a Vencer */}
+                    {aVencer.length > 0 && (
+                      <div className="border-b border-gray-100 dark:border-[#2E3447]">
+                        <div className="px-3 py-1.5 bg-gray-50/50 dark:bg-[#1A1F2E]/50">
+                          <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">A Vencer em 30 dias ({aVencer.length})</h4>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">Atenção: Vence em Breve</p>
-                          <p className="text-xs text-gray-600 dark:text-[#94A3B8] mt-1">TM-2024-9012 - Seguro Incêndio</p>
-                          <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1">Vence em 18 dias</p>
-                        </div>
+                        <AnimatePresence>
+                        {aVencer.map(n => {
+                          const isUnread = !n.lida;
+                          const dotClass = n.lida ? 'border border-gray-300 dark:border-gray-600 bg-transparent' : 'bg-amber-500';
+                          const bgClass = isUnread ? 'bg-[rgba(196,21,31,0.03)] dark:bg-[rgba(196,21,31,0.05)]' : 'opacity-55';
+                          
+                          return (
+                            <motion.div 
+                              key={n.id} 
+                              layout
+                              initial={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              transition={{ duration: 0.2 }}
+                              onClick={() => {
+                                setIsNotificationOpen(false);
+                                navigate(`/seguros?search=${n.luc}`);
+                              }}
+                              className={`group flex items-start gap-2 p-2.5 border-b border-gray-50 dark:border-[#2E3447]/50 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] cursor-pointer transition-colors ${bgClass}`}
+                            >
+                              <div className={`w-[6px] h-[6px] rounded-full mt-1.5 flex-shrink-0 ${dotClass}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline">
+                                  <p className="text-[12px] font-medium text-gray-900 dark:text-gray-100 truncate pr-2">
+                                    {n.loja} <span className="text-gray-400 font-normal ml-1">{n.luc}</span>
+                                  </p>
+                                  <span className="text-[10px] flex-shrink-0 text-amber-600 dark:text-amber-500 font-medium group-hover:hidden">{n.dias}d</span>
+                                  <button onClick={(e) => handleArchiveSingle(e, n.id)} className="text-[10px] text-gray-400 hover:text-red-500 hidden group-hover:block" title="Arquivar">
+                                    ✕
+                                  </button>
+                                </div>
+                                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                                  {n.cobertura} • Vence em {n.dias} dias
+                                </p>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                        </AnimatePresence>
                       </div>
-                    </div>
+                    )}
                   </div>
 
-                  <div className="p-3 bg-gray-50 dark:bg-[#1A1F2E] text-center border-t border-gray-200 dark:border-[#2E3447]">
-                    <button
-                      onClick={() => {
-                        setIsNotificationOpen(false);
-                        navigate('/seguros');
-                      }}
-                      className="text-xs font-medium text-[#D93030] dark:text-[#E04444] hover:underline"
-                    >
-                      Ver todas as notificações
+                  <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-[#1A1F2E] border-t border-gray-200 dark:border-[#2E3447]">
+                    <button onClick={handleArchiveRead} className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors">
+                      Arquivar lidas
                     </button>
                   </div>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
             <button
               onClick={toggleDarkMode}

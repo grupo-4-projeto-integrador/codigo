@@ -84,12 +84,12 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
                 </div>
                 
                 <div className="flex-1 min-w-0 pr-2">
-                  <div className="flex flex-col gap-0.5 mb-1.5">
-                    <span className="font-bold text-[13px] text-gray-900 dark:text-white leading-snug break-words">{lucStr}</span>
-                    <span className="text-[11px] text-gray-500 dark:text-[#94A3B8] leading-snug break-words">{lojaStr}</span>
-                  </div>
-                  <div className={`text-[11px] font-semibold ${isVencida ? 'text-[#D93030]' : 'text-orange-500'}`}>
-                    {daysText}
+                  <div className="flex flex-col gap-0.5">
+                    <div className={`mb-0.5 ${isVencida ? 'text-[#c4151f] text-[11px] font-normal normal-case tracking-normal' : 'text-orange-500 text-[12px] font-bold uppercase tracking-wide'}`}>
+                      {daysText}
+                    </div>
+                    <span className="font-bold text-[13px] text-gray-900 dark:text-white leading-snug break-words uppercase">{lojaStr}</span>
+                    <span className="text-[11px] text-gray-500 dark:text-[#94A3B8] leading-snug break-words font-medium">{lucStr}</span>
                   </div>
                 </div>
                 

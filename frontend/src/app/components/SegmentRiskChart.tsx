@@ -3,6 +3,7 @@ import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc } from "../store";
 import { motion } from "motion/react";
+import { normalizarSegmento } from "../utils/segment";
 
 type SegmentRiskItem = {
   segmento: string;
@@ -46,7 +47,8 @@ function buildRiskFromApolices(
   const aggregate = new Map<string, { vencidas: number; totalAtraso: number }>();
 
   apolices.forEach((apolice) => {
-    const segmento = (apolice.segmento || apolice.tipo || "Nao informado").trim() || "Nao informado";
+    const rawSegmento = (apolice.segmento || apolice.tipo || "Nao informado").trim() || "Nao informado";
+    const segmento = rawSegmento !== "Nao informado" ? normalizarSegmento(rawSegmento) : rawSegmento;
     const vencimento = parseDate(apolice.vencimento || "");
     if (!vencimento) {
       return;
@@ -162,13 +164,12 @@ export function SegmentRiskChart() {
     };
   }, []);
 
-  const normalize = (value: string) => value.trim().toLowerCase();
   const selectedSegment = useMemo(() => {
     if (!selectedLuc) {
       return "";
     }
 
-    return normalize(lucToSegment[selectedLuc] || "");
+    return normalizarSegmento(lucToSegment[selectedLuc] || "");
   }, [lucToSegment, selectedLuc]);
 
   const maxVencidas = useMemo(() => {
@@ -203,7 +204,7 @@ export function SegmentRiskChart() {
           <div className="space-y-4">
             {data.map((item, index) => {
               const width = Math.max((item.vencidas / maxVencidas) * 100, item.vencidas > 0 ? 12 : 0);
-              const isHighlighted = selectedSegment !== "" && normalize(item.segmento) === selectedSegment;
+              const isHighlighted = selectedSegment !== "" && normalizarSegmento(item.segmento) === selectedSegment;
               const barColor = SEGMENT_BAR_COLORS[index % SEGMENT_BAR_COLORS.length];
               const isLightBar = barColor === "#f9e4a0";
 

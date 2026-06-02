@@ -531,7 +531,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
                 <div className="col-span-2 p-3 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
                   <div className="flex items-center justify-between gap-3">
                     {selectedPolicy.dias_restantes !== undefined && selectedPolicy.dias_restantes !== null ? (
-                      <span className={`font-bold text-base ${selectedPolicy.dias_restantes < 0 ? "text-[#a0191e]" : selectedPolicy.dias_restantes <= 30 ? "text-[#f59e0b]" : "text-[#168821]"}`}>
+                      <span className={`font-bold text-base ${selectedPolicy.dias_restantes < 0 ? "text-[#a0191e]" : selectedPolicy.dias_restantes <= 15 ? "text-[#f59e0b]" : "text-[#168821]"}`}>
                         {selectedPolicy.dias_restantes < 0 ? `${Math.abs(selectedPolicy.dias_restantes)} dias de atraso` : `${selectedPolicy.dias_restantes} dias`}
                       </span>
                     ) : (

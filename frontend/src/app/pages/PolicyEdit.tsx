@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { 
   ChevronRight, 
-  ArrowLeft, 
-  Save, 
+  Check,
   X
 } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
@@ -11,13 +10,14 @@ import { getApolice } from "../../api/apolice";
 import { request } from "../../api/client";
 import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { MultiSelect } from "../components/ui/multi-select";
 import { DatePicker } from "../components/ui/date-picker";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
 interface PolicyEditFormInputs {
   loja: string;
-  segmento: string;
+  tipos_cobertura: string[];
   seguradora: string;
   vigencia: Date | undefined;
   vencimento: Date | undefined;
@@ -37,7 +37,7 @@ export function PolicyEdit() {
   const { control, register, handleSubmit, reset } = useForm<PolicyEditFormInputs>({
     defaultValues: {
       loja: "",
-      segmento: "",
+      tipos_cobertura: [],
       seguradora: "",
       vigencia: undefined,
       vencimento: undefined,
@@ -47,7 +47,28 @@ export function PolicyEdit() {
     }
   });
 
+  const [tiposCobertura, setTiposCobertura] = useState<{label: string, value: string}[]>([]);
+  const [usuarios, setUsuarios] = useState<any[]>([]);
+
   useEffect(() => {
+    request<any[]>('/usuarios')
+      .then(data => setUsuarios(data || []))
+      .catch(() => setUsuarios([{ id: 1, nome: "João Carlos" }, { id: 2, nome: "Ana Silva" }]));
+    request<string[]>('/tipos-cobertura')
+      .then(data => {
+        if (data && data.length > 0) {
+          setTiposCobertura(data.map(d => ({ label: d, value: d })));
+        }
+      })
+      .catch(() => {
+        setTiposCobertura([
+          { label: "Incêndio", value: "Incêndio" },
+          { label: "Responsabilidade Civil", value: "Responsabilidade Civil" },
+          { label: "Roubo e Furto", value: "Roubo e Furto" },
+          { label: "Danos Elétricos", value: "Danos Elétricos" }
+        ]);
+      });
+
     if (!id) return;
     
     getApolice(id)
@@ -73,7 +94,7 @@ export function PolicyEdit() {
 
         reset({
           loja: data.lojista || "",
-          segmento: data.tipo || "",
+          tipos_cobertura: (data.tipo || data.segmento || "").split(',').map((s: string) => s.trim()).filter(Boolean),
           seguradora: data.seguradora || "",
           vigencia: data.vigencia ? parseDateSafe(data.vigencia) : undefined,
           vencimento: data.vencimento ? parseDateSafe(data.vencimento) : undefined,
@@ -99,7 +120,8 @@ export function PolicyEdit() {
       const payload = {
         luc: id,
         loja: data.loja,
-        segmento: data.segmento,
+        tipos_cobertura: data.tipos_cobertura,
+        segmento: data.tipos_cobertura.join(', '), // para retrocompatibilidade
         seguradora: data.seguradora,
         vigencia: data.vigencia ? format(data.vigencia, "dd/MM/yyyy") : "",
         vencimento: data.vencimento ? format(data.vencimento, "dd/MM/yyyy") : "",
@@ -133,7 +155,7 @@ export function PolicyEdit() {
   const isVencida = policyData.dias_restantes < 0;
   const diasRestantes = policyData.dias_restantes || 0;
   const statusColor = isVencida ? 'bg-[#D93030] text-white' : 
-                      (diasRestantes <= 30 ? 'bg-orange-500 text-white' : 'bg-[#788033] text-white');
+                      (diasRestantes <= 15 ? 'bg-orange-500 text-white' : 'bg-[#788033] text-white');
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-7xl mx-auto flex flex-col h-full">
@@ -175,8 +197,8 @@ export function PolicyEdit() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">LUC (Não Editável)</label>
-                <Input value={id} disabled className="bg-gray-50 dark:bg-[#1A1F2E]" />
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">LUC</label>
+                <Input value={id} disabled className="bg-gray-100 dark:bg-[#1A1F2E] opacity-50 cursor-not-allowed" />
               </div>
 
               <div className="space-y-2">
@@ -189,56 +211,28 @@ export function PolicyEdit() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Segmento / Tipo</label>
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Tipo de Cobertura</label>
                 <Controller
-                  name="segmento"
+                  name="tipos_cobertura"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full dark:bg-[#1A1F2E]">
-                        <SelectValue placeholder="Selecione o segmento" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Moda">Moda</SelectItem>
-                        <SelectItem value="Alimentação">Alimentação</SelectItem>
-                        <SelectItem value="Serviços">Serviços</SelectItem>
-                        <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
-                        <SelectItem value="Âncoras">Âncoras</SelectItem>
-                        <SelectItem value="Incêndio">Incêndio</SelectItem>
-                        <SelectItem value="Responsabilidade Civil">Responsabilidade Civil</SelectItem>
-                        <SelectItem value="Danos Elétricos">Danos Elétricos</SelectItem>
-                        <SelectItem value="Vidros e Fachadas">Vidros e Fachadas</SelectItem>
-                        <SelectItem value="Roubo e Furto">Roubo e Furto</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <MultiSelect
+                      options={tiposCobertura}
+                      selected={field.value || []}
+                      onChange={field.onChange}
+                      placeholder="Selecione o tipo de cobertura"
+                    />
                   )}
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Seguradora</label>
-                <Controller
-                  name="seguradora"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full dark:bg-[#1A1F2E]">
-                        <SelectValue placeholder="Selecione a seguradora" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Chubb">Chubb</SelectItem>
-                        <SelectItem value="Tokio Marine">Tokio Marine</SelectItem>
-                        <SelectItem value="Sompo">Sompo</SelectItem>
-                        <SelectItem value="Porto Seguro">Porto Seguro</SelectItem>
-                        <SelectItem value="Zurich">Zurich</SelectItem>
-                        <SelectItem value="Allianz">Allianz</SelectItem>
-                        <SelectItem value="Mapfre">Mapfre</SelectItem>
-                        <SelectItem value="HDI">HDI</SelectItem>
-                        <SelectItem value="Liberty">Liberty</SelectItem>
-                        <SelectItem value="Sura">Sura</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
+                <Input 
+                  {...register("seguradora")}
+                  placeholder="Ex: Porto Seguro"
+                  autoComplete="off"
+                  className="dark:bg-[#1A1F2E]"
                 />
               </div>
 
@@ -287,8 +281,15 @@ export function PolicyEdit() {
                 <Input 
                   {...register("responsavel")}
                   placeholder="Nome do responsável" 
+                  autoComplete="off"
+                  list="usuarios-list"
                   className="dark:bg-[#1A1F2E]"
                 />
+                <datalist id="usuarios-list">
+                  {usuarios.map(u => (
+                    <option key={u.id} value={u.nome || u.id} />
+                  ))}
+                </datalist>
               </div>
 
             </div>
@@ -308,12 +309,12 @@ export function PolicyEdit() {
               <button 
                 type="submit"
                 disabled={saving}
-                className="w-full bg-[#168821] hover:bg-[#126b1a] text-white font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
+                className="w-full bg-[#c4151f] hover:bg-[#a01119] text-white font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
               >
                 {saving ? (
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <Save className="w-4 h-4" />
+                  <Check className="w-4 h-4" />
                 )}
                 Salvar Alterações
               </button>
