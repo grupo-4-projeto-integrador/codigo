@@ -16,7 +16,7 @@ import (
 
 func main() {
 	withSeed := flag.Bool("seed", false, "Import seed data after applying migrations")
-	seedFile := flag.String("seed-file", "seguros.sql", "Main SQL dump to import into seguros")
+	seedFile := flag.String("seed-file", "migrations/seed_290_apolices.sql", "Main SQL dump to import into seguros")
 	extraSeedFile := flag.String("extra-seed-file", "seed_apolices.sql", "Additional seed script for coberturas and historico_apolice")
 	flag.Parse()
 
