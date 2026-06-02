@@ -7,13 +7,15 @@ import { ComplianceMapV2, ComplianceSidePanel } from "../components/ComplianceMa
 import { SegmentRiskChart } from "../components/SegmentRiskChart";
 import { ActionQueuePanel } from "../components/ActionQueuePanel";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, setMapFilters } from "../store";
+import { exportToPDF, exportToCSV } from "../utils/exportUtils";
 import { formatLargeCurrency } from "../utils/currency";
+import { useCountUp } from "../hooks/useCountUp";
 import { request } from "../../api/client";
 import { motion, AnimatePresence } from "motion/react";
 import { Tooltip as ShadcnTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu";
 import { IconDownload } from '@tabler/icons-react';
-import { exportToCSV, exportToXLSX } from '../utils/exportUtils';
+import { exportToXLSX } from '../utils/exportUtils';
 type KPIHistoryPoint = {
   label: string;
   value: number;
@@ -41,6 +43,64 @@ type AtividadeRecente = {
   timestamp: string;
 };
 
+const SyncFeedback = ({ lastSync }: { lastSync: Date }) => {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const secondsAgo = Math.floor((now.getTime() - lastSync.getTime()) / 1000);
+  
+  let message = "Sincronizado agora";
+  if (secondsAgo > 60) {
+    const minutes = Math.floor(secondsAgo / 60);
+    message = `há ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+  } else if (secondsAgo > 10) {
+    message = `há ${secondsAgo} segundos`;
+  }
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.span
+        key={message}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.8 }}
+      >
+        {message}
+      </motion.span>
+    </AnimatePresence>
+  );
+};
+
+const CardPulseOverlay = ({ value, color = "rgba(16, 185, 129, 0.15)" }: { value: any, color?: string }) => {
+  const [pulseKey, setPulseKey] = useState(0);
+  const prevValue = useRef(value);
+
+  useEffect(() => {
+    if (prevValue.current !== value) {
+      setPulseKey(k => k + 1);
+      prevValue.current = value;
+    }
+  }, [value]);
+
+  if (pulseKey === 0) return null;
+
+  return (
+    <motion.div
+      key={pulseKey}
+      initial={{ opacity: 1 }}
+      animate={{ opacity: 0 }}
+      transition={{ duration: 1.2, ease: "easeOut" }}
+      className="absolute inset-0 rounded-[14px] pointer-events-none z-10"
+      style={{ backgroundColor: color }}
+    />
+  );
+};
+
 export function Insurance() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -56,6 +116,8 @@ export function Insurance() {
   const [tipoFilter, setTipoFilter] = useState("todos");
   const [seguradoraFilter, setSeguradoraFilter] = useState("todas");
   const [vigenciaFilter, setVigenciaFilter] = useState("");
+
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(new Date());
   const [vencimentoFilter, setVencimentoFilter] = useState("");
 
   // Modal states
@@ -203,6 +265,7 @@ export function Insurance() {
   const percVencidas = totalPolicies ? Math.round((expiredPolicies / totalPolicies) * 100) : 0;
   const totalCobertura = allPolicies.reduce((acc, p) => acc + (Number(p.cobertura) || 0), 0);
 
+
   const sparklineDataAtivas = [
     { value: Math.max(0, activePolicies - 15) }, { value: Math.max(0, activePolicies - 10) }, { value: Math.max(0, activePolicies - 12) }, { value: Math.max(0, activePolicies - 5) }, { value: Math.max(0, activePolicies - 2) }, { value: activePolicies }
   ];
@@ -236,11 +299,17 @@ export function Insurance() {
 
   const { line: coverageDisponivelLine, area: coverageDisponivelArea } = buildCoveragePath(coverageDisponivelValues);
   const { line: coveragePagoLine, area: coveragePagoArea } = buildCoveragePath(coveragePagoValues);
-  const formattedCoverageTotal = formatLargeCurrency(totalCobertura);
+
 
   const conformidadeCount = conformesHistory?.current ?? activePolicies;
   const conformidadeTotal = conformesHistory?.total ?? 290;
   const complianceRate = conformidadeTotal > 0 ? (conformidadeCount / conformidadeTotal) * 100 : 0;
+
+  const animatedConformidade = Math.round(useCountUp(conformidadeCount));
+  const animatedExpiring = Math.round(useCountUp(expiringPolicies));
+  const animatedExpired = Math.round(useCountUp(expiredPolicies));
+  const animatedTotalCobertura = useCountUp(totalCobertura);
+  const formattedCoverageTotal = formatLargeCurrency(animatedTotalCobertura);
   const weeklyVariation = conformesHistory?.weekly_change_percent ?? 0;
   const sparklineValues = (conformesHistory?.points?.length)
     ? conformesHistory.points.map((point) => point.value)
@@ -285,6 +354,7 @@ export function Insurance() {
       try {
         const data = await request<any[]>('/apolices');
         setAllPolicies(data || []);
+        setLastSyncTime(new Date());
       } catch (err) {
         console.error("Failed to fetch policies", err);
       } finally {
@@ -875,12 +945,10 @@ export function Insurance() {
   );
 
   return (
-    <>
-      <div className="flex flex-col lg:flex-row h-full gap-3 md:gap-4 lg:gap-6" style={{ backgroundColor: colors.pageBg }}>
-        {/* Main Content Area */}
-        <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-6 overflow-y-auto">
-          {/* Breadcrumb & Sync Status */}
-          <div className="hidden md:flex items-center justify-between mb-2">
+    <div className="flex flex-col h-full overflow-hidden" style={{ backgroundColor: colors.pageBg }}>
+      {/* Page Header (Breadcrumb, Sync Status, Title & Filters) */}
+      <div className="flex-shrink-0 mb-4 space-y-2 px-6 pt-4">
+        <div className="hidden md:flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-[#94A3B8]">
               <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/')}>Flamboyant Shopping</span>
               <ChevronRight className="w-3 h-3" />
@@ -889,12 +957,17 @@ export function Insurance() {
             
             <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-[#94A3B8] font-medium">
               <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></div>
-              Sincronizado em {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-              <button className="ml-1 p-1 hover:bg-gray-100 dark:hover:bg-[#2E3447] rounded-md transition-colors"><Activity className="w-3 h-3"/></button>
+              <SyncFeedback lastSync={lastSyncTime} />
+              <button 
+                onClick={() => { setLastSyncTime(new Date()); /* triggers visual sync, real sync can be added here */ }}
+                className="ml-1 p-1 hover:bg-gray-100 dark:hover:bg-[#2E3447] rounded-md transition-colors"
+                title="Sincronizar agora"
+              >
+                <Activity className="w-3 h-3"/>
+              </button>
             </div>
           </div>
 
-          {/* Title + Search/Filters Row */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
             <div>
               <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>Mapa de Conformidade por LUC</h1>
@@ -980,7 +1053,6 @@ export function Insurance() {
                 )}
               </div>
 
-              {/* Export Button */}
               <DropdownMenu>
                 <TooltipProvider>
                   <ShadcnTooltip>
@@ -1014,23 +1086,48 @@ export function Insurance() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <button
+              <motion.button
                 onClick={handleNovaApolice}
-                className="px-4 py-2 bg-[#9F1239] hover:bg-[#880d2f] text-white rounded-lg text-[13px] font-semibold flex items-center gap-1.5 transition-colors shadow-sm ml-1 whitespace-nowrap"
+                className="relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold flex items-center justify-center shadow-sm ml-1 whitespace-nowrap group"
+                whileHover={{ scale: 1.02, backgroundColor: "#880d2f", boxShadow: "0 4px 14px rgba(159, 18, 57, 0.4)" }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
               >
-                <Plus className="w-4 h-4" /> Nova Apólice
-              </button>
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <Plus className="w-4 h-4" /> Nova Apólice
+                </span>
+                
+                <motion.div
+                  className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg] w-[150%] pointer-events-none"
+                  initial={{ x: "-150%" }}
+                  animate={{ x: "150%" }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.5,
+                    repeatDelay: 4,
+                    ease: "easeInOut",
+                  }}
+                />
+              </motion.button>
             </div>
           </div>
+      </div>
 
-          {/* Top KPI Row - 4 cards com altura fixa 140px (Dados Reais) */}
+      {/* Main Layout Area (Left/Right Columns) */}
+      <div className="flex flex-col lg:flex-row flex-1 gap-3 md:gap-4 lg:gap-6 min-h-0 px-6 overflow-y-auto">
+        
+        {/* Left Column (Main Content Area) */}
+        <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-6 pb-4">
+
+          {/* Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
             
             {/* Card 1 - Taxa de Conformidade */}
             <div
-              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               style={{ border: 'none' }}
             >
+              <CardPulseOverlay value={conformidadeCount} color="rgba(16, 185, 129, 0.15)" />
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
@@ -1039,7 +1136,7 @@ export function Insurance() {
 
                   <div className="mt-2 flex items-end gap-1 leading-none">
                     <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white">
-                      {conformidadeCount}
+                      {animatedConformidade}
                     </span>
                     <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
                       / {conformidadeTotal}
@@ -1097,10 +1194,13 @@ export function Insurance() {
                     </linearGradient>
                   </defs>
 
-                  {sparklineArea && <path d={sparklineArea} fill={`url(#kpi-history-gradient-${sparklineGradientId})`} />}
+                  {sparklineArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={sparklineArea} fill={`url(#kpi-history-gradient-${sparklineGradientId})`} />}
 
                   {sparklineLine && (
-                    <path
+                    <motion.path
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
                       d={sparklineLine}
                       fill="none"
                       stroke="#639922"
@@ -1115,9 +1215,10 @@ export function Insurance() {
 
             {/* Card 2 - A Vencer */}
             <div
-              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               style={{ border: 'none' }}
             >
+              <CardPulseOverlay value={expiringPolicies} color="rgba(245, 158, 11, 0.15)" />
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
@@ -1126,7 +1227,7 @@ export function Insurance() {
 
                   <div className="mt-2 flex items-end gap-1 leading-none">
                     <span className="text-[28px] font-light tracking-[-0.02em] text-[#BA7517]">
-                      {expiringPolicies}
+                      {animatedExpiring}
                     </span>
                     <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
                       apólices
@@ -1168,11 +1269,14 @@ export function Insurance() {
                     </linearGradient>
                   </defs>
 
-                  {expiringArea && <path d={expiringArea} fill={`url(#expiring-history-gradient-${expiringSparklineId})`} />}
+                  {expiringArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={expiringArea} fill={`url(#expiring-history-gradient-${expiringSparklineId})`} />}
 
                   {expiringLine && (
                     <>
-                      <path
+                      <motion.path
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                         d={expiringLine}
                         fill="none"
                         stroke="#BA7517"
@@ -1198,9 +1302,10 @@ export function Insurance() {
 
             {/* Card 3 - Vencidas */}
             <div
-              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               style={{ border: 'none' }}
             >
+              <CardPulseOverlay value={expiredPolicies} color="rgba(159, 18, 57, 0.15)" />
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
@@ -1209,7 +1314,7 @@ export function Insurance() {
 
                   <div className="mt-2 flex items-end gap-1 leading-none">
                     <span className="text-[28px] font-light tracking-[-0.02em] text-[#A32D2D]">
-                      {expiredPolicies}
+                      {animatedExpired}
                     </span>
                     <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
                       apólices
@@ -1251,11 +1356,14 @@ export function Insurance() {
                     </linearGradient>
                   </defs>
 
-                  {vencidasArea && <path d={vencidasArea} fill={`url(#expired-history-gradient-${expiredSparklineId})`} />}
+                  {vencidasArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={vencidasArea} fill={`url(#expired-history-gradient-${expiredSparklineId})`} />}
 
                   {vencidasLine && (
                     <>
-                      <path
+                      <motion.path
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                         d={vencidasLine}
                         fill="none"
                         stroke="#A32D2D"
@@ -1284,11 +1392,12 @@ export function Insurance() {
               </div>
             </div>
 
-            {/* Card 4 - Cobertura Total */}
+            {/* Card 4 - Valor Segurado */}
             <div
-              className="bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+              className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
               style={{ border: 'none' }}
             >
+              <CardPulseOverlay value={totalCobertura} color="rgba(59, 130, 246, 0.15)" />
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
@@ -1353,11 +1462,14 @@ export function Insurance() {
                     </linearGradient>
                   </defs>
 
-                  {coverageDisponivelArea && <path d={coverageDisponivelArea} fill={`url(#coverage-available-gradient-${coverageSparklineId})`} />}
-                  {coveragePagoArea && <path d={coveragePagoArea} fill={`url(#coverage-paid-gradient-${coverageSparklineId})`} />}
+                  {coverageDisponivelArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coverageDisponivelArea} fill={`url(#coverage-available-gradient-${coverageSparklineId})`} />}
+                  {coveragePagoArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coveragePagoArea} fill={`url(#coverage-paid-gradient-${coverageSparklineId})`} />}
 
                   {coverageDisponivelLine && (
-                    <path
+                    <motion.path
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
                       d={coverageDisponivelLine}
                       fill="none"
                       stroke="#639922"
@@ -1368,7 +1480,10 @@ export function Insurance() {
                   )}
 
                   {coveragePagoLine && (
-                    <path
+                    <motion.path
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
                       d={coveragePagoLine}
                       fill="none"
                       stroke="#A32D2D"
@@ -2297,6 +2412,6 @@ export function Insurance() {
           </div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

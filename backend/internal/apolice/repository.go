@@ -95,7 +95,7 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 		return Apolice{}, err
 	}
 
-	if err := r.insertHistoricoTx(tx, model.Luc, "ApÃƒÂ³lice criada", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, model.Luc, "Apólice criada", "Sistema"); err != nil {
 		return Apolice{}, err
 	}
 
@@ -136,7 +136,7 @@ func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) 
 		return Apolice{}, err
 	}
 
-	if err := r.insertHistoricoTx(tx, updated.Luc, "ApÃƒÂ³lice atualizada", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, updated.Luc, "Apólice atualizada", "Sistema"); err != nil {
 		return Apolice{}, err
 	}
 
@@ -167,7 +167,7 @@ func (r *PostgresRepository) Delete(luc string) error {
 		return ErrNotFound
 	}
 
-	if err := r.insertHistoricoTx(tx, luc, "ApÃƒÂ³lice excluÃƒÂ­da", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, luc, "Apólice excluída", "Sistema"); err != nil {
 		return err
 	}
 
@@ -299,7 +299,7 @@ func (r *PostgresRepository) UpdateObservacoes(luc string, observacoes string) e
 		return ErrNotFound
 	}
 
-	if err := r.insertHistoricoTx(tx, luc, "ObservaÃƒÂ§ÃƒÂµes atualizadas", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, luc, "Observações atualizadas", "Sistema"); err != nil {
 		return err
 	}
 
@@ -334,7 +334,7 @@ func (r *PostgresRepository) Renovar(luc string, novoVencimento time.Time, novoV
 
 func (r *PostgresRepository) insertHistoricoTx(tx *sql.Tx, luc string, descricao string, ator string) error {
 	if strings.TrimSpace(ator) == "" {
-		ator = "UsuÃƒÂ¡rio Logado"
+		ator = "João Carlos"
 	}
 
 	_, err := tx.Exec(`INSERT INTO historico_apolice (apolice_luc, data, descricao, ator) VALUES ($1, NOW(), $2, $3)`, luc, descricao, ator)

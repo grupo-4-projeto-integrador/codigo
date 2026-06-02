@@ -1,4 +1,4 @@
-﻿package apolice
+package apolice
 
 import (
 	"math"
@@ -141,7 +141,7 @@ func (s *Service) Renovar(luc string, novaVigenciaStr string, novoValor float64,
 		return err
 	}
 
-	return s.repo.Renovar(luc, novaVigencia, novoValor, ator, "RenovaÃ§Ã£o realizada")
+	return s.repo.Renovar(luc, novaVigencia, novoValor, ator, "Renovação realizada")
 }
 
 func (s *Service) GetLojas() ([]LojaInfo, error) {

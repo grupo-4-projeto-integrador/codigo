@@ -611,7 +611,7 @@ func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.service.Renovar(itemID, payload.NovaVigencia, payload.NovoValor, "UsuÃƒÂ¡rio Logado"); err != nil {
+	if err := h.service.Renovar(itemID, payload.NovaVigencia, payload.NovoValor, "João Carlos"); err != nil {
 		h.writeError(w, requestID, err)
 		return
 	}

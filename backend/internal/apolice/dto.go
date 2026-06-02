@@ -1,4 +1,4 @@
-﻿package apolice
+package apolice
 
 import "time"
 

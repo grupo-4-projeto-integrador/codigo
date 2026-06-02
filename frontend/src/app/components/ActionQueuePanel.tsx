@@ -39,12 +39,6 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
             {items.length}
           </span>
         </div>
-        <button 
-          onClick={fetchItems}
-          className="text-xs text-gray-500 hover:text-gray-900 dark:text-[#94A3B8] dark:hover:text-white flex items-center gap-1"
-        >
-          {loading ? <RefreshCw className="w-3 h-3 animate-spin" /> : "Ver todas"}
-        </button>
       </div>
 
       <div className="flex flex-col relative before:content-[''] before:absolute before:left-[48px] before:top-[20px] before:bottom-[20px] before:w-[1px] before:border-l before:border-dashed before:border-[rgba(196,21,31,0.25)]">
@@ -85,21 +79,21 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
               >
                 <div className="font-bold text-gray-400 dark:text-[#64748B] w-4 text-center mt-0.5">{index + 1}</div>
                 
-                <div className={`mt-0.5 relative z-[1] bg-white group-hover:bg-gray-50 dark:bg-[#242938] dark:group-hover:bg-[#2A3143] ${isVencida ? 'text-[#D93030]' : 'text-orange-500'}`}>
+                <div className={`mt-0.5 relative z-[1] bg-white group-hover:bg-gray-50 dark:bg-[#242938] dark:group-hover:bg-[#2A3143] ${isVencida ? 'text-[#D93030]' : 'text-orange-500'} flex-shrink-0`}>
                   <Clock className="w-4 h-4" />
                 </div>
                 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="font-bold text-sm text-gray-900 dark:text-white truncate">{lucStr}</span>
-                    <span className="text-xs text-gray-500 truncate dark:text-[#94A3B8]">{lojaStr}</span>
+                <div className="flex-1 min-w-0 pr-2">
+                  <div className="flex flex-col gap-0.5 mb-1.5">
+                    <span className="font-bold text-[13px] text-gray-900 dark:text-white leading-snug break-words">{lucStr}</span>
+                    <span className="text-[11px] text-gray-500 dark:text-[#94A3B8] leading-snug break-words">{lojaStr}</span>
                   </div>
                   <div className={`text-[11px] font-semibold ${isVencida ? 'text-[#D93030]' : 'text-orange-500'}`}>
                     {daysText}
                   </div>
                 </div>
                 
-                <div className="font-bold text-sm text-gray-900 whitespace-nowrap dark:text-white">
+                <div className="font-bold text-sm text-gray-900 whitespace-nowrap dark:text-white flex-shrink-0 pt-0.5">
                   {formattedVal}
                 </div>
               </button>

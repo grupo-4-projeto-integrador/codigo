@@ -15,7 +15,9 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertCircle,
-  AlertTriangle
+  AlertTriangle,
+  PanelLeftClose,
+  PanelLeftOpen
 } from "lucide-react";
 import logo from "../../imports/image-4.png";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
@@ -393,13 +395,13 @@ export function Layout() {
             className="p-2 text-white/80 hover:text-white hover:bg-[#a0191e50] rounded-lg transition-colors"
             title={isSidebarCollapsed ? "Expandir menu" : "Recolher menu"}
           >
-            {isSidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            {isSidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
         </div>
         
         <nav className="flex-1 py-6 px-4 space-y-1">
           <div
-            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group`}
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group transition-all duration-300 hover:bg-white/5 hover:translate-x-1`}
             title={isSidebarCollapsed ? "Dashboard" : ""}
           >
             <Home className={`w-5 h-5 ${isSidebarCollapsed ? '' : 'mr-3'} opacity-90`} />
@@ -411,7 +413,7 @@ export function Layout() {
             )}
           </div>
           <div
-            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group`}
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group transition-all duration-300 hover:bg-white/5 hover:translate-x-1`}
             title={isSidebarCollapsed ? "Novo Sinistro" : ""}
           >
             <ShieldAlert className={`w-5 h-5 ${isSidebarCollapsed ? '' : 'mr-3'} opacity-90`} />
@@ -423,7 +425,7 @@ export function Layout() {
             )}
           </div>
           <div
-            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group`}
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group transition-all duration-300 hover:bg-white/5 hover:translate-x-1`}
             title={isSidebarCollapsed ? "Histórico" : ""}
           >
             <FileText className={`w-5 h-5 ${isSidebarCollapsed ? '' : 'mr-3'} opacity-90`} />
@@ -436,7 +438,7 @@ export function Layout() {
           </div>
           <NavLink
             to="/seguros"
-            className={({isActive}) => `flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium transition-colors relative group ${isActive ? 'text-white' : 'text-white/80 hover:text-white'}`}
+            className={({isActive}) => `flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 relative group ${isActive ? 'text-white translate-x-1 shadow-md' : 'text-white/80 hover:text-white hover:bg-white/10 hover:translate-x-1'}`}
             style={({isActive}) => isActive ? { backgroundColor: '#a0191e' } : {}}
             title={isSidebarCollapsed ? "Seguros" : ""}
           >
@@ -449,7 +451,7 @@ export function Layout() {
             )}
           </NavLink>
           <div
-            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group`}
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group transition-all duration-300 hover:bg-white/5 hover:translate-x-1`}
             title={isSidebarCollapsed ? "Lojistas" : ""}
           >
             <Users className={`w-5 h-5 ${isSidebarCollapsed ? '' : 'mr-3'} opacity-90`} />
@@ -461,7 +463,7 @@ export function Layout() {
             )}
           </div>
           <div
-            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group`}
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group transition-all duration-300 hover:bg-white/5 hover:translate-x-1`}
             title={isSidebarCollapsed ? "Relatórios" : ""}
           >
             <BarChart3 className={`w-5 h-5 ${isSidebarCollapsed ? '' : 'mr-3'} opacity-90`} />
@@ -477,10 +479,7 @@ export function Layout() {
         <div className="p-4 border-t" style={{ borderColor: '#a0191e50' }}>
           <button
             onClick={() => navigate("/")}
-            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} w-full px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-lg transition-colors relative group`}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#a0191e50'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            title={isSidebarCollapsed ? "Sair" : ""}
+            className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} w-full px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-1 relative group`}
           >
             <LogOut className={`w-5 h-5 ${isSidebarCollapsed ? '' : 'mr-3'}`} />
             {!isSidebarCollapsed && " Sair"}

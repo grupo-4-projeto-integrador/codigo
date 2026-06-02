@@ -5,7 +5,7 @@ import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
 import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getMapFilters, subscribeMapFilters } from "../store";
 import { useNavigate } from "react-router";
@@ -118,6 +118,14 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
     });
   }, []);
 
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    // Only run the stagger animation once after the initial load.
+    // 500ms allows the map data to load and the initial animation to schedule.
+    const timer = setTimeout(() => setHasMounted(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const policyByLuc = useMemo<Map<string, ApoliceRecord>>(() => {
     return new Map(apolices.map((policy: ApoliceRecord) => [policy.luc, policy]));
   }, [apolices]);
@@ -180,12 +188,17 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
       className="w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] relative"
     >
       {/* Header */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mapa de Conformidade</h2>
-          <p className="text-sm text-gray-500 dark:text-[#94A3B8] mt-1">
-            {totalLucs} lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
-          </p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{totalLucs}</span>
+            <span className="text-[11px] font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-widest">lojas mapeadas</span>
+          </div>
+          <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-[#475569]"></div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-2xl font-bold text-[#9F1239] dark:text-[#E04444] tracking-tight">{percentualVencidas}%</span>
+            <span className="text-[11px] font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-widest">com apólice vencida</span>
+          </div>
         </div>
       </div>
 
@@ -202,7 +215,7 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
           {/* LUC Grid */}
           <TooltipProvider delayDuration={100}>
             <div className="mb-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 44px)', gridAutoRows: '38px', gap: '5px', justifyContent: 'start', width: '100%' }}>
-              {paginatedLucs.map((luc: string) => {
+              {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
               const details = getStatusDetails(policy?.status);
               const isSelected = selectedLuc === luc;
@@ -218,6 +231,20 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
                   ? `${statusLabel} • ${Math.abs(daysRemaining)} dias de atraso`
                   : `${statusLabel} • ${daysRemaining} dias restantes`;
 
+              const { filtroSegmento, filtroSeguradora, filtroStatus } = mapFilters;
+              const hasFilter = filtroSegmento || filtroSeguradora || filtroStatus;
+              let isDimmed = false;
+              if (hasFilter) {
+                const p = policyByLuc.get(luc);
+                const segmento = p?.segmento || p?.tipo || '';
+                const seguradora = p?.seguradora || '';
+                const status = (p?.status || '').toLowerCase();
+                isDimmed =
+                  !!(filtroSegmento && segmento !== filtroSegmento) ||
+                  !!(filtroSeguradora && seguradora !== filtroSeguradora) ||
+                  !!(filtroStatus && status !== filtroStatus.toLowerCase());
+              }
+
               return (
                 <Tooltip key={luc}>
                   <TooltipTrigger asChild>
@@ -225,36 +252,18 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
                       onClick={() => onSelectLuc(luc)}
                       className="relative flex items-center justify-center font-bold text-sm shadow-sm focus:outline-none border border-transparent"
                       aria-label={`LUC ${luc}`}
-                      style={(() => {
-                        const { filtroSegmento, filtroSeguradora, filtroStatus } = mapFilters;
-                        const hasFilter = filtroSegmento || filtroSeguradora || filtroStatus;
-                        let isDimmed = false;
-                        if (hasFilter) {
-                          const p = policyByLuc.get(luc);
-                          const segmento = p?.segmento || p?.tipo || '';
-                          const seguradora = p?.seguradora || '';
-                          const status = (p?.status || '').toLowerCase();
-                          isDimmed =
-                            !!(filtroSegmento && segmento !== filtroSegmento) ||
-                            !!(filtroSeguradora && seguradora !== filtroSeguradora) ||
-                            !!(filtroStatus && status !== filtroStatus.toLowerCase());
-                        }
-                        return {
+                      style={{
                           width: '44px',
                           height: '38px',
                           borderRadius: '10px',
                           flexShrink: 0,
-                          backgroundColor: details.bg,
                           color: details.text,
                           zIndex: zIndexLevel,
-                          opacity: isDimmed ? 0.12 : 1,
                           pointerEvents: (isDimmed ? 'none' : 'auto') as React.CSSProperties['pointerEvents'],
-                          transition: 'opacity 0.2s ease',
                           ...(isSelected ? { boxShadow: `0 0 0 3px #3b82f6` } : {})
-                        };
-                      })()}
-                      initial={{ scale: baseScale }}
-                      animate={{ scale: baseScale }}
+                      }}
+                      initial={hasMounted ? false : { scale: 0.5, opacity: 0 }}
+                      animate={{ scale: baseScale, opacity: isDimmed ? 0.12 : 1 }}
                       whileHover={{
                         scale: baseScale * 1.1,
                         boxShadow: `0 10px 20px -5px ${details.bg}60, 0 4px 10px -3px rgba(0,0,0,0.1)`,
@@ -265,9 +274,34 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
                       transition={{
                         type: "spring",
                         stiffness: 400,
-                        damping: 25
+                        damping: 25,
+                        ...(hasMounted ? {
+                          opacity: { duration: 0.2 },
+                          scale: { type: "spring", stiffness: 300, damping: 20 }
+                        } : {
+                          opacity: { duration: 0.3, delay: index * 0.05 },
+                          scale: { type: "spring", stiffness: 300, damping: 20, delay: index * 0.05 }
+                        })
                       }}
-                    />
+                    >
+                      <AnimatePresence mode="popLayout">
+                        <motion.div
+                          key={details.bg}
+                          initial={{ scale: 0.85, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.85, opacity: 0 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: details.bg,
+                            position: 'absolute',
+                            inset: 0,
+                            borderRadius: '10px',
+                          }}
+                        />
+                      </AnimatePresence>
+                    </motion.button>
                   </TooltipTrigger>
                   <TooltipContent
                     side="top"
@@ -357,26 +391,39 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
     return () => { active = false; };
   }, []);
 
-  if (!selectedLuc) {
-    return (
-      <div className="bg-white dark:bg-[#242938] rounded-xl border flex flex-col items-center justify-center h-full min-h-[400px] text-center p-8" style={{ borderColor: '#E5E7EB' }}>
-        <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] mb-4">
-          <MapPin className="w-8 h-8 text-gray-300 dark:text-[#475569]" />
-        </div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Nenhuma unidade selecionada</h3>
-        <p className="text-sm text-gray-500 dark:text-[#94A3B8] max-w-[250px]">
-          Clique em um dos quadrados do mapa ao lado para visualizar os detalhes de conformidade.
-        </p>
-      </div>
-    );
-  }
-
   const policyByLuc = new Map(apolices.map((policy) => [policy.luc, policy]));
-  const selectedPolicy = policyByLuc.get(selectedLuc);
+  const selectedPolicy = selectedLuc ? policyByLuc.get(selectedLuc) : undefined;
   const selectedDetails = getStatusDetails(selectedPolicy?.status);
 
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl border overflow-hidden" style={{ borderColor: '#E5E7EB', display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="bg-white dark:bg-[#242938] rounded-xl border relative overflow-hidden" style={{ borderColor: '#E5E7EB', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '400px' }}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        {!selectedLuc ? (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20, position: 'absolute' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+            className="flex flex-col items-center justify-center h-full w-full text-center p-8 absolute inset-0 bg-white dark:bg-[#242938] z-10"
+          >
+            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] mb-4">
+              <MapPin className="w-8 h-8 text-gray-300 dark:text-[#475569]" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Nenhuma unidade selecionada</h3>
+            <p className="text-sm text-gray-500 dark:text-[#94A3B8] max-w-[250px]">
+              Clique em um dos quadrados do mapa ao lado para visualizar os detalhes de conformidade.
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key={selectedLuc}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20, position: 'absolute' }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+            className="flex flex-col h-full w-full absolute inset-0 bg-white dark:bg-[#242938] z-20"
+          >
       {/* Panel Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-white dark:bg-[#242938] dark:border-[#2E3447]">
         <div className="flex items-center gap-3">
@@ -627,6 +674,9 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
           </div>
         )}
       </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

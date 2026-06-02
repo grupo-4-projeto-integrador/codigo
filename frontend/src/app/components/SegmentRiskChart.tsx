@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc } from "../store";
+import { motion } from "motion/react";
 
 type SegmentRiskItem = {
   segmento: string;
@@ -199,7 +200,7 @@ export function SegmentRiskChart() {
             Nenhum segmento com risco identificado.
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-4">
             {data.map((item, index) => {
               const width = Math.max((item.vencidas / maxVencidas) * 100, item.vencidas > 0 ? 12 : 0);
               const isHighlighted = selectedSegment !== "" && normalize(item.segmento) === selectedSegment;
@@ -207,45 +208,46 @@ export function SegmentRiskChart() {
               const isLightBar = barColor === "#f9e4a0";
 
               return (
-                <div
+                <motion.div
                   key={item.segmento}
-                  className="rounded-lg border px-2.5 py-2 transition-colors"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.08, type: "spring", stiffness: 400, damping: 25 }}
+                  className="group relative transition-all duration-300"
                   style={{
-                    borderColor: isHighlighted ? "#3e0000" : "#e5e7eb",
-                    background: isHighlighted
-                      ? "linear-gradient(90deg, rgba(62,0,0,0.10) 0%, rgba(62,0,0,0.04) 100%)"
-                      : "transparent",
-                    boxShadow: isHighlighted
-                      ? "inset 0 0 0 1px rgba(62,0,0,0.12), 0 1px 3px rgba(62,0,0,0.10)"
-                      : "none",
+                    opacity: selectedSegment && !isHighlighted ? 0.3 : 1
                   }}
                 >
-                  <div className="mb-1 flex items-center justify-between gap-3">
-                    <span
-                      className="truncate text-[12px] font-medium text-gray-800 dark:text-gray-100"
-                      style={{ color: isLightBar ? "#3e0000" : isHighlighted ? "#3e0000" : undefined }}
-                    >
-                      {item.segmento}
-                    </span>
-                    <span
-                      className="text-[11px] text-gray-500 dark:text-[#94A3B8] whitespace-nowrap"
-                      style={{ color: isHighlighted ? "#6e150e" : undefined }}
-                    >
-                      {item.vencidas} vencidas - {item.dias_medio_atraso}d medio
-                    </span>
+                  <div className="flex justify-between items-end mb-1.5">
+                    <div className="flex flex-col">
+                      <span
+                        className="truncate text-[13px] font-semibold text-gray-900 dark:text-gray-100 transition-colors"
+                        style={{ color: isHighlighted ? "#a0191e" : undefined }}
+                      >
+                        {index + 1}. {item.segmento}
+                      </span>
+                      <span
+                        className="text-[11px] font-medium text-gray-500 dark:text-[#94A3B8] mt-0.5 transition-colors"
+                        style={{ color: isHighlighted ? "#6e150e" : undefined }}
+                      >
+                        <span className="text-gray-900 dark:text-gray-300">{item.vencidas}</span> vencidas <span className="mx-1 text-gray-300 dark:text-gray-600">•</span> <span className="text-gray-900 dark:text-gray-300">{item.dias_medio_atraso}d</span> atraso médio
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="h-5 w-full rounded bg-gray-100 dark:bg-[#242938] overflow-hidden">
-                    <div
-                      className="h-full rounded"
+                  <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-[#242938] overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${width}%` }}
+                      transition={{ delay: index * 0.08 + 0.15, duration: 0.7, ease: "easeOut" }}
                       style={{
-                        width: `${width}%`,
                         background: barColor,
-                        opacity: isHighlighted ? 1 : 0.9,
+                        opacity: isHighlighted ? 1 : 0.85,
                       }}
                     />
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
