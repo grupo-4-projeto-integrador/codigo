@@ -75,7 +75,7 @@ jobs:
         run: |
           go run ./cmd/api &
           sleep 5
-          go test ./smoke_test.go -v
+          go test -tags smoke ./smoke_test.go -v
 
       - name: Install Frontend
         working-directory: ./frontend
