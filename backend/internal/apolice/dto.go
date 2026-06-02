@@ -1,4 +1,4 @@
-package apolice
+﻿package apolice
 
 import "time"
 
@@ -58,10 +58,18 @@ func ParseDate(value string) (time.Time, error) {
 		}
 	}
 
-	return time.Time{}, ErrValidation("data inválida: " + value)
+	return time.Time{}, ErrValidation("data invÃ¡lida: " + value)
 }
 
 type RenovacaoPayload struct {
 	NovaVigencia string  `json:"nova_vigencia"`
 	NovoValor    float64 `json:"novo_valor"`
 }
+type DocumentoDTO struct {
+	ID          int    `json:"id"`
+	ApoliceLuc  string `json:"apolice_luc"`
+	Nome        string `json:"nome"`
+	DataAdicao  string `json:"data_adicao"`
+}
+
+

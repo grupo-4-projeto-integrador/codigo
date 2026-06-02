@@ -1,6 +1,6 @@
-import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert, FilePlus, FilePenLine, RefreshCw, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import { useState, useEffect, useRef, useId } from "react";
+import React, { useState, useEffect, useRef, useId } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { ComplianceMapV2, ComplianceSidePanel } from "../components/ComplianceMapV2";
@@ -30,6 +30,15 @@ type KPIHistoryResponse = {
 type CoverageHistoryResponse = {
   disponivel: number[];
   pago: number[];
+};
+
+type AtividadeRecente = {
+  id: string;
+  luc: string;
+  nome_loja: string;
+  acao: string;
+  responsavel: string;
+  timestamp: string;
 };
 
 export function Insurance() {
@@ -177,6 +186,8 @@ export function Insurance() {
   const [conformesHistory, setConformesHistory] = useState<KPIHistoryResponse | null>(null);
   const [vencidasHistoryData, setVencidasHistoryData] = useState<KPIHistoryResponse | null>(null);
   const [coverageHistory, setCoverageHistory] = useState<CoverageHistoryResponse | null>(null);
+  const [atividadesRecentes, setAtividadesRecentes] = useState<AtividadeRecente[]>([]);
+  const [loadingAtividades, setLoadingAtividades] = useState(true);
   const sparklineGradientId = useId().replace(/:/g, "-");
   const expiringSparklineId = useId().replace(/:/g, "-");
   const expiredSparklineId = useId().replace(/:/g, "-");
@@ -359,6 +370,22 @@ export function Insurance() {
     return () => {
       active = false;
     };
+  }, []);
+
+  const fetchAtividadesGlobais = async () => {
+    setLoadingAtividades(true);
+    try {
+      const data = await request<AtividadeRecente[]>('/apolices/atividade-recente?limit=5');
+      setAtividadesRecentes(data || []);
+    } catch {
+      setAtividadesRecentes([]);
+    } finally {
+      setLoadingAtividades(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAtividadesGlobais();
   }, []);
 
 
@@ -563,10 +590,31 @@ export function Insurance() {
     setShowRenovarModal(true);
   };
 
-  const handleConfirmarRenovacao = () => {
-    alert(`Renovação da apólice ${selectedPolicy?.id} confirmada!\n\nA apólice será renovada por mais 12 meses.`);
-    setShowRenovarModal(false);
-    setSelectedPolicy(null);
+  const handleConfirmarRenovacao = async () => {
+    if (!selectedPolicy) return;
+    try {
+      // Create a date next year for new vigencia
+      const nextYear = new Date();
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      
+      const payload = {
+        nova_vigencia: nextYear.toLocaleDateString('pt-BR'),
+        novo_valor: parseFloat((selectedPolicy.cobertura || '0').replace(/\D/g, '')) / 100 || 0
+      };
+
+      await request(`/apolices/${selectedPolicy.id}/renovar`, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      
+      alert(`Renovação da apólice ${selectedPolicy.id} confirmada!\n\nA apólice será renovada por mais 12 meses.`);
+      setShowRenovarModal(false);
+      setSelectedPolicy(null);
+      fetchAtividadesGlobais();
+    } catch (err) {
+      console.error(err);
+      alert("Falha ao renovar a apólice");
+    }
   };
 
   const handleVerApoliceCard = (policyId: string) => {
@@ -834,11 +882,9 @@ export function Insurance() {
           {/* Breadcrumb & Sync Status */}
           <div className="hidden md:flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-[#94A3B8]">
-              <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/dashboard')}>Shopping Flamboyant</span>
+              <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/')}>Flamboyant Shopping</span>
               <ChevronRight className="w-3 h-3" />
-              <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }}>Seguros</span>
-              <ChevronRight className="w-3 h-3" />
-              <span className="font-medium text-gray-800 dark:text-gray-300">Dashboard</span>
+              <span className="font-medium text-gray-800 dark:text-gray-300">Seguros</span>
             </div>
             
             <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-[#94A3B8] font-medium">
@@ -1445,7 +1491,7 @@ export function Insurance() {
                     onClick={() => typeof page === 'number' && handlePageClick(page)}
                     disabled={typeof page !== 'number'}
                     className={`w-7 h-7 rounded flex items-center justify-center text-[12px] font-medium transition-all outline-none ${page === currentPage
-                        ? 'bg-[#EFF6FF] text-[#3B82F6] border border-[#3B82F6]'
+                        ? 'bg-[#c4151f]/10 text-[#c4151f] border border-[#c4151f] dark:bg-[#c4151f]/20 dark:text-[#E23B44] dark:border-[#E23B44]'
                         : typeof page === 'number'
                           ? 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#242938] border border-transparent'
                           : 'bg-transparent text-gray-400 cursor-default border border-transparent'
@@ -1468,7 +1514,7 @@ export function Insurance() {
         </div>
 
           {/* Right Panel (350px fixed) - SEM PERFIL */}
-        <div className="w-full lg:w-[350px] space-y-3 md:space-y-4 flex-shrink-0 overflow-y-auto rounded-[0px]">
+        <div className="w-full lg:w-[350px] space-y-3 md:space-y-4 flex-shrink-0 flex flex-col h-full rounded-[0px]">
 
           {/* Fila de Ação */}
           <ActionQueuePanel onSelectLuc={setSelectedMapLuc} />
@@ -1481,6 +1527,84 @@ export function Insurance() {
             onEditApolice={handleEditarApolice}
           />
 
+          {/* 3. Atividade Recente */}
+          <div className="bg-white dark:bg-[#242938] rounded-xl border flex-1 flex flex-col min-h-0"
+            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
+          >
+            <div className="px-4 py-3 border-b flex items-center justify-between shrink-0" style={{ borderColor: colors.cardBorder }}>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-[#8B1A1A]/10 dark:bg-[#E04444]/10 flex items-center justify-center">
+                  <Activity className="w-3.5 h-3.5 text-[#8B1A1A] dark:text-[#E04444]" />
+                </div>
+                <h3 className="text-[13px] font-bold text-gray-900 dark:text-white">Atividade Recente</h3>
+              </div>
+              <span className="text-[10px] text-gray-400 dark:text-[#64748B] font-medium uppercase tracking-wide">Últimas ações</span>
+            </div>
+
+            <div className="divide-y overflow-y-auto flex-1" style={{ borderColor: colors.cardBorder }}>
+              {loadingAtividades ? (
+                <div className="flex flex-col gap-3 p-4">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="flex items-start gap-3 animate-pulse">
+                      <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#1A1F2E] shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="h-3 bg-gray-200 dark:bg-[#1A1F2E] rounded w-3/4" />
+                        <div className="h-2.5 bg-gray-100 dark:bg-[#1E2435] rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : atividadesRecentes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#1A1F2E] flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-gray-400" />
+                  </div>
+                  <p className="text-[12px] text-gray-400 dark:text-[#64748B] text-center">Nenhuma atividade registrada ainda.<br />Crie ou edite uma apólice para começar.</p>
+                </div>
+              ) : (
+                atividadesRecentes.map((atividade, i) => {
+                  const iconConfig: Record<string, { icon: React.ReactNode; bg: string; text: string }> = {
+                    criada:      { icon: <FilePlus className="w-3.5 h-3.5" />, bg: 'bg-[#1c3d32]/10 dark:bg-[#1c3d32]/30', text: 'text-[#1c3d32] dark:text-[#2E7A5A]' },
+                    editada:     { icon: <FilePenLine className="w-3.5 h-3.5" />, bg: 'bg-[#bc9b7c]/15 dark:bg-[#bc9b7c]/20', text: 'text-[#8a6845] dark:text-[#D1B7A1]' },
+                    renovada:    { icon: <RefreshCw className="w-3.5 h-3.5" />, bg: 'bg-[#788033]/15 dark:bg-[#788033]/30', text: 'text-[#5a6121] dark:text-[#A3AD44]' },
+                    excluida:    { icon: <Trash2 className="w-3.5 h-3.5" />, bg: 'bg-[#c4151f]/10 dark:bg-[#c4151f]/30', text: 'text-[#c4151f] dark:text-[#E23B44]' },
+                    observacoes: { icon: <FileText className="w-3.5 h-3.5" />, bg: 'bg-[#6e150e]/10 dark:bg-[#6e150e]/30', text: 'text-[#6e150e] dark:text-[#D45044]' },
+                  };
+                  const cfg = iconConfig[atividade.acao] ?? iconConfig['editada'];
+                  const acaoLabel: Record<string, string> = {
+                    criada: 'Criou apólice', editada: 'Editou apólice',
+                    renovada: 'Renovou apólice', excluida: 'Excluiu apólice',
+                    observacoes: 'Atualizou observações'
+                  };
+                  const ts = new Date(atividade.timestamp);
+                  const timeStr = ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                  const dateStr = ts.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                  return (
+                    <div
+                      key={atividade.id}
+                      className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer"
+                      onClick={() => handleVerApolice(atividade.luc)}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg} ${cfg.text}`}>
+                        {cfg.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[12px] font-semibold text-gray-900 dark:text-white truncate">
+                            {atividade.nome_loja || atividade.luc}
+                          </span>
+                          <span className="text-[10px] text-gray-400 dark:text-[#64748B] shrink-0">{dateStr} {timeStr}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 dark:text-[#94A3B8] mt-0.5">
+                          {acaoLabel[atividade.acao] ?? atividade.acao} · {atividade.responsavel}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
 
         </div>
       </div>

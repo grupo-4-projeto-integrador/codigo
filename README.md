@@ -22,7 +22,7 @@ Para facilitar a vida do grupo, criamos um script que faz toda a configuração 
 
 1. **Configure o Banco de Dados e as Variáveis**
 
-Na pasta raiz do projeto, entre na pasta `backend` e rode o nosso script automático. Ele vai criar as tabelas, inserir os dados e criar o arquivo `.env` sozinho:
+Na pasta raiz do projeto, entre na pasta `backend` e rode o nosso script automático. O script vai te fazer duas perguntas simples (qual a sua senha do PostgreSQL e qual o nome do banco que deseja usar), e então fará todo o resto sozinho: criará o banco se não existir, inserirá os dados de exemplo, e vai gerar o arquivo `.env` já configurado.
 
 ```powershell
 cd backend

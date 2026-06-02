@@ -93,3 +93,8 @@ export async function getAtividadesRecentes(limit: number = 10): Promise<any[]> 
   return request<any[]>(`/atividades?limit=${limit}`);
 }
 
+
+export async function getDocumentos(luc: string): Promise<any[]> {
+  return request<any[]>(`/apolices/${encodeURIComponent(luc)}/documentos`);
+}
+

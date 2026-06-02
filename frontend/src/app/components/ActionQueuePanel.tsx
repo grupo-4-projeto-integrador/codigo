@@ -17,7 +17,7 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
     setLoading(true);
     try {
       const data = await getFilaDeAcao();
-      setItems(data.slice(0, 5));
+      setItems(data.slice(0, 3));
       setLastUpdate(new Date());
     } catch (error) {
       console.error("Failed to load fila de acao", error);

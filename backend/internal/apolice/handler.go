@@ -3,6 +3,7 @@ package apolice
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"os"
@@ -68,7 +69,7 @@ func (h *Handler) GetMapLayout(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
@@ -93,7 +94,7 @@ func (h *Handler) GetLojas(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
@@ -110,7 +111,7 @@ func (h *Handler) GetKPIHistory(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
@@ -119,7 +120,7 @@ func (h *Handler) GetKPIHistory(w http.ResponseWriter, r *http.Request) {
 		metric = "conformes"
 	}
 	if metric != "conformes" && metric != "vencidas" {
-		_ = response.Fail(w, http.StatusBadRequest, "Métrica não suportada", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "MÃƒÂ©trica nÃƒÂ£o suportada", requestID, nil)
 		return
 	}
 
@@ -127,7 +128,7 @@ func (h *Handler) GetKPIHistory(w http.ResponseWriter, r *http.Request) {
 	if rawWeeks := strings.TrimSpace(r.URL.Query().Get("weeks")); rawWeeks != "" {
 		parsedWeeks, err := strconv.Atoi(rawWeeks)
 		if err != nil || parsedWeeks < 1 {
-			_ = response.Fail(w, http.StatusBadRequest, "Parâmetro weeks inválido", requestID, nil)
+			_ = response.Fail(w, http.StatusBadRequest, "ParÃƒÂ¢metro weeks invÃƒÂ¡lido", requestID, nil)
 			return
 		}
 		if parsedWeeks > 52 {
@@ -171,7 +172,7 @@ func (h *Handler) GetExpiringByWeek(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
@@ -207,7 +208,7 @@ func (h *Handler) GetCoverageHistory(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
@@ -215,7 +216,7 @@ func (h *Handler) GetCoverageHistory(w http.ResponseWriter, r *http.Request) {
 	if rawWeeks := strings.TrimSpace(r.URL.Query().Get("weeks")); rawWeeks != "" {
 		parsedWeeks, err := strconv.Atoi(rawWeeks)
 		if err != nil || parsedWeeks < 1 {
-			_ = response.Fail(w, http.StatusBadRequest, "Parâmetro weeks inválido", requestID, nil)
+			_ = response.Fail(w, http.StatusBadRequest, "ParÃƒÂ¢metro weeks invÃƒÂ¡lido", requestID, nil)
 			return
 		}
 		if parsedWeeks > 52 {
@@ -270,7 +271,7 @@ func (h *Handler) GetRiskBySegment(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
@@ -289,7 +290,7 @@ func (h *Handler) GetRiskBySegment(w http.ResponseWriter, r *http.Request) {
 	for _, item := range items {
 		segmento := strings.TrimSpace(item.Segmento)
 		if segmento == "" {
-			segmento = "Não informado"
+			segmento = "NÃƒÂ£o informado"
 		}
 
 		daysRemaining := calculateDaysRemaining(item.Vencimento)
@@ -400,7 +401,7 @@ func countVencidasAt(items []Apolice, at time.Time) int {
 func resolveMapLayoutPath() (string, error) {
 	_, currentFile, _, ok := runtime.Caller(0)
 	if !ok {
-		return "", errors.New("não foi possível resolver o caminho do arquivo")
+		return "", errors.New("nÃƒÂ£o foi possÃƒÂ­vel resolver o caminho do arquivo")
 	}
 
 	baseDir := filepath.Dir(currentFile)
@@ -411,7 +412,7 @@ func (h *Handler) FilaDeAcao(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
@@ -448,7 +449,7 @@ func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		payload, err := decodePayload(r)
 		if err != nil {
-			_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+			_ = response.Fail(w, http.StatusBadRequest, "JSON invÃƒÂ¡lido", requestID, nil)
 			return
 		}
 
@@ -461,7 +462,7 @@ func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 		_ = response.Success(w, http.StatusCreated, ToResponse(item), requestID)
 
 	default:
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 	}
 }
 
@@ -474,7 +475,7 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 		itemID := strings.TrimPrefix(requestedPath, normalizedPrefix)
 		itemID = strings.TrimPrefix(itemID, "/")
 		if itemID == "" {
-			_ = response.Fail(w, http.StatusBadRequest, "Informe o LUC da apólice na URL", requestID, nil)
+			_ = response.Fail(w, http.StatusBadRequest, "Informe o LUC da apÃƒÂ³lice na URL", requestID, nil)
 			return
 		}
 
@@ -490,7 +491,7 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 		case http.MethodPut, http.MethodPatch:
 			payload, err := decodePayload(r)
 			if err != nil {
-				_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+				_ = response.Fail(w, http.StatusBadRequest, "JSON invÃƒÂ¡lido", requestID, nil)
 				return
 			}
 
@@ -506,10 +507,10 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 				h.writeError(w, requestID, err)
 				return
 			}
-			_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice excluída com sucesso"}, requestID)
+			_ = response.Success(w, http.StatusOK, map[string]string{"message": "ApÃƒÂ³lice excluÃƒÂ­da com sucesso"}, requestID)
 
 		default:
-			_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+			_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		}
 	}
 }
@@ -518,13 +519,13 @@ func (h *Handler) GetCoberturas(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
 	itemID := r.PathValue("id")
 	if itemID == "" {
-		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apÃƒÂ³lice nÃƒÂ£o informado", requestID, nil)
 		return
 	}
 
@@ -541,13 +542,13 @@ func (h *Handler) GetHistorico(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodGet {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
 	itemID := r.PathValue("id")
 	if itemID == "" {
-		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apÃƒÂ³lice nÃƒÂ£o informado", requestID, nil)
 		return
 	}
 
@@ -564,13 +565,13 @@ func (h *Handler) UpdateObservacoes(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodPatch {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
 	itemID := r.PathValue("id")
 	if itemID == "" {
-		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apÃƒÂ³lice nÃƒÂ£o informado", requestID, nil)
 		return
 	}
 
@@ -578,7 +579,7 @@ func (h *Handler) UpdateObservacoes(w http.ResponseWriter, r *http.Request) {
 		Observacoes string `json:"observacoes"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "JSON invÃƒÂ¡lido", requestID, nil)
 		return
 	}
 
@@ -587,35 +588,35 @@ func (h *Handler) UpdateObservacoes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Observações atualizadas com sucesso"}, requestID)
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "ObservaÃƒÂ§ÃƒÂµes atualizadas com sucesso"}, requestID)
 }
 
 func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodPost {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
 		return
 	}
 
 	itemID := r.PathValue("id")
 	if itemID == "" {
-		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apÃƒÂ³lice nÃƒÂ£o informado", requestID, nil)
 		return
 	}
 
 	var payload RenovacaoPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "JSON invÃƒÂ¡lido", requestID, nil)
 		return
 	}
 
-	if err := h.service.Renovar(itemID, payload.NovaVigencia, payload.NovoValor, "Usuário Logado"); err != nil {
+	if err := h.service.Renovar(itemID, payload.NovaVigencia, payload.NovoValor, "UsuÃƒÂ¡rio Logado"); err != nil {
 		h.writeError(w, requestID, err)
 		return
 	}
 
-	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice renovada com sucesso"}, requestID)
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "ApÃƒÂ³lice renovada com sucesso"}, requestID)
 }
 
 func (h *Handler) writeError(w http.ResponseWriter, requestID string, err error) {
@@ -669,3 +670,43 @@ func (h *Handler) GetAtividadesRecentes(w http.ResponseWriter, r *http.Request) 
 
 	_ = response.Success(w, http.StatusOK, items, requestID)
 }
+
+func (h *Handler) DownloadDocumento(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	doc, err := h.service.GetDocumentoByID(id)
+	if err != nil {
+		response.Fail(w, http.StatusNotFound, "Documento nÃœo encontrado", middleware.RequestIDFromContext(r.Context()), nil)
+		return
+	}
+	
+	basePath, err := filepath.Abs("uploads")
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro interno", middleware.RequestIDFromContext(r.Context()), nil)
+		return
+	}
+	
+	caminhoAbsoluto := filepath.Join(basePath, doc.ArquivoPath)
+	
+	// Prevent path traversal
+	if !strings.HasPrefix(caminhoAbsoluto, basePath) {
+		response.Fail(w, http.StatusForbidden, "Acesso negado", middleware.RequestIDFromContext(r.Context()), nil)
+		return
+	}
+	
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", doc.Nome))
+	http.ServeFile(w, r, caminhoAbsoluto)
+}
+
+
+
+func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	docs, err := h.service.GetDocumentosByApolice(id)
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao buscar documentos", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+	response.Success(w, http.StatusOK, docs, middleware.RequestIDFromContext(r.Context()))
+}
+
+

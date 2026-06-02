@@ -1,4 +1,4 @@
-package apolice
+﻿package apolice
 
 import (
 	"math"
@@ -33,8 +33,8 @@ func (s *Service) GetFilaDeAcao() ([]Apolice, error) {
 		return nil, err
 	}
 
-	// Calcula score de urgência: Valor x Prazo (Risco temporal)
-	// Vencidas ganham risco alto, próximas do vencimento ganham risco moderado.
+	// Calcula score de urgÃªncia: Valor x Prazo (Risco temporal)
+	// Vencidas ganham risco alto, prÃ³ximas do vencimento ganham risco moderado.
 	type scoredApolice struct {
 		policy Apolice
 		score  float64
@@ -42,7 +42,7 @@ func (s *Service) GetFilaDeAcao() ([]Apolice, error) {
 
 	scored := make([]scoredApolice, 0, len(items))
 	for _, item := range items {
-		// Pular apólices ativas sem urgência (mais de 90 dias)
+		// Pular apÃ³lices ativas sem urgÃªncia (mais de 90 dias)
 		if item.Status == "Ativa" && item.DiasRestantes > 90 {
 			continue
 		}
@@ -133,7 +133,7 @@ func (s *Service) UpdateObservacoes(luc string, observacoes string) error {
 
 func (s *Service) Renovar(luc string, novaVigenciaStr string, novoValor float64, ator string) error {
 	if strings.TrimSpace(luc) == "" {
-		return ErrValidation("LUC não pode estar vazio")
+		return ErrValidation("LUC nÃ£o pode estar vazio")
 	}
 
 	novaVigencia, err := ParseDate(novaVigenciaStr)
@@ -141,7 +141,7 @@ func (s *Service) Renovar(luc string, novaVigenciaStr string, novoValor float64,
 		return err
 	}
 
-	return s.repo.Renovar(luc, novaVigencia, novoValor, ator, "Renovação realizada")
+	return s.repo.Renovar(luc, novaVigencia, novoValor, ator, "RenovaÃ§Ã£o realizada")
 }
 
 func (s *Service) GetLojas() ([]LojaInfo, error) {
@@ -150,7 +150,7 @@ func (s *Service) GetLojas() ([]LojaInfo, error) {
 
 func (s *Service) buildModel(payload Payload) (Apolice, error) {
 	if strings.TrimSpace(payload.Luc) == "" || strings.TrimSpace(payload.Loja) == "" || strings.TrimSpace(payload.Segmento) == "" || strings.TrimSpace(payload.Seguradora) == "" || strings.TrimSpace(payload.Vigencia) == "" || strings.TrimSpace(payload.Vencimento) == "" {
-		return Apolice{}, ErrValidation("Todos os campos são obrigatórios")
+		return Apolice{}, ErrValidation("Todos os campos sÃ£o obrigatÃ³rios")
 	}
 
 	vigencia, err := ParseDate(payload.Vigencia)
@@ -196,3 +196,15 @@ func calculatePolicyStatus(vencimento time.Time) string {
 	}
 	return "Ativa"
 }
+
+func (s *Service) GetDocumentoByID(id string) (Documento, error) {
+	return s.repo.GetDocumentoByID(id)
+}
+
+
+
+func (s *Service) GetDocumentosByApolice(luc string) ([]Documento, error) {
+	return s.repo.GetDocumentosByApolice(luc)
+}
+
+

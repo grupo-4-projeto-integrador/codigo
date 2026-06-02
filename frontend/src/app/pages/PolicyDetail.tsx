@@ -10,10 +10,12 @@ import {
   Save, 
   User, 
   AlertTriangle,
-  CalendarIcon,
-  Trash2
+  Trash2,
+  Loader2
 } from "lucide-react";
-import { getApolice, getCoberturas, getHistorico, updateObservacoes } from "../../api/apolice";
+import { useForm, Controller } from "react-hook-form";
+import { getApolice, getCoberturas, getHistorico, updateObservacoes, getDocumentos } from "../../api/apolice";
+import { downloadArquivo } from "../utils/downloadUtils";
 import { request } from "../../api/client";
 import type { ApoliceRecord } from "../../types/apolice";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
@@ -31,12 +33,11 @@ import {
   AlertDialogAction 
 } from "../components/ui/alert-dialog";
 import { Input } from "../components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
-import { Calendar } from "../components/ui/calendar";
+import { DatePicker } from "../components/ui/date-picker";
 import { Button } from "../components/ui/button";
 import { format, addYears } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { useUserProfile } from "../contexts/UserProfileContext";
 import { formatLargeCurrency } from "../utils/currency";
 import { exportApoliceParaPDF } from "../utils/exportUtils";
 
@@ -47,14 +48,23 @@ export function PolicyDetail() {
   const [policy, setPolicy] = useState<ApoliceRecord | null>(null);
   const [coberturas, setCoberturas] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
+  const [documentos, setDocumentos] = useState<any[]>([]);
+  const [isDownloading, setIsDownloading] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [observacoes, setObservacoes] = useState("");
+
+  const { canEdit } = useUserProfile();
   const [savingObs, setSavingObs] = useState(false);
 
   const [showRenewDialog, setShowRenewDialog] = useState(false);
-  const [renewDate, setRenewDate] = useState<Date | undefined>(undefined);
-  const [renewValue, setRenewValue] = useState<string>("0");
   const [isRenewing, setIsRenewing] = useState(false);
+
+  const { control: renewControl, handleSubmit: handleRenewSubmit, reset: resetRenew } = useForm({
+    defaultValues: {
+      nova_vigencia: undefined as Date | undefined,
+      novo_valor: "0"
+    }
+  });
 
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -63,12 +73,14 @@ export function PolicyDetail() {
     Promise.all([
       getApolice(id),
       getCoberturas(id),
-      getHistorico(id)
+      getHistorico(id),
+      getDocumentos(id)
     ])
-    .then(([policyData, coberturasData, historicoData]) => {
+    .then(([policyData, coberturasData, historicoData, documentosData]) => {
       setPolicy(policyData);
       setCoberturas(coberturasData);
       setHistorico(historicoData);
+      setDocumentos(documentosData);
       setObservacoes(policyData.observacoes || "");
       setLoading(false);
     })
@@ -78,25 +90,39 @@ export function PolicyDetail() {
     });
   };
 
+  const handleDownloadDoc = async (docId: number, nome: string) => {
+    try {
+      setIsDownloading(prev => ({ ...prev, [docId]: true }));
+      await downloadArquivo(docId, nome);
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível baixar o arquivo");
+    } finally {
+      setIsDownloading(prev => ({ ...prev, [docId]: false }));
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, [id]);
 
   const openRenewDialog = () => {
     if (!policy) return;
-    setRenewDate(addYears(new Date(), 1));
-    setRenewValue(policy.cobertura?.toString() || "0");
+    resetRenew({
+      nova_vigencia: addYears(new Date(), 1),
+      novo_valor: policy.cobertura?.toString() || "0"
+    });
     setShowRenewDialog(true);
   };
 
-  const handleConfirmRenew = async () => {
-    if (!id || !renewDate) return;
+  const onConfirmRenew = async (data: { nova_vigencia?: Date, novo_valor: string }) => {
+    if (!id || !data.nova_vigencia) return;
     setIsRenewing(true);
     
     try {
       const payload = {
-        nova_vigencia: format(renewDate, "dd/MM/yyyy"),
-        novo_valor: parseFloat(renewValue) || 0
+        nova_vigencia: format(data.nova_vigencia, "dd/MM/yyyy"),
+        novo_valor: parseFloat(data.novo_valor) || 0
       };
 
       await request(`/apolices/${id}/renovar`, {
@@ -189,14 +215,13 @@ export function PolicyDetail() {
   return (
     <div className="max-w-7xl mx-auto flex flex-col h-full">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-[#94A3B8] mb-6">
-        <button onClick={() => navigate('/seguros')} className="hover:text-gray-900 dark:hover:text-white flex items-center gap-1 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Seguros
-        </button>
-        <ChevronRight className="w-4 h-4" />
-        <span>Dashboard</span>
-        <ChevronRight className="w-4 h-4" />
+      <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-[#94A3B8] mb-6">
+        <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/')}>Flamboyant Shopping</span>
+        <ChevronRight className="w-3 h-3" />
+        <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/seguros')}>Seguros</span>
+        <ChevronRight className="w-3 h-3" />
+        <span className="cursor-pointer hover:opacity-70 font-medium text-gray-700 dark:text-gray-300" onClick={() => navigate('/seguros')}>{policy.lojista}</span>
+        <ChevronRight className="w-3 h-3" />
         <span className="font-semibold text-gray-900 dark:text-white">Apólice {policy.luc}</span>
       </div>
 
@@ -339,57 +364,65 @@ export function PolicyDetail() {
           {/* Documentos */}
           <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
             <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-4">Documentos</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-[#2E3447] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer group">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center">
-                    <FileText className="w-4 h-4" />
+            
+            {documentos.length === 0 ? (
+              <p className="text-sm text-gray-500">Nenhum documento encontrado.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {documentos.map(doc => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-[#2E3447] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#6e150e] dark:group-hover:text-[#E04444] transition-colors">
+                          {doc.nome}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-[#94A3B8]">
+                          Adicionado em {new Date(doc.data_adicao).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDownloadDoc(doc.id, doc.nome)}
+                      disabled={isDownloading[doc.id]}
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors disabled:opacity-50"
+                    >
+                      {isDownloading[doc.id] ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Download className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#6e150e] dark:group-hover:text-[#E04444] transition-colors">Apolice_Completa.pdf</p>
-                    <p className="text-xs text-gray-500 dark:text-[#94A3B8]">Adicionado em {start.toLocaleDateString('pt-BR')}</p>
-                  </div>
-                </div>
-                <button className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
-                  <Download className="w-4 h-4" />
-                </button>
+                ))}
               </div>
-              <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-[#2E3447] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer group">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#6e150e] dark:group-hover:text-[#E04444] transition-colors">Condicoes_Gerais.pdf</p>
-                    <p className="text-xs text-gray-500 dark:text-[#94A3B8]">Adicionado em {start.toLocaleDateString('pt-BR')}</p>
-                  </div>
-                </div>
-                <button className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
-                  <Download className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Observações */}
           <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider">Observações</h3>
-              <button 
-                onClick={handleSaveObservacoes}
-                disabled={savingObs}
-                className="text-xs font-medium bg-[#6e150e] hover:bg-[#5a110b] text-white px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors disabled:opacity-50"
-              >
-                {savingObs ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-3 h-3" />}
-                Salvar
-              </button>
+              {canEdit && (
+                <button 
+                  onClick={handleSaveObservacoes}
+                  disabled={savingObs}
+                  className="text-xs font-medium bg-[#6e150e] hover:bg-[#5a110b] text-white px-3 py-1.5 rounded flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  {savingObs ? <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-3 h-3" />}
+                  Salvar
+                </button>
+              )}
             </div>
             <textarea
               className="w-full bg-gray-50 dark:bg-[#1A1F2E] border border-gray-200 dark:border-[#2E3447] rounded-lg p-3 text-sm text-gray-900 dark:text-[#F1F5F9] focus:outline-none focus:ring-2 focus:ring-[#6e150e]/50 min-h-[120px] resize-y"
-              placeholder="Adicione observações internas sobre esta apólice..."
+              placeholder={canEdit ? "Adicione observações internas sobre esta apólice..." : "Nenhuma observação."}
               value={observacoes}
               onChange={e => setObservacoes(e.target.value)}
               onBlur={handleSaveObservacoes}
+              disabled={!canEdit}
             />
           </div>
 
@@ -435,111 +468,111 @@ export function PolicyDetail() {
             )}
 
             <div className="mt-8 flex flex-col gap-2">
-              <button onClick={openRenewDialog} className="w-full bg-[#6e150e] hover:bg-[#5a110b] text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
-                Renovar Apólice
-              </button>
-              <button onClick={() => navigate(`/seguros/apolice/${id}/editar`)} className="w-full bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] font-medium text-sm py-2.5 rounded-lg transition-colors">
-                Editar Dados
-              </button>
+              {canEdit && (
+                <>
+                  <button onClick={openRenewDialog} className="w-full bg-[#6e150e] hover:bg-[#5a110b] text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
+                    Renovar Apólice
+                  </button>
+                  <button onClick={() => navigate(`/seguros/apolice/${id}/editar`)} className="w-full bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] font-medium text-sm py-2.5 rounded-lg transition-colors">
+                    Editar Dados
+                  </button>
+                </>
+              )}
               <button onClick={() => exportApoliceParaPDF(policy, coberturas)} className="w-full bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] font-medium text-sm py-2.5 rounded-lg transition-colors">
                 Exportar PDF
               </button>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button className="w-full bg-transparent hover:bg-red-50 dark:hover:bg-red-900/10 text-[#c4151f] font-medium text-[13px] py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2">
-                    <Trash2 className="w-4 h-4" />
-                    Excluir Apólice
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Excluir apólice permanentemente?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta ação não pode ser desfeita. A apólice {policy.luc} e todos os seus documentos e histórico serão removidos.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDelete();
-                      }}
-                      disabled={isDeleting}
-                      className="bg-[#c4151f] hover:bg-[#a01119] text-white"
-                    >
-                      {isDeleting ? "Excluindo..." : "Excluir permanentemente"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {canEdit && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="w-full bg-transparent hover:bg-red-50 dark:hover:bg-red-900/10 text-[#c4151f] font-medium text-[13px] py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2">
+                      <Trash2 className="w-4 h-4" />
+                      Excluir Apólice
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir Apólice?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. A apólice e todo o seu histórico serão removidos permanentemente.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700 text-white">
+                        {isDeleting ? "Excluindo..." : "Sim, excluir"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
 
           </div>
         </div>
       </div>
 
-      <Dialog open={showRenewDialog} onOpenChange={setShowRenewDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Confirmar Renovação</DialogTitle>
-          </DialogHeader>
-          
-          {policy && (
-            <div className="flex flex-col gap-4 py-4">
-              <div className="bg-gray-50 dark:bg-[#1A1F2E] p-4 rounded-lg flex flex-col gap-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Vencimento Atual:</span>
-                  <span className="font-medium">{end.toLocaleDateString('pt-BR')}</span>
+        <Dialog open={showRenewDialog} onOpenChange={setShowRenewDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmar Renovação</DialogTitle>
+            </DialogHeader>
+            
+            {policy && (
+              <form onSubmit={handleRenewSubmit(onConfirmRenew)} className="flex flex-col gap-4 py-4">
+                <div className="bg-gray-50 dark:bg-[#1A1F2E] p-4 rounded-lg flex flex-col gap-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Vencimento Atual:</span>
+                    <span className="font-medium">{end.toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Novo Vencimento:</span>
+                    <span className="font-bold text-[#6e150e] dark:text-[#E04444]">
+                      {addYears(end, 1).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Novo Vencimento:</span>
-                  <span className="font-bold text-[#6e150e] dark:text-[#E04444]">
-                    {renewDate ? format(renewDate, "dd/MM/yyyy") : "-"}
-                  </span>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Data da Renovação</label>
+                  <Controller
+                    name="nova_vigencia"
+                    control={renewControl}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Selecione a nova data"
+                      />
+                    )}
+                  />
                 </div>
-                <div className="flex justify-between text-sm border-t border-gray-200 dark:border-[#2E3447] pt-2 mt-1">
-                  <span className="text-gray-500">Variação de Valor:</span>
-                  <span className={`font-semibold ${parseFloat(renewValue) - policy.cobertura > 0 ? 'text-green-600' : (parseFloat(renewValue) - policy.cobertura < 0 ? 'text-red-600' : 'text-gray-500')}`}>
-                    {parseFloat(renewValue) - policy.cobertura > 0 ? "+" : ""}
-                    {formatCurrency(parseFloat(renewValue) - policy.cobertura)}
-                  </span>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium">Novo Valor Segurado (R$)</label>
+                  <Controller
+                    name="novo_valor"
+                    control={renewControl}
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <Input type="number" {...field} />
+                    )}
+                  />
                 </div>
-              </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Nova Data de Vencimento</label>
-                <Popover modal={true}>
-                  <PopoverTrigger asChild>
-                    <Button variant={"outline"} className="w-full justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {renewDate ? format(renewDate, "PPP", { locale: ptBR }) : <span>Selecione</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 pointer-events-auto">
-                    <Calendar mode="single" selected={renewDate} onSelect={setRenewDate} initialFocus locale={ptBR} />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium">Novo Valor Segurado (R$)</label>
-                <Input type="number" value={renewValue} onChange={e => setRenewValue(e.target.value)} />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRenewDialog(false)} disabled={isRenewing}>
-              Cancelar
-            </Button>
-            <Button onClick={handleConfirmRenew} disabled={isRenewing} className="bg-[#168821] hover:bg-[#126b1a] text-white">
-              {isRenewing ? "Renovando..." : "Confirmar Renovação"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                <DialogFooter className="mt-4">
+                  <Button type="button" variant="outline" onClick={() => setShowRenewDialog(false)} disabled={isRenewing}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isRenewing} className="bg-[#168821] hover:bg-[#126b1a] text-white">
+                    {isRenewing ? "Renovando..." : "Confirmar Renovação"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            )}
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }

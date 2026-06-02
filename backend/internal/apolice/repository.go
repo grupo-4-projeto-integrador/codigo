@@ -18,6 +18,8 @@ type Repository interface {
 	GetCoberturas(luc string) ([]Cobertura, error)
 	GetHistorico(luc string) ([]HistoricoApolice, error)
 	GetHistoricoGlobal(limit int) ([]HistoricoApolice, error)
+	GetDocumentoByID(id string) (Documento, error)
+	GetDocumentosByApolice(luc string) ([]Documento, error)
 	GetAtividadesRecentes(limit int) ([]AtividadeRecente, error)
 	UpdateObservacoes(luc string, observacoes string) error
 	Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error
@@ -93,7 +95,7 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 		return Apolice{}, err
 	}
 
-	if err := r.insertHistoricoTx(tx, model.Luc, "Apólice criada", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, model.Luc, "ApÃƒÂ³lice criada", "Sistema"); err != nil {
 		return Apolice{}, err
 	}
 
@@ -134,7 +136,7 @@ func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) 
 		return Apolice{}, err
 	}
 
-	if err := r.insertHistoricoTx(tx, updated.Luc, "Apólice atualizada", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, updated.Luc, "ApÃƒÂ³lice atualizada", "Sistema"); err != nil {
 		return Apolice{}, err
 	}
 
@@ -165,7 +167,7 @@ func (r *PostgresRepository) Delete(luc string) error {
 		return ErrNotFound
 	}
 
-	if err := r.insertHistoricoTx(tx, luc, "Apólice excluída", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, luc, "ApÃƒÂ³lice excluÃƒÂ­da", "Sistema"); err != nil {
 		return err
 	}
 
@@ -297,7 +299,7 @@ func (r *PostgresRepository) UpdateObservacoes(luc string, observacoes string) e
 		return ErrNotFound
 	}
 
-	if err := r.insertHistoricoTx(tx, luc, "Observações atualizadas", "Sistema"); err != nil {
+	if err := r.insertHistoricoTx(tx, luc, "ObservaÃƒÂ§ÃƒÂµes atualizadas", "Sistema"); err != nil {
 		return err
 	}
 
@@ -332,7 +334,7 @@ func (r *PostgresRepository) Renovar(luc string, novoVencimento time.Time, novoV
 
 func (r *PostgresRepository) insertHistoricoTx(tx *sql.Tx, luc string, descricao string, ator string) error {
 	if strings.TrimSpace(ator) == "" {
-		ator = "Usuário Logado"
+		ator = "UsuÃƒÂ¡rio Logado"
 	}
 
 	_, err := tx.Exec(`INSERT INTO historico_apolice (apolice_luc, data, descricao, ator) VALUES ($1, NOW(), $2, $3)`, luc, descricao, ator)
@@ -391,3 +393,41 @@ func (r *PostgresRepository) GetLojas() ([]LojaInfo, error) {
 	}
 	return items, nil
 }
+
+func (r *PostgresRepository) GetDocumentoByID(id string) (Documento, error) {
+	var doc Documento
+	var deletedAt sql.NullTime
+	err := r.db.QueryRow(`SELECT id, apolice_luc, nome, arquivo_path, data_adicao, deleted_at FROM documentos WHERE id = $1`, id).Scan(&doc.ID, &doc.ApoliceLuc, &doc.Nome, &doc.ArquivoPath, &doc.DataAdicao, &deletedAt)
+	if err != nil {
+		return doc, err
+	}
+	if deletedAt.Valid {
+		doc.DeletedAt = &deletedAt.Time
+	}
+	return doc, nil
+}
+
+
+
+func (r *PostgresRepository) GetDocumentosByApolice(luc string) ([]Documento, error) {
+	rows, err := r.db.Query(`SELECT id, apolice_luc, nome, arquivo_path, data_adicao, deleted_at FROM documentos WHERE apolice_luc = $1`, luc)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Documento
+	for rows.Next() {
+		var item Documento
+		var deletedAt sql.NullTime
+		if err := rows.Scan(&item.ID, &item.ApoliceLuc, &item.Nome, &item.ArquivoPath, &item.DataAdicao, &deletedAt); err != nil {
+			return nil, err
+		}
+		if deletedAt.Valid {
+			item.DeletedAt = &deletedAt.Time
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+

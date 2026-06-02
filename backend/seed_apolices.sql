@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS historico_apolice (
     ator VARCHAR(100) NOT NULL
 );
 
-TRUNCATE TABLE coberturas, historico_apolice RESTART IDENTITY;
+TRUNCATE TABLE coberturas, historico_apolice, documentos RESTART IDENTITY;
 
 -- Inserir alguns dados para as coberturas
 INSERT INTO coberturas (apolice_luc, nome, descricao, valor)
@@ -35,3 +35,10 @@ SELECT luc, vigencia, 'Emissão da Apólice', 'Sistema' FROM seguros;
 
 INSERT INTO historico_apolice (apolice_luc, data, descricao, ator)
 SELECT luc, vigencia + INTERVAL '10 days', 'Pagamento da Primeira Parcela Confirmado', 'Financeiro' FROM seguros;
+
+-- Inserir documentos de teste
+INSERT INTO documentos (apolice_luc, nome, arquivo_path)
+SELECT luc, 'Apolice_Completa.pdf', 'apolices/teste/Apolice_Completa.pdf' FROM seguros;
+
+INSERT INTO documentos (apolice_luc, nome, arquivo_path)
+SELECT luc, 'Condicoes_Gerais.pdf', 'apolices/teste/Condicoes_Gerais.pdf' FROM seguros;

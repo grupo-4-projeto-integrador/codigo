@@ -31,3 +31,12 @@ type HistoricoApolice struct {
 	Descricao  string    `json:"descricao"`
 	Ator       string    `json:"ator"`
 }
+
+type Documento struct {
+	ID          int        `json:"id"`
+	ApoliceLuc  string     `json:"apolice_luc"`
+	Nome        string     `json:"nome"`
+	ArquivoPath string     `json:"arquivo_path"`
+	DataAdicao  time.Time  `json:"data_adicao"`
+	DeletedAt   *time.Time `json:"deleted_at"`
+}

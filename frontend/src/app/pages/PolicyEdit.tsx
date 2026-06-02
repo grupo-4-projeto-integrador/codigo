@@ -3,28 +3,28 @@ import { useParams, useNavigate } from "react-router";
 import { 
   ChevronRight, 
   ArrowLeft, 
-  Shield, 
-  FileText, 
-  Download, 
-  Clock, 
   Save, 
-  X, 
-  AlertTriangle,
-  CalendarIcon
+  X
 } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
 import { getApolice } from "../../api/apolice";
 import { request } from "../../api/client";
-import type { ApoliceRecord } from "../../types/apolice";
 import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
-import { Calendar } from "../components/ui/calendar";
-import { Button } from "../components/ui/button";
+import { DatePicker } from "../components/ui/date-picker";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import joaoCarlosImg from "../../assets/joao-carlos.jpg";
-import { formatLargeCurrency } from "../utils/currency";
+
+interface PolicyEditFormInputs {
+  loja: string;
+  segmento: string;
+  seguradora: string;
+  vigencia: Date | undefined;
+  vencimento: Date | undefined;
+  cobertura: string;
+  responsavel: string;
+  observacoes: string;
+}
 
 export function PolicyEdit() {
   const { id } = useParams<{ id: string }>();
@@ -34,15 +34,18 @@ export function PolicyEdit() {
   const [saving, setSaving] = useState(false);
   const [policyData, setPolicyData] = useState<any>({});
 
-  const [loja, setLoja] = useState("");
-  const [segmento, setSegmento] = useState("");
-  const [seguradora, setSeguradora] = useState("");
-  const [vigencia, setVigencia] = useState<Date | undefined>(undefined);
-  const [vencimento, setVencimento] = useState<Date | undefined>(undefined);
-  const [vigenciaOpen, setVigenciaOpen] = useState(false);
-  const [vencimentoOpen, setVencimentoOpen] = useState(false);
-  const [cobertura, setCobertura] = useState<string>("0");
-  const [responsavel, setResponsavel] = useState("");
+  const { control, register, handleSubmit, reset } = useForm<PolicyEditFormInputs>({
+    defaultValues: {
+      loja: "",
+      segmento: "",
+      seguradora: "",
+      vigencia: undefined,
+      vencimento: undefined,
+      cobertura: "0",
+      responsavel: "",
+      observacoes: ""
+    }
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -50,9 +53,6 @@ export function PolicyEdit() {
     getApolice(id)
       .then((data) => {
         setPolicyData(data);
-        setLoja(data.lojista || "");
-        setSegmento(data.tipo || "");
-        setSeguradora(data.seguradora || "");
         
         const parseDateSafe = (dateString: string) => {
           if (!dateString) return undefined;
@@ -71,11 +71,16 @@ export function PolicyEdit() {
           return new Date(dateString);
         };
 
-        if (data.vigencia) setVigencia(parseDateSafe(data.vigencia));
-        if (data.vencimento) setVencimento(parseDateSafe(data.vencimento));
-        
-        setCobertura(data.cobertura?.toString() || "0");
-        setResponsavel(data.responsavel || "");
+        reset({
+          loja: data.lojista || "",
+          segmento: data.tipo || "",
+          seguradora: data.seguradora || "",
+          vigencia: data.vigencia ? parseDateSafe(data.vigencia) : undefined,
+          vencimento: data.vencimento ? parseDateSafe(data.vencimento) : undefined,
+          cobertura: data.cobertura?.toString() || "0",
+          responsavel: data.responsavel || "",
+          observacoes: data.observacoes || ""
+        });
         
         setLoading(false);
       })
@@ -84,22 +89,22 @@ export function PolicyEdit() {
         toast.error("Erro ao carregar os dados da apólice");
         setLoading(false);
       });
-  }, [id]);
+  }, [id, reset]);
 
-  const handleSave = async () => {
+  const onSubmit = async (data: PolicyEditFormInputs) => {
     if (!id) return;
     setSaving(true);
     
     try {
       const payload = {
         luc: id,
-        loja,
-        segmento,
-        seguradora,
-        vigencia: vigencia ? format(vigencia, "dd/MM/yyyy") : "",
-        vencimento: vencimento ? format(vencimento, "dd/MM/yyyy") : "",
-        cobertura: parseFloat(cobertura) || 0,
-        observacoes: policyData.observacoes || ""
+        loja: data.loja,
+        segmento: data.segmento,
+        seguradora: data.seguradora,
+        vigencia: data.vigencia ? format(data.vigencia, "dd/MM/yyyy") : "",
+        vencimento: data.vencimento ? format(data.vencimento, "dd/MM/yyyy") : "",
+        cobertura: parseFloat(data.cobertura) || 0,
+        observacoes: data.observacoes || ""
       };
 
       await request(`/apolices/${id}`, {
@@ -131,18 +136,17 @@ export function PolicyEdit() {
                       (diasRestantes <= 30 ? 'bg-orange-500 text-white' : 'bg-[#788033] text-white');
 
   return (
-    <div className="max-w-7xl mx-auto flex flex-col h-full">
+    <form onSubmit={handleSubmit(onSubmit)} className="max-w-7xl mx-auto flex flex-col h-full">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-[#94A3B8] mb-6">
-        <button onClick={() => navigate('/seguros')} className="hover:text-gray-900 dark:hover:text-white flex items-center gap-1 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Seguros
-        </button>
-        <ChevronRight className="w-4 h-4" />
-        <button onClick={() => navigate(`/seguros/apolice/${id}`)} className="hover:text-gray-900 dark:hover:text-white transition-colors">
-          Apólice {id}
-        </button>
-        <ChevronRight className="w-4 h-4" />
+      <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-[#94A3B8] mb-6">
+        <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/')}>Flamboyant Shopping</span>
+        <ChevronRight className="w-3 h-3" />
+        <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/seguros')}>Seguros</span>
+        <ChevronRight className="w-3 h-3" />
+        <span className="cursor-pointer hover:opacity-70 font-medium text-gray-700 dark:text-gray-300" onClick={() => navigate('/seguros')}>{policyData?.lojista || policyData?.loja || "Carregando..."}</span>
+        <ChevronRight className="w-3 h-3" />
+        <span className="cursor-pointer hover:opacity-70 font-medium text-gray-700 dark:text-gray-300" onClick={() => navigate(`/seguros/apolice/${id}`)}>Apólice {id}</span>
+        <ChevronRight className="w-3 h-3" />
         <span className="font-semibold text-gray-900 dark:text-white">Editar Apólice</span>
       </div>
 
@@ -178,8 +182,7 @@ export function PolicyEdit() {
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Loja (Lojista/Fantasia)</label>
                 <Input 
-                  value={loja} 
-                  onChange={(e) => setLoja(e.target.value)} 
+                  {...register("loja")}
                   placeholder="Nome da loja" 
                   className="dark:bg-[#1A1F2E]"
                 />
@@ -187,106 +190,93 @@ export function PolicyEdit() {
 
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Segmento / Tipo</label>
-                <Select value={segmento} onValueChange={setSegmento}>
-                  <SelectTrigger className="w-full dark:bg-[#1A1F2E]">
-                    <SelectValue placeholder="Selecione o segmento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Moda">Moda</SelectItem>
-                    <SelectItem value="Alimentação">Alimentação</SelectItem>
-                    <SelectItem value="Serviços">Serviços</SelectItem>
-                    <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
-                    <SelectItem value="Âncoras">Âncoras</SelectItem>
-                    <SelectItem value="Incêndio">Incêndio</SelectItem>
-                    <SelectItem value="Responsabilidade Civil">Responsabilidade Civil</SelectItem>
-                    <SelectItem value="Danos Elétricos">Danos Elétricos</SelectItem>
-                    <SelectItem value="Vidros e Fachadas">Vidros e Fachadas</SelectItem>
-                    <SelectItem value="Roubo e Furto">Roubo e Furto</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name="segmento"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full dark:bg-[#1A1F2E]">
+                        <SelectValue placeholder="Selecione o segmento" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Moda">Moda</SelectItem>
+                        <SelectItem value="Alimentação">Alimentação</SelectItem>
+                        <SelectItem value="Serviços">Serviços</SelectItem>
+                        <SelectItem value="Eletrônicos">Eletrônicos</SelectItem>
+                        <SelectItem value="Âncoras">Âncoras</SelectItem>
+                        <SelectItem value="Incêndio">Incêndio</SelectItem>
+                        <SelectItem value="Responsabilidade Civil">Responsabilidade Civil</SelectItem>
+                        <SelectItem value="Danos Elétricos">Danos Elétricos</SelectItem>
+                        <SelectItem value="Vidros e Fachadas">Vidros e Fachadas</SelectItem>
+                        <SelectItem value="Roubo e Furto">Roubo e Furto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Seguradora</label>
-                <Select value={seguradora} onValueChange={setSeguradora}>
-                  <SelectTrigger className="w-full dark:bg-[#1A1F2E]">
-                    <SelectValue placeholder="Selecione a seguradora" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Chubb">Chubb</SelectItem>
-                    <SelectItem value="Tokio Marine">Tokio Marine</SelectItem>
-                    <SelectItem value="Sompo">Sompo</SelectItem>
-                    <SelectItem value="Porto Seguro">Porto Seguro</SelectItem>
-                    <SelectItem value="Zurich">Zurich</SelectItem>
-                    <SelectItem value="Allianz">Allianz</SelectItem>
-                    <SelectItem value="Mapfre">Mapfre</SelectItem>
-                    <SelectItem value="HDI">HDI</SelectItem>
-                    <SelectItem value="Liberty">Liberty</SelectItem>
-                    <SelectItem value="Sura">Sura</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Controller
+                  name="seguradora"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="w-full dark:bg-[#1A1F2E]">
+                        <SelectValue placeholder="Selecione a seguradora" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Chubb">Chubb</SelectItem>
+                        <SelectItem value="Tokio Marine">Tokio Marine</SelectItem>
+                        <SelectItem value="Sompo">Sompo</SelectItem>
+                        <SelectItem value="Porto Seguro">Porto Seguro</SelectItem>
+                        <SelectItem value="Zurich">Zurich</SelectItem>
+                        <SelectItem value="Allianz">Allianz</SelectItem>
+                        <SelectItem value="Mapfre">Mapfre</SelectItem>
+                        <SelectItem value="HDI">HDI</SelectItem>
+                        <SelectItem value="Liberty">Liberty</SelectItem>
+                        <SelectItem value="Sura">Sura</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
 
               <div className="space-y-2 flex flex-col">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Início da Vigência</label>
-                <Popover open={vigenciaOpen} onOpenChange={setVigenciaOpen} modal={true}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={`w-full justify-start text-left font-normal dark:bg-[#1A1F2E] ${!vigencia ? "text-muted-foreground" : ""}`}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {vigencia ? format(vigencia, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 pointer-events-auto">
-                    <Calendar
-                      mode="single"
-                      selected={vigencia}
-                      onSelect={(date) => {
-                        setVigencia(date);
-                        setVigenciaOpen(false);
-                      }}
-                      initialFocus
-                      locale={ptBR}
+                <Controller
+                  name="vigencia"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Selecione a data de início"
                     />
-                  </PopoverContent>
-                </Popover>
+                  )}
+                />
               </div>
 
               <div className="space-y-2 flex flex-col">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Vencimento</label>
-                <Popover open={vencimentoOpen} onOpenChange={setVencimentoOpen} modal={true}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={`w-full justify-start text-left font-normal dark:bg-[#1A1F2E] ${!vencimento ? "text-muted-foreground" : ""}`}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {vencimento ? format(vencimento, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 pointer-events-auto">
-                    <Calendar
-                      mode="single"
-                      selected={vencimento}
-                      onSelect={(date) => {
-                        setVencimento(date);
-                        setVencimentoOpen(false);
-                      }}
-                      initialFocus
-                      locale={ptBR}
+                <Controller
+                  name="vencimento"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Selecione a data de vencimento"
                     />
-                  </PopoverContent>
-                </Popover>
+                  )}
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Valor Segurado Base</label>
                 <Input 
                   type="number"
-                  value={cobertura} 
-                  onChange={(e) => setCobertura(e.target.value)} 
+                  {...register("cobertura")}
                   placeholder="0.00" 
                   className="dark:bg-[#1A1F2E]"
                 />
@@ -295,8 +285,7 @@ export function PolicyEdit() {
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Responsável Interno</label>
                 <Input 
-                  value={responsavel} 
-                  onChange={(e) => setResponsavel(e.target.value)} 
+                  {...register("responsavel")}
                   placeholder="Nome do responsável" 
                   className="dark:bg-[#1A1F2E]"
                 />
@@ -317,7 +306,7 @@ export function PolicyEdit() {
 
             <div className="flex flex-col gap-3">
               <button 
-                onClick={handleSave}
+                type="submit"
                 disabled={saving}
                 className="w-full bg-[#168821] hover:bg-[#126b1a] text-white font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
               >
@@ -330,6 +319,7 @@ export function PolicyEdit() {
               </button>
               
               <button 
+                type="button"
                 onClick={() => navigate(`/seguros/apolice/${id}`)}
                 disabled={saving}
                 className="w-full bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
@@ -342,6 +332,6 @@ export function PolicyEdit() {
           </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

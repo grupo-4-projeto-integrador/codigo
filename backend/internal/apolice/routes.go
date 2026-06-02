@@ -27,4 +27,7 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	mux.HandleFunc("PATCH /api/apolices/{id}/observacoes", handler.UpdateObservacoes)
 	mux.HandleFunc("POST /api/apolices/{id}/renovar", handler.RenovarApolice)
 	mux.HandleFunc("GET /api/lojas", handler.GetLojas)
+	
+	mux.HandleFunc("GET /api/documentos/{id}/download", handler.DownloadDocumento)
+	mux.HandleFunc("GET /api/apolices/{id}/documentos", handler.GetDocumentos)
 }

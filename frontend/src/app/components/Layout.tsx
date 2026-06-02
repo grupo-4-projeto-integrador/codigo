@@ -215,9 +215,9 @@ export function Layout() {
       <div className="md:hidden flex flex-col sticky top-0 z-30" style={{ backgroundColor: '#6e150e' }}>
         {/* Logo e Avatar */}
         <div className="h-14 flex items-center justify-between px-4 border-b" style={{ borderColor: '#a0191e50' }}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/seguros')}>
             <img src={logo} alt="Logo" className="w-6 h-6" />
-            <span className="font-bold text-base tracking-wide text-white">Shopping Flamboyant</span>
+            <span className="font-bold text-base tracking-wide text-white hover:text-gray-200 transition-colors">Shopping Flamboyant</span>
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -380,13 +380,13 @@ export function Layout() {
       >
         <div className="h-16 flex items-center justify-between px-4 border-b" style={{ borderColor: '#a0191e50' }}>
           {!isSidebarCollapsed && (
-            <>
+            <div className="flex items-center cursor-pointer flex-1" onClick={() => navigate('/seguros')}>
               <img src={logo} alt="Logo" className="w-7 h-7 mr-3" />
-              <span className="font-bold text-lg tracking-wide flex-1">Flamboyant Shopping</span>
-            </>
+              <span className="font-bold text-lg tracking-wide text-white hover:text-gray-200 transition-colors">Flamboyant Shopping</span>
+            </div>
           )}
           {isSidebarCollapsed && (
-            <img src={logo} alt="Logo" className="w-7 h-7 mx-auto" />
+            <img src={logo} alt="Logo" className="w-7 h-7 mx-auto cursor-pointer" onClick={() => navigate('/seguros')} />
           )}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
