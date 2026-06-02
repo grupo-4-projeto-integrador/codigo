@@ -6,7 +6,10 @@ CREATE TABLE IF NOT EXISTS seguros (
     vigencia date,
     vencimento date,
     status character varying,
-    cobertura numeric DEFAULT 0
+    cobertura numeric DEFAULT 0,
+    responsavel character varying DEFAULT '',
+    observacoes text DEFAULT '',
+    deleted_at timestamp DEFAULT NULL
 );
 
 ALTER TABLE seguros OWNER TO postgres;
