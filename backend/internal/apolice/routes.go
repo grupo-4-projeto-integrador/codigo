@@ -30,4 +30,5 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
 	
 	mux.HandleFunc("GET /api/documentos/{id}/download", handler.DownloadDocumento)
 	mux.HandleFunc("GET /api/apolices/{id}/documentos", handler.GetDocumentos)
+	mux.HandleFunc("POST /api/apolices/{id}/documentos", handler.UploadDocumento)
 }

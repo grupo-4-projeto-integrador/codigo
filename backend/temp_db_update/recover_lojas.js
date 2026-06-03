@@ -19,14 +19,14 @@ const lojasPorSegmento = {
 async function run() {
   await client.connect();
   const res = await client.query("SELECT luc, segmento FROM seguros");
-  
+
   let updated = 0;
   for (let row of res.rows) {
     let segment = row.segmento || 'Outros';
     if (!lojasPorSegmento[segment]) segment = 'Outros';
-    
+
     const opcoes = lojasPorSegmento[segment];
-    
+
     // Use hash of LUC to deterministically pick a store name
     let hash = 0;
     for (let i = 0; i < row.luc.length; i++) {
@@ -34,13 +34,13 @@ async function run() {
     }
     const absHash = Math.abs(hash);
     const index = absHash % opcoes.length;
-    
+
     const lojaNome = opcoes[index];
-    
+
     await client.query("UPDATE seguros SET loja = $1 WHERE luc = $2", [lojaNome, row.luc]);
     updated++;
   }
-  
+
   console.log(`Recuperadas ${updated} lojas com nomes reais.`);
   await client.end();
 }

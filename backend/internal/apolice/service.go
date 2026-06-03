@@ -207,4 +207,8 @@ func (s *Service) GetDocumentosByApolice(luc string) ([]Documento, error) {
 	return s.repo.GetDocumentosByApolice(luc)
 }
 
+func (s *Service) CreateDocumento(doc Documento) (Documento, error) {
+	return s.repo.CreateDocumento(doc)
+}
+
 

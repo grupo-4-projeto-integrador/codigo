@@ -20,6 +20,7 @@ type Repository interface {
 	GetHistoricoGlobal(limit int) ([]HistoricoApolice, error)
 	GetDocumentoByID(id string) (Documento, error)
 	GetDocumentosByApolice(luc string) ([]Documento, error)
+	CreateDocumento(doc Documento) (Documento, error)
 	GetAtividadesRecentes(limit int) ([]AtividadeRecente, error)
 	UpdateObservacoes(luc string, observacoes string) error
 	Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error
@@ -428,6 +429,19 @@ func (r *PostgresRepository) GetDocumentosByApolice(luc string) ([]Documento, er
 		items = append(items, item)
 	}
 	return items, nil
+}
+
+func (r *PostgresRepository) CreateDocumento(doc Documento) (Documento, error) {
+	query := `
+		INSERT INTO documentos (apolice_luc, nome, arquivo_path)
+		VALUES ($1, $2, $3)
+		RETURNING id, data_adicao
+	`
+	err := r.db.QueryRow(query, doc.ApoliceLuc, doc.Nome, doc.ArquivoPath).Scan(&doc.ID, &doc.DataAdicao)
+	if err != nil {
+		return Documento{}, err
+	}
+	return doc, nil
 }
 
 

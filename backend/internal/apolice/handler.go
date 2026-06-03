@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -709,4 +710,57 @@ func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, http.StatusOK, docs, middleware.RequestIDFromContext(r.Context()))
 }
 
+func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "Falha ao processar form data", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
 
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		response.Fail(w, http.StatusBadRequest, "Arquivo não encontrado no form", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+	defer file.Close()
+
+	// Ensure uploads dir exists
+	basePath := "uploads"
+	if err := os.MkdirAll(basePath, os.ModePerm); err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao criar diretório", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+
+	// Create random filename to avoid collisions
+	ext := filepath.Ext(header.Filename)
+	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
+	filePath := filepath.Join(basePath, filename)
+
+	dst, err := os.Create(filePath)
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao salvar arquivo", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao copiar arquivo", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+
+	doc := Documento{
+		ApoliceLuc:  id,
+		Nome:        header.Filename,
+		ArquivoPath: filename,
+	}
+
+	createdDoc, err := h.service.CreateDocumento(doc)
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao salvar registro do documento", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+
+	response.Success(w, http.StatusCreated, createdDoc, middleware.RequestIDFromContext(r.Context()))
+}
