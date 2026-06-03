@@ -144,6 +144,7 @@ export function PolicyNew() {
     try {
       const payload = {
         luc: data.luc,
+        lojista: data.loja,
         loja: data.loja,
         tipos_cobertura: data.tipos_cobertura,
         segmento: data.tipos_cobertura.join(', '), // compatibilidade com backend legado se necessário
@@ -218,7 +219,7 @@ export function PolicyNew() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Tipo de Cobertura <span className="text-red-500">*</span></label>
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Segmento <span className="text-red-500">*</span></label>
                 <Controller
                   name="tipos_cobertura"
                   control={control}
@@ -228,7 +229,7 @@ export function PolicyNew() {
                       options={tiposCobertura}
                       selected={field.value || []}
                       onChange={field.onChange}
-                      placeholder="Selecione o tipo de cobertura"
+                      placeholder="Selecione o segmento"
                     />
                   )}
                 />

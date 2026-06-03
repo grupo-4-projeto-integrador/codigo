@@ -16,7 +16,6 @@ export function MultiSelect({
   placeholder?: string
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null)
-  const [open, setOpen] = React.useState(false)
   const [inputValue, setInputValue] = React.useState("")
 
   const handleUnselect = (item: string) => {
@@ -34,10 +33,17 @@ export function MultiSelect({
       if (e.key === "Escape") {
         input.blur()
       }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        const val = input.value.trim();
+        if (val !== "" && !selected.some(s => s.toLowerCase() === val.toLowerCase())) {
+          onChange([...selected, val]);
+          setInputValue("");
+        }
+      }
     }
   }
-
-  const selectables = options; // Mostrar todas as opções
 
   return (
     <Command onKeyDown={handleKeyDown} className="overflow-visible bg-transparent">
@@ -73,62 +79,10 @@ export function MultiSelect({
             ref={inputRef}
             value={inputValue}
             onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
-            onFocus={() => setOpen(true)}
             placeholder={selected.length === 0 ? placeholder : "Adicionar cobertura..."}
             className="ml-2 bg-transparent outline-none placeholder:text-gray-500 flex-1 min-w-[120px]"
           />
         </div>
-      </div>
-      <div className="relative mt-1">
-        {open && (selectables.length > 0 || inputValue.length > 0) ? (
-          <div className="absolute w-full z-10 top-0 rounded-md border bg-white dark:bg-[#242938] text-gray-900 dark:text-gray-100 shadow-md outline-none animate-in">
-            <CommandList className="max-h-[200px] overflow-auto">
-              <CommandGroup>
-                {selectables.map((option) => {
-                  const isSelected = selected.includes(option.value);
-                  return (
-                    <CommandItem
-                      key={option.value}
-                      onMouseDown={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                      }}
-                      onSelect={() => {
-                        if (!isSelected) {
-                          setInputValue("")
-                          onChange([...selected, option.value])
-                        }
-                      }}
-                      className={`cursor-pointer flex justify-between items-center dark:hover:bg-[#1A1F2E] ${isSelected ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      {option.label}
-                      {isSelected && <Check className="w-4 h-4 ml-2 text-gray-500" />}
-                    </CommandItem>
-                  )
-                })}
-                {inputValue && 
-                 !options.some(o => o.value.toLowerCase() === inputValue.toLowerCase()) && 
-                 !selected.some(s => s.toLowerCase() === inputValue.toLowerCase()) && (
-                  <CommandItem
-                    key={`create-${inputValue}`}
-                    onMouseDown={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                    }}
-                    onSelect={() => {
-                      setInputValue("")
-                      onChange([...selected, inputValue])
-                    }}
-                    className="cursor-pointer dark:hover:bg-[#1A1F2E] text-[#c4151f] font-medium"
-                  >
-                    Criar "{inputValue}"
-                  </CommandItem>
-                )}
-              </CommandGroup>
-            </CommandList>
-          </div>
-        ) : null}
       </div>
     </Command>
   )
