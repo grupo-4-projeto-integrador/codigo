@@ -396,7 +396,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
   const selectedDetails = getStatusDetails(selectedPolicy?.status);
 
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl border relative overflow-hidden" style={{ borderColor: '#E5E7EB', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '400px' }}>
+    <div className="bg-white dark:bg-[#242938] rounded-xl border border-[#E5E7EB] dark:border-[#2E3447] relative overflow-hidden" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '400px' }}>
       <AnimatePresence mode="popLayout" initial={false}>
         {!selectedLuc ? (
           <motion.div

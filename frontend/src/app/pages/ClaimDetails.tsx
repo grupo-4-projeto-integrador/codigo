@@ -121,10 +121,10 @@ export function ClaimDetails() {
       </div>
 
       {/* Main Info Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] overflow-hidden">
         <div className="h-2 bg-[#8B1A1A] w-full"></div>
         <div className="p-8">
-          <div className="flex justify-between items-start border-b border-gray-100 pb-6 mb-6">
+          <div className="flex justify-between items-start border-b border-gray-100 dark:border-[#2E3447] pb-6 mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{claim.id}</h1>
               <div className="flex items-center text-sm text-gray-500 space-x-4">
@@ -194,8 +194,8 @@ export function ClaimDetails() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Regulation Session */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-full">
-          <div className="flex items-center mb-6 pb-4 border-b border-gray-100">
+        <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6 flex flex-col h-full">
+          <div className="flex items-center mb-6 pb-4 border-b border-gray-100 dark:border-[#2E3447]">
             <div className="w-8 h-8 rounded bg-[#C8A882]/20 text-[#8B1A1A] flex items-center justify-center mr-3">
               <UserCheck className="w-5 h-5" />
             </div>
@@ -254,11 +254,11 @@ export function ClaimDetails() {
         </div>
 
         {/* Financial Session */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col h-full relative overflow-hidden">
+        <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6 flex flex-col h-full relative overflow-hidden">
           {/* Disabled Overlay if not ready */}
           {claim.status !== 'Aprovado' && claim.status !== 'Pago' && (
-            <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center border-l border-gray-100">
-              <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-center max-w-[80%]">
+            <div className="absolute inset-0 bg-white/60 dark:bg-[#242938]/80 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center border-l border-gray-100 dark:border-[#2E3447]">
+              <div className="bg-white dark:bg-[#1A1F2E] p-4 rounded-lg shadow-md border border-gray-200 dark:border-[#2E3447] text-center max-w-[80%]">
                 <Clock className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
                 <h3 className="font-bold text-gray-900 text-sm mb-1">Aprovação Pendente</h3>
                 <p className="text-xs text-gray-500">
@@ -268,7 +268,7 @@ export function ClaimDetails() {
             </div>
           )}
 
-          <div className="flex items-center mb-6 pb-4 border-b border-gray-100">
+          <div className="flex items-center mb-6 pb-4 border-b border-gray-100 dark:border-[#2E3447]">
             <div className="w-8 h-8 rounded bg-green-100 text-green-700 flex items-center justify-center mr-3">
               <DollarSign className="w-5 h-5" />
             </div>

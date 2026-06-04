@@ -148,7 +148,7 @@ export function SinistroForm() {
         <img src={img2} alt="" className="w-full h-full object-contain" />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl p-8 relative z-10 border-t-4 border-[#8B1A1A]">
+      <div className="bg-white dark:bg-[#242938] rounded-2xl shadow-xl p-8 relative z-10 border-t-4 border-[#8B1A1A]">
         {/* Logo Flamboyant */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -326,7 +326,7 @@ export function SinistroForm() {
                           p-4 rounded-lg border-2 transition-all duration-200
                           ${isSelected 
                             ? `${config.borderColor} ${config.bgLight} scale-105 shadow-md` 
-                            : 'border-[#C8A882]/30 bg-white hover:border-[#C8A882]'
+                            : 'border-[#C8A882]/30 bg-white dark:bg-[#1E2435] hover:border-[#C8A882]'
                           }
                         `}
                       >

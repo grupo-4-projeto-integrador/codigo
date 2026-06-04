@@ -113,8 +113,8 @@ export function NewClaim() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <div className="border-b border-gray-100 pb-4 mb-6">
+        <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-8">
+          <div className="border-b border-gray-100 dark:border-[#2E3447] pb-4 mb-6">
             <h2 className="text-lg font-semibold text-[#8B1A1A] flex items-center">
               <Building2 className="w-5 h-5 mr-2" /> Dados da Ocorrência
             </h2>
@@ -127,7 +127,7 @@ export function NewClaim() {
               </label>
               <select 
                 {...register("store", { required: "Selecione o local" })}
-                className={`w-full border ${errors.store ? 'border-red-500' : 'border-gray-300'} rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white text-gray-900 text-sm`}
+                className={`w-full border ${errors.store ? 'border-red-500' : 'border-gray-300 dark:border-[#2E3447]'} rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-[#F1F5F9] text-sm`}
               >
                 <option value="">Selecione...</option>
                 {stores?.map(s => <option key={s} value={s}>{s}</option>)}
@@ -143,7 +143,7 @@ export function NewClaim() {
                 <input 
                   type="date"
                   {...register("date", { required: "Data é obrigatória" })}
-                  className={`w-full border ${errors.date ? 'border-red-500' : 'border-gray-300'} rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white text-gray-900 text-sm`}
+                  className={`w-full border ${errors.date ? 'border-red-500' : 'border-gray-300 dark:border-[#2E3447]'} rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-[#F1F5F9] text-sm`}
                 />
               </div>
               {errors.date && <p className="mt-1 text-xs text-red-500">{errors.date.message}</p>}
@@ -155,7 +155,7 @@ export function NewClaim() {
               </label>
               <select 
                 {...register("type", { required: "Selecione o tipo" })}
-                className={`w-full border ${errors.type ? 'border-red-500' : 'border-gray-300'} rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white text-gray-900 text-sm`}
+                className={`w-full border ${errors.type ? 'border-red-500' : 'border-gray-300 dark:border-[#2E3447]'} rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-[#F1F5F9] text-sm`}
               >
                 <option value="">Selecione...</option>
                 {types?.map(t => <option key={t} value={t}>{t}</option>)}
@@ -169,7 +169,7 @@ export function NewClaim() {
               </label>
               <select 
                 {...register("riskClass")}
-                className="w-full border border-gray-300 rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white text-gray-900 text-sm"
+                className="w-full border border-gray-300 dark:border-[#2E3447] rounded-lg shadow-sm py-2.5 px-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-[#F1F5F9] text-sm"
               >
                 <option value="Estrutural">Estrutural</option>
                 <option value="Conteúdo">Conteúdo (Mercadorias/Equipamentos)</option>
@@ -216,15 +216,15 @@ export function NewClaim() {
                 {...register("description", { required: "Descrição é obrigatória", minLength: 10 })}
                 rows={5}
                 placeholder="Descreva o que ocorreu, horários estimados, pessoas envolvidas e primeiras providências tomadas..."
-                className={`w-full border ${errors.description ? 'border-red-500' : 'border-gray-300'} rounded-lg shadow-sm p-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white text-gray-900 text-sm`}
+                className={`w-full border ${errors.description ? 'border-red-500' : 'border-gray-300 dark:border-[#2E3447]'} rounded-lg shadow-sm p-3 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-[#F1F5F9] text-sm`}
               />
               {errors.description && <p className="mt-1 text-xs text-red-500">Forneça uma descrição detalhada (min 10 caracteres)</p>}
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          <div className="border-b border-gray-100 pb-4 mb-6">
+        <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-8">
+          <div className="border-b border-gray-100 dark:border-[#2E3447] pb-4 mb-6">
             <h2 className="text-lg font-semibold text-[#8B1A1A] flex items-center">
               <UploadCloud className="w-5 h-5 mr-2" /> Evidências e Documentos
             </h2>
@@ -244,7 +244,7 @@ export function NewClaim() {
             <p className="text-xs text-gray-500 mb-4">
               JPG, PNG, PDF ou MP4 (Máx. 50MB)
             </p>
-            <label className="cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
+            <label className="cursor-pointer bg-white dark:bg-[#1E2435] border border-gray-300 dark:border-[#2E3447] text-gray-700 dark:text-[#F1F5F9] px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-[#2A3143] transition-colors shadow-sm">
               Selecionar Arquivos
               <input type="file" multiple className="hidden" onChange={handleFileChange} />
             </label>
@@ -279,7 +279,7 @@ export function NewClaim() {
           <button 
             type="button"
             onClick={() => navigate(-1)}
-            className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 shadow-sm transition-colors"
+            className="px-6 py-2.5 border border-gray-300 dark:border-[#2E3447] rounded-lg text-sm font-medium text-gray-700 dark:text-[#F1F5F9] bg-white dark:bg-[#242938] hover:bg-gray-50 dark:hover:bg-[#2A3143] shadow-sm transition-colors"
           >
             Cancelar
           </button>

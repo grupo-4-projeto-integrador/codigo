@@ -31,7 +31,7 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl border flex flex-col mb-4 shadow-sm" style={{ borderColor: '#E5E7EB' }}>
+    <div className="bg-white dark:bg-[#242938] rounded-xl border flex flex-col mb-4 shadow-sm dark:border-[#2E3447]">
       <div className="p-4 border-b border-gray-100 flex items-center justify-between dark:border-[#2E3447]">
         <div className="flex items-center gap-2">
           <h3 className="font-bold text-gray-900 dark:text-white text-lg">Fila de ação</h3>

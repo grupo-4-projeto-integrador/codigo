@@ -11,8 +11,10 @@ ENV VITE_API_URL=$VITE_API_URL
 RUN pnpm build
 
 # Final stage
+# O build do Vite escreve para ../backend/static/dist (conforme vite.config.ts)
+# copiar a saída correta do estágio builder
 FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /backend/static/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

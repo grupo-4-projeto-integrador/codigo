@@ -48,6 +48,8 @@
   --border: #E5E7EB;
   --input-background: #F9FAFB;
   --ring: #D93030;
+  --popover: #FFFFFF;
+  --popover-foreground: #1F2937;
   --radius: 8px;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
@@ -89,6 +91,9 @@
   --border: #2E3447;
   --input-background: #1E2435;
   --ring: #E04444;
+  --popover: #242938;
+  --popover-foreground: #F1F5F9;
+  --color-border: rgba(255,255,255,0.07);
 }
 
 @theme inline {
