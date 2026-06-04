@@ -19,6 +19,7 @@ import { downloadArquivo } from "../utils/downloadUtils";
 import { request } from "../../api/client";
 import type { ApoliceRecord } from "../../types/apolice";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
+import { DocumentListWithUpload } from "../components/DocumentListWithUpload";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 import { 
@@ -420,45 +421,12 @@ export function PolicyDetail() {
             </div>
           </div>
 
-          {/* Documentos */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
-            <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-4">Documentos</h3>
-            
-            {documentos.length === 0 ? (
-              <p className="text-sm text-gray-500">Nenhum documento encontrado.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {documentos.map(doc => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-[#2E3447] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-[#6e150e] dark:group-hover:text-[#E04444] transition-colors">
-                          {doc.nome}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-[#94A3B8]">
-                          Adicionado em {new Date(doc.data_adicao).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => handleDownloadDoc(doc.id, doc.nome)}
-                      disabled={isDownloading[doc.id]}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors disabled:opacity-50"
-                    >
-                      {isDownloading[doc.id] ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Download className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <DocumentListWithUpload 
+            policyId={id!} 
+            documentos={documentos} 
+            onUploadSuccess={loadData} 
+            onExportApolice={() => exportApoliceParaPDF(policy, coberturas)}
+          />
 
           {/* Observações */}
           <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
@@ -572,7 +540,7 @@ export function PolicyDetail() {
       </div>
 
         <Dialog open={showRenewDialog} onOpenChange={setShowRenewDialog}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px]" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Confirmar Renovação</DialogTitle>
             </DialogHeader>

@@ -189,16 +189,8 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
     >
       {/* Header */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">{totalLucs}</span>
-            <span className="text-[11px] font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-widest">lojas mapeadas</span>
-          </div>
-          <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-[#475569]"></div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-[#9F1239] dark:text-[#E04444] tracking-tight">{percentualVencidas}%</span>
-            <span className="text-[11px] font-semibold text-gray-500 dark:text-[#94A3B8] uppercase tracking-widest">com apólice vencida</span>
-          </div>
+        <div className="text-[12px] font-normal" style={{ color: 'var(--color-text-secondary)' }}>
+          <span className="font-medium">{totalLucs}</span> lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
         </div>
       </div>
 

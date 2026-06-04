@@ -41,11 +41,53 @@ export function exportToXLSX(data: ApoliceRecord[], filename: string) {
   XLSX.writeFile(workbook, finalFilename);
 }
 
+export function exportToPDF(data: ApoliceRecord[], filename: string) {
+  if (!data || data.length === 0) return;
+
+  const doc = new jsPDF();
+  
+  doc.setFontSize(14);
+  doc.text("Listagem de Apólices", 14, 15);
+  doc.setFontSize(10);
+  doc.text(`Exportado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 22);
+
+  const head = [["LUC", "Loja", "Seguradora", "Vigência", "Vencimento", "Status", "Cobertura"]];
+  const body = data.map(item => [
+    item.luc || item.id || "-",
+    item.fantasia || item.lojista || item.loja || "-",
+    item.seguradora || "-",
+    formatDate(item.vigencia),
+    formatDate(item.vencimento),
+    item.status || "-",
+    formatValue(item.cobertura)
+  ]);
+
+  autoTable(doc, {
+    startY: 28,
+    head: head,
+    body: body,
+    theme: "striped",
+    headStyles: { fillColor: [196, 21, 31] },
+    styles: { fontSize: 8 },
+  });
+
+  const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+  doc.save(finalFilename);
+}
+
 // Let's create an inline formatter to be safe and standalone
 const formatValue = (val: number | string | undefined) => {
   if (val === undefined) return "R$ 0,00";
   const num = Number(val);
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+};
+
+const formatDate = (val: any) => {
+  if (!val) return "-";
+  if (typeof val === 'string' && val.includes("T")) {
+    return new Date(val).toLocaleDateString("pt-BR");
+  }
+  return val;
 };
 
 export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
@@ -109,13 +151,6 @@ export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
   doc.text("Valor Segurado:", 14, 89);
   
   doc.setTextColor(0, 0, 0);
-  const formatDate = (val: any) => {
-    if (!val) return "-";
-    if (val.includes && val.includes("T")) {
-      return new Date(val).toLocaleDateString("pt-BR");
-    }
-    return val;
-  };
   doc.text(formatDate(apolice.vigencia), 45, 77);
   doc.text(formatDate(apolice.vencimento), 45, 83);
   doc.text(formatValue(apolice.cobertura), 45, 89);

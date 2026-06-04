@@ -6,7 +6,9 @@ import {
   X
 } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
-import { getApolice } from "../../api/apolice";
+import { getApolice, getDocumentos } from "../../api/apolice";
+import { DocumentListWithUpload } from "../components/DocumentListWithUpload";
+import { exportApoliceParaPDF } from "../utils/exportUtils";
 import { request } from "../../api/client";
 import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
@@ -33,6 +35,7 @@ export function PolicyEdit() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [policyData, setPolicyData] = useState<any>({});
+  const [documentos, setDocumentos] = useState<any[]>([]);
 
   const { control, register, handleSubmit, reset } = useForm<PolicyEditFormInputs>({
     defaultValues: {
@@ -71,9 +74,14 @@ export function PolicyEdit() {
 
     if (!id) return;
     
-    getApolice(id)
-      .then((data) => {
-        setPolicyData(data);
+    const loadData = () => {
+      Promise.all([
+        getApolice(id),
+        getDocumentos(id)
+      ])
+        .then(([data, docsData]) => {
+          setDocumentos(docsData || []);
+          setPolicyData(data);
         
         const parseDateSafe = (dateString: string) => {
           if (!dateString) return undefined;
@@ -103,13 +111,22 @@ export function PolicyEdit() {
           observacoes: data.observacoes || ""
         });
         
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        toast.error("Erro ao carregar os dados da apólice");
-        setLoading(false);
-      });
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          toast.error("Erro ao carregar os dados da apólice");
+          setLoading(false);
+        });
+    };
+
+    loadData();
+    // Expose loadData to window or just rely on a refetch callback
+    // Wait, let's keep it simple by wrapping the inner logic in a function and using it for the callback
+    (window as any).__refreshDocs = () => {
+      getDocumentos(id).then(docs => setDocumentos(docs || []));
+    };
+
   }, [id, reset]);
 
   const onSubmit = async (data: PolicyEditFormInputs) => {
@@ -295,6 +312,16 @@ export function PolicyEdit() {
 
             </div>
           </div>
+
+          <DocumentListWithUpload 
+            policyId={id!} 
+            documentos={documentos} 
+            onUploadSuccess={() => getDocumentos(id!).then(docs => setDocumentos(docs || []))}
+            onExportApolice={() => {
+              const policyRecord = { ...formData, id };
+              exportApoliceParaPDF(policyRecord, coberturas);
+            }}
+          />
         </div>
 
         {/* Side Column (Sticky) */}

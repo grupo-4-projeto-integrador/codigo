@@ -1072,9 +1072,9 @@ export function Insurance() {
                   <DropdownMenuItem onClick={() => {
                     const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
                     const dateStr = new Date().toISOString().split('T')[0];
-                    exportToCSV(sortedPolicies, `apolices-${statusName}-${dateStr}.csv`);
+                    exportToPDF(sortedPolicies, `apolices-${statusName}-${dateStr}.pdf`);
                   }}>
-                    Baixar CSV
+                    Baixar PDF
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => {
                     const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
