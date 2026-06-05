@@ -3,14 +3,15 @@ package apolice
 import "time"
 
 type Payload struct {
-	Luc        string  `json:"luc"`
-	Loja       string  `json:"loja"`
-	Segmento   string  `json:"segmento"`
-	Seguradora string  `json:"seguradora"`
-	Vigencia   string  `json:"vigencia"`
-	Vencimento string  `json:"vencimento"`
-	Cobertura  float64 `json:"cobertura"`
-	Observacoes string `json:"observacoes"`
+	Luc         string  `json:"luc"`
+	Loja        string  `json:"loja"`
+	Segmento    string  `json:"segmento"`
+	Seguradora  string  `json:"seguradora"`
+	Vigencia    string  `json:"vigencia"`
+	Vencimento  string  `json:"vencimento"`
+	Cobertura   float64 `json:"cobertura"`
+	Responsavel string  `json:"responsavel"`
+	Observacoes string  `json:"observacoes"`
 }
 
 type Response struct {
@@ -58,18 +59,17 @@ func ParseDate(value string) (time.Time, error) {
 		}
 	}
 
-	return time.Time{}, ErrValidation("data invÃ¡lida: " + value)
+	return time.Time{}, ErrValidation("data inválida: " + value)
 }
 
 type RenovacaoPayload struct {
 	NovaVigencia string  `json:"nova_vigencia"`
 	NovoValor    float64 `json:"novo_valor"`
 }
+
 type DocumentoDTO struct {
 	ID          int    `json:"id"`
 	ApoliceLuc  string `json:"apolice_luc"`
 	Nome        string `json:"nome"`
 	DataAdicao  string `json:"data_adicao"`
 }
-
-

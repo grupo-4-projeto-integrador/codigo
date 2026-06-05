@@ -47,9 +47,10 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
     }
   };
   
-  const displayDocs = onExportApolice && !documentos.some(d => d.nome === 'Apolice_Completa.pdf')
-    ? [{ id: -1, nome: `apólice_${policyId}.pdf`, data_adicao: new Date().toISOString() }, ...documentos]
-    : documentos;
+  const safeDocumentos = documentos || [];
+  const displayDocs = onExportApolice && !safeDocumentos.some(d => d.nome === 'Apolice_Completa.pdf')
+    ? [{ id: -1, nome: `apólice_${policyId}.pdf`, data_adicao: new Date().toISOString() }, ...safeDocumentos]
+    : safeDocumentos;
 
   const startUpload = (file: File) => {
     const tempId = Math.random().toString(36).substring(7);
@@ -149,7 +150,7 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
     <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
       <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-4">Documentos</h3>
       
-      {documentos.length === 0 && uploadingDocs.length === 0 ? (
+      {displayDocs.length === 0 && uploadingDocs.length === 0 ? (
         <p className="text-sm text-gray-500 mb-4">Nenhum documento encontrado.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">

@@ -15,12 +15,14 @@ import (
 	"strings"
 	"time"
 
+	"grupo4/seguros/internal/audit"
 	"grupo4/seguros/internal/middleware"
 	"grupo4/seguros/pkg/response"
 )
 
 type Handler struct {
-	service *Service
+	service  *Service
+	auditSvc *audit.Service // nullable — auditoria opcional
 }
 
 type MapLayoutItem struct {
@@ -62,8 +64,15 @@ type AtividadeRecenteResponse struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, auditSvc *audit.Service) *Handler {
+	return &Handler{service: service, auditSvc: auditSvc}
+}
+
+// logAudit envia registro de auditoria de forma segura (nunca bloqueia/falha).
+func (h *Handler) logAudit(r *http.Request, acao, entidade, entidadeID string, anterior, novo *string) {
+	if h.auditSvc != nil {
+		h.auditSvc.LogFromRequest(r, acao, entidade, entidadeID, anterior, novo)
+	}
 }
 
 func (h *Handler) GetMapLayout(w http.ResponseWriter, r *http.Request) {
@@ -450,7 +459,7 @@ func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		payload, err := decodePayload(r)
 		if err != nil {
-			_ = response.Fail(w, http.StatusBadRequest, "JSON invÃƒÂ¡lido", requestID, nil)
+			_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
 			return
 		}
 
@@ -460,6 +469,8 @@ func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		novoJSON := toJSON(item)
+		h.logAudit(r, audit.AcaoCriar, audit.EntidadeApolice, item.Luc, nil, &novoJSON)
 		_ = response.Success(w, http.StatusCreated, ToResponse(item), requestID)
 
 	default:
@@ -492,23 +503,32 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 		case http.MethodPut, http.MethodPatch:
 			payload, err := decodePayload(r)
 			if err != nil {
-				_ = response.Fail(w, http.StatusBadRequest, "JSON invÃƒÂ¡lido", requestID, nil)
+				_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
 				return
 			}
+
+			// snapshot antes de editar
+			anterior, _ := h.service.Get(itemID)
+			anteriorJSON := toJSON(anterior)
 
 			item, err := h.service.Update(itemID, payload)
 			if err != nil {
 				h.writeError(w, requestID, err)
 				return
 			}
+			novoJSON := toJSON(item)
+			h.logAudit(r, audit.AcaoEditar, audit.EntidadeApolice, itemID, &anteriorJSON, &novoJSON)
 			_ = response.Success(w, http.StatusOK, ToResponse(item), requestID)
 
 		case http.MethodDelete:
+			anterior, _ := h.service.Get(itemID)
+			anteriorJSON := toJSON(anterior)
 			if err := h.service.Delete(itemID); err != nil {
 				h.writeError(w, requestID, err)
 				return
 			}
-			_ = response.Success(w, http.StatusOK, map[string]string{"message": "ApÃƒÂ³lice excluÃƒÂ­da com sucesso"}, requestID)
+			h.logAudit(r, audit.AcaoExcluir, audit.EntidadeApolice, itemID, &anteriorJSON, nil)
+			_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice excluída com sucesso"}, requestID)
 
 		default:
 			_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
@@ -617,7 +637,9 @@ func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = response.Success(w, http.StatusOK, map[string]string{"message": "ApÃƒÂ³lice renovada com sucesso"}, requestID)
+	detalhes := fmt.Sprintf(`{"nova_vigencia":%q,"novo_valor":%f}`, payload.NovaVigencia, payload.NovoValor)
+	h.logAudit(r, audit.AcaoRenovar, audit.EntidadeApolice, itemID, nil, &detalhes)
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice renovada com sucesso"}, requestID)
 }
 
 func (h *Handler) writeError(w http.ResponseWriter, requestID string, err error) {
@@ -646,6 +668,15 @@ func decodePayload(r *http.Request) (Payload, error) {
 	payload.Vencimento = strings.TrimSpace(payload.Vencimento)
 
 	return payload, nil
+}
+
+// toJSON serializa qualquer valor para string JSON, silenciando erros.
+func toJSON(v any) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "{}"
+	}
+	return string(b)
 }
 
 func (h *Handler) GetAtividadesRecentes(w http.ResponseWriter, r *http.Request) {

@@ -84,13 +84,13 @@ export function PolicyNew() {
       .then(data => {
         setUsuarios(data || []);
         if (data && data.length > 0) {
-          setValue('responsavel', data[0].nome || data[0].id);
+          setValue('responsavel', data[0].nome || data[0].id, { shouldValidate: true, shouldDirty: true });
         }
       })
       .catch(() => {
         const mockUsers = [{ id: 1, nome: "João Carlos" }, { id: 2, nome: "Ana Silva" }];
         setUsuarios(mockUsers);
-        setValue('responsavel', "João Carlos");
+        setValue('responsavel', "João Carlos", { shouldValidate: true, shouldDirty: true });
       });
   }, [setValue]);
 
@@ -103,19 +103,19 @@ export function PolicyNew() {
     try {
       const lojaData = await request<any>(`/lojas/${selectedLuc}`);
       if (lojaData && (lojaData.nome || lojaData.lojista || lojaData.fantasia)) {
-        setValue("loja", lojaData.nome || lojaData.lojista || lojaData.fantasia || "");
+        setValue("loja", lojaData.nome || lojaData.lojista || lojaData.fantasia || "", { shouldValidate: true, shouldDirty: true });
         setLojaIsReadOnly(true);
       } else {
-        setValue("loja", "");
+        setValue("loja", "", { shouldValidate: true, shouldDirty: true });
         setLojaIsReadOnly(false);
       }
     } catch(e) {
       const selectedLoja = lojasCadastradas.find(l => l.luc === selectedLuc);
       if (selectedLoja) {
-        setValue("loja", selectedLoja.nome || selectedLoja.lojista || "");
+        setValue("loja", selectedLoja.nome || selectedLoja.lojista || "", { shouldValidate: true, shouldDirty: true });
         setLojaIsReadOnly(true);
       } else {
-        setValue("loja", "");
+        setValue("loja", "", { shouldValidate: true, shouldDirty: true });
         setLojaIsReadOnly(false);
       }
     }
@@ -124,14 +124,13 @@ export function PolicyNew() {
   const formValues = watch();
   const filledFieldsCount = [
     formValues.luc,
-    formValues.loja,
     formValues.tipos_cobertura?.length > 0 ? formValues.tipos_cobertura : null,
     formValues.seguradora,
     formValues.vigencia,
     formValues.vencimento,
-    formValues.cobertura,
+    formValues.cobertura?.toString(), // Ensure 0 is counted
     formValues.responsavel
-  ].filter(v => !!v).length;
+  ].filter(v => v !== undefined && v !== null && v !== "").length;
 
   const onSubmit = async (data: PolicyFormInputs) => {
     if (!data.luc || !data.seguradora || !data.tipos_cobertura?.length || !data.vigencia || !data.vencimento || !data.cobertura || !data.responsavel) {
@@ -252,11 +251,16 @@ export function PolicyNew() {
                   control={control}
                   rules={{ required: true }}
                   render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Selecione a data de início"
-                    />
+                    <div>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Selecione a data de início"
+                      />
+                      {field.value && field.value < new Date(new Date().setHours(0,0,0,0)) && (
+                        <p className="text-[#c4151f] text-[10px] mt-1 font-medium">Data de vigência está no passado.</p>
+                      )}
+                    </div>
                   )}
                 />
               </div>
@@ -268,11 +272,16 @@ export function PolicyNew() {
                   control={control}
                   rules={{ required: true }}
                   render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Selecione a data de vencimento"
-                    />
+                    <div>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Selecione a data de vencimento"
+                      />
+                      {field.value && field.value < new Date(new Date().setHours(0,0,0,0)) && (
+                        <p className="text-[#c4151f] text-[10px] mt-1 font-medium">Data de vencimento está no passado.</p>
+                      )}
+                    </div>
                   )}
                 />
               </div>
@@ -281,7 +290,14 @@ export function PolicyNew() {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Valor Segurado Base <span className="text-red-500">*</span></label>
                 <Input 
                   type="number"
-                  {...register("cobertura", { required: true })}
+                  min="0"
+                  step="0.01"
+                  {...register("cobertura", { required: true, min: 0 })}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e') {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="0.00" 
                   className="dark:bg-[#1A1F2E]"
                 />
@@ -337,7 +353,7 @@ export function PolicyNew() {
                 <span className="font-semibold text-gray-900 dark:text-white truncate max-w-[140px] text-right">{formValues.loja || "-"}</span>
               </div>
               <div className="flex justify-between border-b border-gray-100 dark:border-[#2E3447] pb-2">
-                <span className="text-gray-500">Cobertura</span>
+                <span className="text-gray-500">Segmento</span>
                 <span className="font-semibold text-gray-900 dark:text-white max-w-[150px] truncate text-right" title={formValues.tipos_cobertura?.join(', ')}>
                   {formValues.tipos_cobertura?.length > 0 ? formValues.tipos_cobertura.join(', ') : "-"}
                 </span>
@@ -362,12 +378,12 @@ export function PolicyNew() {
 
             <div className="mb-6">
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-[11px] text-gray-500 dark:text-[#94A3B8] font-medium">{filledFieldsCount} de 8 campos obrigatórios preenchidos</span>
+                <span className="text-[11px] text-gray-500 dark:text-[#94A3B8] font-medium">{filledFieldsCount} de 7 campos obrigatórios preenchidos</span>
               </div>
               <div className="w-full h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-[#c4151f] transition-all duration-300" 
-                  style={{ width: `${(filledFieldsCount / 8) * 100}%` }}
+                  style={{ width: `${(filledFieldsCount / 7) * 100}%` }}
                 />
               </div>
             </div>
@@ -375,7 +391,7 @@ export function PolicyNew() {
             <div className="flex flex-col gap-3">
               <button 
                 type="submit"
-                disabled={saving || filledFieldsCount < 8}
+                disabled={saving || filledFieldsCount < 7}
                 className="w-full bg-[#c4151f] hover:bg-[#a01119] text-white font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50"
               >
                 {saving ? (

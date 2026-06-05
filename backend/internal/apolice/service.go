@@ -172,6 +172,8 @@ func (s *Service) buildModel(payload Payload) (Apolice, error) {
 		Status:        calculatePolicyStatus(vencimento),
 		Cobertura:     payload.Cobertura,
 		DiasRestantes: calculateDaysRemaining(vencimento),
+		Responsavel:   strings.TrimSpace(payload.Responsavel),
+		Observacoes:   strings.TrimSpace(payload.Observacoes),
 	}, nil
 }
 

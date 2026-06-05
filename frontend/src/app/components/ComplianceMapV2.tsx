@@ -82,8 +82,8 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
   const [currentPage, setCurrentPage] = useState(1);
   const [mapFilters, setMapFiltersState] = useState(getMapFilters);
 
-  // 5 lines * 12 columns (approximate on desktop) = 60 items per page
-  const ITEMS_PER_PAGE = 60;
+  // 5 lines * 13 columns = 65 items per page
+  const ITEMS_PER_PAGE = 65;
 
   useEffect(() => {
     let active = true;
@@ -206,11 +206,12 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
         <>
           {/* LUC Grid */}
           <TooltipProvider delayDuration={100}>
-            <div className="mb-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 44px)', gridAutoRows: '38px', gap: '5px', justifyContent: 'start', width: '100%' }}>
+            <div className="mb-4 map-grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 44px)', gridAutoRows: '38px', gap: '5px', justifyContent: 'start', width: '100%' }}>
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
               const details = getStatusDetails(policy?.status);
               const isSelected = selectedLuc === luc;
+              const hasSelection = selectedLuc !== null;
               const baseScale = 1;
               const zIndexLevel = isSelected ? 30 : (policy?.cobertura ? Math.floor(baseScale * 10) : 1);
               const daysRemainingDate = parseTooltipDate(policy?.vencimento);
@@ -241,8 +242,8 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
                 <Tooltip key={luc}>
                   <TooltipTrigger asChild>
                     <motion.button
-                      onClick={() => onSelectLuc(luc)}
-                      className="relative flex items-center justify-center font-bold text-sm shadow-sm focus:outline-none border border-transparent"
+                      onClick={() => onSelectLuc(isSelected ? null : luc)}
+                      className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile ${isSelected ? 'sel' : ''}`}
                       aria-label={`LUC ${luc}`}
                       style={{
                           width: '44px',
@@ -252,48 +253,32 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
                           color: details.text,
                           zIndex: zIndexLevel,
                           pointerEvents: (isDimmed ? 'none' : 'auto') as React.CSSProperties['pointerEvents'],
-                          ...(isSelected ? { boxShadow: `0 0 0 3px #3b82f6` } : {})
+                          WebkitTapHighlightColor: 'transparent',
                       }}
                       initial={hasMounted ? false : { scale: 0.5, opacity: 0 }}
-                      animate={{ scale: baseScale, opacity: isDimmed ? 0.12 : 1 }}
+                      animate={{ 
+                        scale: isSelected ? baseScale * 1.05 : (hasSelection ? baseScale * 0.96 : baseScale), 
+                        opacity: isDimmed ? 0.12 : (hasSelection && !isSelected ? 0.65 : 1),
+                        outline: isSelected ? `2px solid ${details.bg}` : `0px solid transparent`,
+                        outlineOffset: isSelected ? '2px' : '0px',
+                        boxShadow: isSelected ? `0 0 0 2px #f9e4a0, 0 4px 16px rgba(196,21,31,0.3)` : 'none',
+                        filter: isSelected ? 'brightness(1.05)' : 'brightness(1)',
+                        backgroundColor: details.bg
+                      }}
                       whileHover={{
-                        scale: baseScale * 1.1,
-                        boxShadow: `0 10px 20px -5px ${details.bg}60, 0 4px 10px -3px rgba(0,0,0,0.1)`,
+                        scale: baseScale * 1.05,
+                        boxShadow: `0 8px 16px -4px ${details.bg}50, 0 4px 8px -4px rgba(0,0,0,0.1)`,
                         filter: 'brightness(1.05)',
                         zIndex: 40
                       }}
                       whileTap={{ scale: baseScale * 0.95 }}
                       transition={{
                         type: "spring",
-                        stiffness: 400,
-                        damping: 25,
-                        ...(hasMounted ? {
-                          opacity: { duration: 0.2 },
-                          scale: { type: "spring", stiffness: 300, damping: 20 }
-                        } : {
-                          opacity: { duration: 0.3, delay: index * 0.05 },
-                          scale: { type: "spring", stiffness: 300, damping: 20, delay: index * 0.05 }
-                        })
+                        stiffness: hasMounted ? 400 : 300,
+                        damping: hasMounted ? 25 : 20,
+                        delay: hasMounted ? 0 : (index % 13) * 0.02 + Math.floor(index / 13) * 0.02
                       }}
-                    >
-                      <AnimatePresence mode="popLayout">
-                        <motion.div
-                          key={details.bg}
-                          initial={{ scale: 0.85, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0.85, opacity: 0 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            backgroundColor: details.bg,
-                            position: 'absolute',
-                            inset: 0,
-                            borderRadius: '10px',
-                          }}
-                        />
-                      </AnimatePresence>
-                    </motion.button>
+                    />
                   </TooltipTrigger>
                   <TooltipContent
                     side="top"
@@ -388,16 +373,16 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
   const selectedDetails = getStatusDetails(selectedPolicy?.status);
 
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl border border-[#E5E7EB] dark:border-[#2E3447] relative overflow-hidden" style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '400px' }}>
-      <AnimatePresence mode="popLayout" initial={false}>
+    <div className="bg-white dark:bg-[#242938] rounded-xl border border-[#E5E7EB] dark:border-[#2E3447] relative overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
+      <AnimatePresence mode="wait" initial={false}>
         {!selectedLuc ? (
           <motion.div
             key="empty"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20, position: 'absolute' }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            className="flex flex-col items-center justify-center h-full w-full text-center p-8 absolute inset-0 bg-white dark:bg-[#242938] z-10"
+            className="flex flex-col items-center justify-center min-h-[350px] w-full text-center p-8 bg-white dark:bg-[#242938]"
           >
             <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] mb-4">
               <MapPin className="w-8 h-8 text-gray-300 dark:text-[#475569]" />
@@ -412,9 +397,9 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
             key={selectedLuc}
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20, position: 'absolute' }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            className="flex flex-col h-full w-full absolute inset-0 bg-white dark:bg-[#242938] z-20"
+            className="flex flex-col w-full bg-white dark:bg-[#242938]"
           >
       {/* Panel Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-white dark:bg-[#242938] dark:border-[#2E3447]">
@@ -432,7 +417,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
       </div>
 
       {/* Panel Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }} className="space-y-3">
+      <div style={{ padding: '12px' }} className="space-y-3">
 
         {/* Status and Actions Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
@@ -534,85 +519,10 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
               </div>
             </div>
 
-            {/* Timeline Section */}
+            {/* Responsavel Section */}
             {(() => {
-              const parseDate = (str?: string) => {
-                if (!str) return null;
-                const parts = str.split('/');
-                if (parts.length === 3) return new Date(+parts[2], +parts[1] - 1, +parts[0]);
-                return new Date(str);
-              };
-              const fmt = (d: Date | null) => d ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-              const today = new Date();
-
-              const emissaoDate = selectedPolicy.vigencia ? parseDate(selectedPolicy.vigencia) : null;
-              const vigenciaDate = emissaoDate ? new Date(emissaoDate.getTime() - 30 * 86400000) : null;
-              const vencimentoDate = parseDate(selectedPolicy.vencimento);
-              const renovacaoDate = vencimentoDate ? new Date(vencimentoDate.getTime() + 365 * 86400000) : null;
-
-              const events = [
-                { label: 'Emissão', date: vigenciaDate, isPast: vigenciaDate ? vigenciaDate < today : false },
-                { label: 'Início da Vigência', date: emissaoDate, isPast: emissaoDate ? emissaoDate < today : false },
-                { label: 'Vencimento', date: vencimentoDate, isPast: vencimentoDate ? vencimentoDate < today : false, isStatus: true },
-                { label: 'Renovação Prevista', date: renovacaoDate, isPast: renovacaoDate ? renovacaoDate < today : false },
-              ];
-
-              const currentIdx = events.findIndex((e, i) => {
-                const next = events[i + 1];
-                return e.date && (!next?.date || (next.date > today));
-              });
-
-              const statusColor = selectedDetails.bg;
-
               return (
                 <div style={{ borderTop: '0.5px solid var(--color-border-tertiary)', paddingTop: '12px', marginTop: '4px' }}>
-                  <p style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '12px' }}>
-                    Linha do Tempo
-                  </p>
-                  <div style={{ position: 'relative', paddingLeft: '22px' }}>
-                    {/* Connector line */}
-                    <div style={{
-                      position: 'absolute',
-                      left: '5px',
-                      top: '8px',
-                      bottom: '8px',
-                      borderLeft: '1.5px dashed var(--color-border-secondary)',
-                    }} />
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                      {events.map((ev, idx) => {
-                        const isCurrent = idx === currentIdx;
-                        const dotColor = ev.isStatus ? statusColor : (isCurrent ? '#BA7517' : ev.isPast ? '#788033' : 'var(--color-border-secondary)');
-                        const dotShadow = isCurrent ? '0 0 0 3px rgba(186,117,23,0.15)' : 'none';
-                        return (
-                          <div key={ev.label} style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-                            <div style={{
-                              position: 'absolute',
-                              left: '-22px',
-                              width: '11px',
-                              height: '11px',
-                              borderRadius: '50%',
-                              backgroundColor: dotColor,
-                              boxShadow: dotShadow,
-                              flexShrink: 0,
-                              zIndex: 1,
-                            }} />
-                            <div>
-                              <p style={{ fontSize: '11px', fontWeight: 600, color: ev.isStatus ? statusColor : (ev.isPast ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'), lineHeight: 1.2 }}>
-                                {ev.label}
-                              </p>
-                              <p style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginTop: '1px' }}>
-                                {fmt(ev.date)}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Responsavel — inside timeline card, below events */}
-                  <div style={{ borderTop: '0.5px solid var(--color-border-tertiary)', margin: '14px 0' }} />
                   <p style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '10px' }}>
                     Responsável pelo Contrato
                   </p>

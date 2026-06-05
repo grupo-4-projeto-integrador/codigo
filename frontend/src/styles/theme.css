@@ -197,3 +197,95 @@
     line-height: 1.5;
   }
 }
+
+/* Elegant Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+/* Global Radix / Shadcn Dropdown & Select Item Styling */
+[role="option"]:hover,
+[role="menuitem"]:hover,
+[cmdk-item]:hover,
+.SelectItem:hover,
+[data-radix-select-item]:hover,
+[data-highlighted] {
+  background: rgba(196, 21, 31, 0.08) !important;
+  color: var(--color-text-primary) !important;
+  cursor: pointer;
+}
+
+/* Map Tiles Spatial Emergence */
+.map-tile {
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+/* Premium Typography for Numbers (Stripe/Linear style) */
+.kpi-number {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "cv11" 1, "ss01" 1, "ss03" 1;
+  letter-spacing: -0.03em;
+}
+
+.table-number {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+  letter-spacing: -0.01em;
+}
+
+[role="option"][data-state="checked"],
+[data-radix-select-item][data-state="checked"] {
+  background: rgba(196, 21, 31, 0.12) !important;
+  color: #c4151f !important;
+}
+
+[role="option"][data-state="checked"] svg,
+[data-radix-select-item][data-state="checked"] svg {
+  color: #c4151f !important;
+}
+
+/* Flamboyant Logo Animation */
+@keyframes logoSpin {
+  0%   { transform: rotate(0deg);  }
+  8%   { transform: rotate(45deg); }
+  16%  { transform: rotate(0deg);  }
+  100% { transform: rotate(0deg);  }
+}
+.sidebar-logo {
+  animation: logoSpin 10s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform;
+}
+
+/* Slide in from top animation */
+@keyframes slideInTop {
+  from { transform: translateY(-12px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* Shimmer effect for skeleton loaders */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.shimmer-effect {
+  background: linear-gradient(90deg, var(--color-background-secondary) 25%, var(--color-background-tertiary) 50%, var(--color-background-secondary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}

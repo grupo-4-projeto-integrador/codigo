@@ -212,12 +212,9 @@ export function SegmentRiskChart() {
                 <motion.div
                   key={item.segmento}
                   initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08, type: "spring", stiffness: 400, damping: 25 }}
-                  className="group relative transition-all duration-300"
-                  style={{
-                    opacity: selectedSegment && !isHighlighted ? 0.3 : 1
-                  }}
+                  animate={{ opacity: selectedSegment && !isHighlighted ? 0.3 : 1, y: 0 }}
+                  transition={{ delay: index * 0.08, duration: 0.4, ease: "easeOut" }}
+                  className="group relative"
                 >
                   <div className="flex justify-between items-end mb-1.5">
                     <div className="flex flex-col">

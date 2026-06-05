@@ -12,10 +12,21 @@ import { formatLargeCurrency } from "../utils/currency";
 import { useCountUp } from "../hooks/useCountUp";
 import { request } from "../../api/client";
 import { motion, AnimatePresence } from "motion/react";
+import { SkeletonCard } from "../components/ui/SkeletonCard";
+import { SkeletonTable } from "../components/ui/SkeletonTable";
+import { SkeletonMap } from "../components/ui/SkeletonMap";
+import { AuditLog } from "./AuditLog";
 import { Tooltip as ShadcnTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu";
 import { IconDownload } from '@tabler/icons-react';
 import { exportToXLSX } from '../utils/exportUtils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 type KPIHistoryPoint = {
   label: string;
   value: number;
@@ -110,6 +121,9 @@ export function Insurance() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'visao-geral' | 'audit-log'>('visao-geral');
 
   // Advanced filter states
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -442,11 +456,30 @@ export function Insurance() {
     };
   }, []);
 
-  const fetchAtividadesGlobais = async () => {
+  const fetchAtividades = async (luc: string | null) => {
     setLoadingAtividades(true);
     try {
-      const data = await request<AtividadeRecente[]>('/apolices/atividade-recente?limit=5');
-      setAtividadesRecentes(data || []);
+      if (luc) {
+        const data = await request<any[]>(`/apolices/${luc}/historico`);
+        setAtividadesRecentes((data || []).map(h => {
+          const acaoLower = (h.acao || '').toLowerCase();
+          const mappedAcao = acaoLower.includes('criada') ? 'criada' :
+                            acaoLower.includes('renovada') ? 'renovada' :
+                            acaoLower.includes('excluída') ? 'excluida' :
+                            acaoLower.includes('observações') ? 'observacoes' : 'editada';
+          return {
+            id: h.id.toString(),
+            luc: h.apolice_luc,
+            nome_loja: "",
+            acao: mappedAcao,
+            responsavel: h.autor || 'Sistema',
+            timestamp: h.data
+          };
+        }));
+      } else {
+        const data = await request<AtividadeRecente[]>('/apolices/atividade-recente?limit=5');
+        setAtividadesRecentes(data || []);
+      }
     } catch {
       setAtividadesRecentes([]);
     } finally {
@@ -455,8 +488,8 @@ export function Insurance() {
   };
 
   useEffect(() => {
-    fetchAtividadesGlobais();
-  }, []);
+    fetchAtividades(selectedMapLuc);
+  }, [selectedMapLuc]);
 
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -545,6 +578,34 @@ export function Insurance() {
     return 0;
   });
 
+  // Listen for custom events from CommandPalette
+  useEffect(() => {
+    const handleExportarPdf = () => {
+      const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
+      const dateStr = new Date().toISOString().split('T')[0];
+      exportToPDF(sortedPolicies, `apolices-${statusName}-${dateStr}.pdf`);
+    };
+
+    const handleFiltrarVencidas = () => {
+      setStatusFilter('vencida');
+      setCurrentPage(1);
+      setTimeout(() => {
+        tableSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 100);
+    };
+
+    window.addEventListener('exportar-pdf', handleExportarPdf);
+    window.addEventListener('filtrar-vencidas', handleFiltrarVencidas);
+
+    return () => {
+      window.removeEventListener('exportar-pdf', handleExportarPdf);
+      window.removeEventListener('filtrar-vencidas', handleFiltrarVencidas);
+    };
+  }, [sortedPolicies, statusFilter]);
+
   // Paginação
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
@@ -557,6 +618,12 @@ export function Insurance() {
   };
 
   const handleVerApolice = (policyId: string) => {
+    try {
+      const stored = localStorage.getItem('recent_policies');
+      let recent = stored ? JSON.parse(stored) : [];
+      recent = [policyId, ...recent.filter((id: string) => id !== policyId)].slice(0, 5);
+      localStorage.setItem('recent_policies', JSON.stringify(recent));
+    } catch (e) {}
     navigate(`/seguros/apolice/${encodeURIComponent(policyId)}`);
   };
 
@@ -968,14 +1035,15 @@ export function Insurance() {
             </div>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-2">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>Mapa de Conformidade por LUC</h1>
-              <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1">Visualização consolidada da conformidade das apólices por loja.</p>
+              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>Seguros</h1>
+              <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1">Gestão de apólices, mapa de lucs e auditoria de ações.</p>
             </div>
             
-            <div className="flex items-center gap-2 lg:gap-2.5">
-              <div className="relative w-[180px] xl:w-[260px]">
+            {activeTab === 'visao-geral' && (
+              <div className="flex items-center gap-2 lg:gap-2.5">
+                <div className="relative w-[180px] xl:w-[260px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 <input
                   type="text"
@@ -988,67 +1056,64 @@ export function Insurance() {
               </div>
 
               <div className="relative flex items-center">
-                <select
-                  value={seguradoraFilter}
-                  onChange={(e) => setSeguradoraFilter(e.target.value)}
-                  className={`max-w-[120px] truncate px-3 py-2 border rounded-lg text-[13px] font-medium focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px] transition-colors ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200'}`}
-                  style={{
-                    backgroundColor: seguradoraFilter !== 'todas' ? 'var(--color-brand)' : undefined,
-                    backgroundImage: seguradoraFilter !== 'todas' ? 'none' : `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`
-                  }}
-                >
-                  <option value="todas" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Seguradora</option>
-                  {uniqueSeguradoras.map(seguradora => (
-                    <option key={seguradora} value={seguradora} className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">{seguradora}</option>
-                  ))}
-                </select>
+                <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
+                  <SelectTrigger 
+                    className={`h-9 w-[175px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'}`}
+                  >
+                    <SelectValue placeholder="Seguradora" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#2E3447] z-[100] bg-white dark:bg-[#242938]">
+                    <SelectItem value="todas" className="text-[13px] font-medium cursor-pointer">Todas Seguradoras</SelectItem>
+                    {uniqueSeguradoras.map(seguradora => (
+                      <SelectItem key={seguradora} value={seguradora} className="text-[13px] font-medium cursor-pointer">{seguradora}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {seguradoraFilter !== 'todas' && (
-                  <button onClick={() => setSeguradoraFilter('todas')} className="absolute right-2 text-white/80 hover:text-white z-10 pointer-events-auto">
-                    <X className="w-4 h-4" />
+                  <button onClick={(e) => { e.stopPropagation(); setSeguradoraFilter('todas'); }} className="absolute right-8 text-white/80 hover:text-white z-10 p-1">
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
 
               <div className="relative flex items-center">
-                <select
-                  value={tipoFilter}
-                  onChange={(e) => setTipoFilter(e.target.value)}
-                  className={`max-w-[110px] truncate px-3 py-2 border rounded-lg text-[13px] font-medium focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px] transition-colors ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200'}`}
-                  style={{
-                    backgroundColor: tipoFilter !== 'todos' ? 'var(--color-brand)' : undefined,
-                    backgroundImage: tipoFilter !== 'todos' ? 'none' : `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`
-                  }}
-                >
-                  <option value="todos" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Segmento</option>
-                  {uniqueTipos.map(tipo => (
-                    <option key={tipo} value={tipo} className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">{tipo}</option>
-                  ))}
-                </select>
+                <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                  <SelectTrigger 
+                    className={`h-9 w-[150px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'}`}
+                  >
+                    <SelectValue placeholder="Segmento" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#2E3447] z-[100] bg-white dark:bg-[#242938]">
+                    <SelectItem value="todos" className="text-[13px] font-medium cursor-pointer">Todos Segmentos</SelectItem>
+                    {uniqueTipos.map(tipo => (
+                      <SelectItem key={tipo} value={tipo} className="text-[13px] font-medium cursor-pointer">{tipo}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {tipoFilter !== 'todos' && (
-                  <button onClick={() => setTipoFilter('todos')} className="absolute right-2 text-white/80 hover:text-white z-10 pointer-events-auto">
-                    <X className="w-4 h-4" />
+                  <button onClick={(e) => { e.stopPropagation(); setTipoFilter('todos'); }} className="absolute right-8 text-white/80 hover:text-white z-10 p-1">
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
 
               <div className="relative flex items-center">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className={`max-w-[110px] truncate px-3 py-2 border rounded-lg text-[13px] font-medium focus:outline-none cursor-pointer shadow-[0_1px_2px_rgba(0,0,0,0.03)] appearance-none pr-8 bg-no-repeat bg-[right_0.75rem_center] bg-[length:16px_12px] transition-colors ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200'}`}
-                  style={{
-                    backgroundColor: statusFilter !== 'todas' ? 'var(--color-brand)' : undefined,
-                    backgroundImage: statusFilter !== 'todas' ? 'none' : `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E")`
-                  }}
-                >
-                  <option value="todas" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Status</option>
-                  <option value="ativa" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Ativa</option>
-                  <option value="a vencer" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">A Vencer</option>
-                  <option value="vencida" className="text-gray-900 bg-white dark:text-white dark:bg-[#242938]">Vencida</option>
-                </select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger 
+                    className={`h-9 w-[140px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'}`}
+                  >
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#2E3447] z-[100] bg-white dark:bg-[#242938]">
+                    <SelectItem value="todas" className="text-[13px] font-medium cursor-pointer">Todos Status</SelectItem>
+                    <SelectItem value="ativa" className="text-[13px] font-medium cursor-pointer">Ativa</SelectItem>
+                    <SelectItem value="a vencer" className="text-[13px] font-medium cursor-pointer">A Vencer</SelectItem>
+                    <SelectItem value="vencida" className="text-[13px] font-medium cursor-pointer">Vencida</SelectItem>
+                  </SelectContent>
+                </Select>
                 {statusFilter !== 'todas' && (
-                  <button onClick={() => setStatusFilter('todas')} className="absolute right-2 text-white/80 hover:text-white z-10 pointer-events-auto">
-                    <X className="w-4 h-4" />
+                  <button onClick={(e) => { e.stopPropagation(); setStatusFilter('todas'); }} className="absolute right-8 text-white/80 hover:text-white z-10 p-1">
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -1110,18 +1175,50 @@ export function Insurance() {
                 />
               </motion.button>
             </div>
+            )}
           </div>
-      </div>
 
-      {/* Main Layout Area (Left/Right Columns) */}
-      <div className="flex flex-col lg:flex-row flex-1 gap-3 md:gap-4 lg:gap-6 min-h-0 px-6 overflow-y-auto">
+          {/* Tabs */}
+          <div className="flex items-center gap-6 border-b border-gray-200 dark:border-[#2E3447] mb-4">
+            <button
+              onClick={() => setActiveTab('visao-geral')}
+              className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'visao-geral' ? 'text-[#c4151f] dark:text-[#E04444]' : 'text-gray-500 hover:text-gray-700 dark:text-[#94A3B8] dark:hover:text-gray-300'}`}
+            >
+              Visão Geral
+              {activeTab === 'visao-geral' && (
+                <motion.div layoutId="activeTabSeguros" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c4151f] dark:bg-[#E04444]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('audit-log')}
+              className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'audit-log' ? 'text-[#c4151f] dark:text-[#E04444]' : 'text-gray-500 hover:text-gray-700 dark:text-[#94A3B8] dark:hover:text-gray-300'}`}
+            >
+              Audit Log
+              {activeTab === 'audit-log' && (
+                <motion.div layoutId="activeTabSeguros" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c4151f] dark:bg-[#E04444]" />
+              )}
+            </button>
+          </div>
+        </div>
+
+      {activeTab === 'visao-geral' ? (
+        <>
+          <div className="flex flex-col lg:flex-row flex-1 gap-3 md:gap-4 lg:gap-6 min-h-0 px-6 overflow-y-auto">
         
         {/* Left Column (Main Content Area) */}
         <div className="flex-1 space-y-3 md:space-y-4 lg:space-y-6 pb-4">
 
           {/* Metric Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-            
+            {isLoading ? (
+              <>
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+                <SkeletonCard />
+              </>
+            ) : (
+              <>
             {/* Card 1 - Taxa de Conformidade */}
             <div
               className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
@@ -1135,7 +1232,7 @@ export function Insurance() {
                   </p>
 
                   <div className="mt-2 flex items-end gap-1 leading-none">
-                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
                       {animatedConformidade}
                     </span>
                     <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
@@ -1189,7 +1286,8 @@ export function Insurance() {
                 >
                   <defs>
                     <linearGradient id={`kpi-history-gradient-${sparklineGradientId}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#639922" stopOpacity="0.18" />
+                      <stop offset="0%" stopColor="#639922" stopOpacity="0.45" />
+                      <stop offset="75%" stopColor="#639922" stopOpacity="0.08" />
                       <stop offset="100%" stopColor="#639922" stopOpacity="0" />
                     </linearGradient>
                   </defs>
@@ -1197,17 +1295,29 @@ export function Insurance() {
                   {sparklineArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={sparklineArea} fill={`url(#kpi-history-gradient-${sparklineGradientId})`} />}
 
                   {sparklineLine && (
-                    <motion.path
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                      d={sparklineLine}
-                      fill="none"
-                      stroke="#639922"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <>
+                      <motion.path
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                        d={sparklineLine}
+                        fill="none"
+                        stroke="#639922"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="280" cy={(() => {
+                        const values = sparklineValues;
+                        const minY = 36;
+                        const maxY = 8;
+                        const minValue = Math.min(...values);
+                        const maxValue = Math.max(...values);
+                        const range = Math.max(maxValue - minValue, 1);
+                        const normalized = (values[values.length - 1] - minValue) / range;
+                        return minY - normalized * (minY - maxY);
+                      })()} r="2.5" fill="#639922" />
+                    </>
                   )}
                 </svg>
               </div>
@@ -1226,7 +1336,7 @@ export function Insurance() {
                   </p>
 
                   <div className="mt-2 flex items-end gap-1 leading-none">
-                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#BA7517]">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#BA7517] kpi-number">
                       {animatedExpiring}
                     </span>
                     <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
@@ -1264,7 +1374,8 @@ export function Insurance() {
                 >
                   <defs>
                     <linearGradient id={`expiring-history-gradient-${expiringSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#BA7517" stopOpacity="0.20" />
+                      <stop offset="0%" stopColor="#BA7517" stopOpacity="0.45" />
+                      <stop offset="75%" stopColor="#BA7517" stopOpacity="0.08" />
                       <stop offset="100%" stopColor="#BA7517" stopOpacity="0" />
                     </linearGradient>
                   </defs>
@@ -1313,7 +1424,7 @@ export function Insurance() {
                   </p>
 
                   <div className="mt-2 flex items-end gap-1 leading-none">
-                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#A32D2D]">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number">
                       {animatedExpired}
                     </span>
                     <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
@@ -1351,7 +1462,8 @@ export function Insurance() {
                 >
                   <defs>
                     <linearGradient id={`expired-history-gradient-${expiredSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.22" />
+                      <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.50" />
+                      <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.10" />
                       <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
                     </linearGradient>
                   </defs>
@@ -1405,7 +1517,7 @@ export function Insurance() {
                   </p>
 
                   <div className="mt-2 flex items-end gap-1 leading-none">
-                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white">
+                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
                       {formattedCoverageTotal.value}
                     </span>
                     {formattedCoverageTotal.suffix && (
@@ -1453,11 +1565,13 @@ export function Insurance() {
                 >
                   <defs>
                     <linearGradient id={`coverage-available-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1c3d32" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="#1c3d32" stopOpacity="0" />
+                      <stop offset="0%" stopColor="#639922" stopOpacity="0.40" />
+                      <stop offset="75%" stopColor="#639922" stopOpacity="0.06" />
+                      <stop offset="100%" stopColor="#639922" stopOpacity="0" />
                     </linearGradient>
                     <linearGradient id={`coverage-paid-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.20" />
+                      <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.35" />
+                      <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.06" />
                       <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
                     </linearGradient>
                   </defs>
@@ -1466,36 +1580,56 @@ export function Insurance() {
                   {coveragePagoArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coveragePagoArea} fill={`url(#coverage-paid-gradient-${coverageSparklineId})`} />}
 
                   {coverageDisponivelLine && (
-                    <motion.path
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                      d={coverageDisponivelLine}
-                      fill="none"
-                      stroke="#639922"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <>
+                      <motion.path
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                        d={coverageDisponivelLine}
+                        fill="none"
+                        stroke="#639922"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="280" cy={(() => {
+                        const values = coverageDisponivelValues;
+                        const minY = 36;
+                        const maxY = 8;
+                        const normalized = values[values.length - 1] / coverageGlobalMax;
+                        return minY - normalized * (minY - maxY);
+                      })()} r="2.5" fill="#639922" />
+                    </>
                   )}
 
                   {coveragePagoLine && (
-                    <motion.path
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-                      d={coveragePagoLine}
-                      fill="none"
-                      stroke="#A32D2D"
-                      strokeWidth="1.5"
-                      strokeDasharray="4 3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <>
+                      <motion.path
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+                        d={coveragePagoLine}
+                        fill="none"
+                        stroke="#A32D2D"
+                        strokeWidth="1.5"
+                        strokeDasharray="4 3"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="280" cy={(() => {
+                        const values = coveragePagoValues;
+                        const minY = 36;
+                        const maxY = 8;
+                        const normalized = values[values.length - 1] / coverageGlobalMax;
+                        return minY - normalized * (minY - maxY);
+                      })()} r="2.5" fill="#A32D2D" />
+                    </>
                   )}
                 </svg>
               </div>
             </div>
+              </>
+            )}
           </div>
 
           <div
@@ -1506,10 +1640,14 @@ export function Insurance() {
             }}
           >
             <div style={{ minHeight: 0 }}>
-              <ComplianceMapV2
-                selectedLuc={selectedMapLuc}
-                onSelectLuc={setSelectedMapLuc}
-              />
+              {isLoading ? (
+                <SkeletonMap />
+              ) : (
+                <ComplianceMapV2
+                  selectedLuc={selectedMapLuc}
+                  onSelectLuc={setSelectedMapLuc}
+                />
+              )}
             </div>
             <div style={{ position: 'relative', minHeight: 0 }}>
               <div style={{ position: 'absolute', inset: 0 }}>
@@ -1519,6 +1657,9 @@ export function Insurance() {
           </div>
 
           {/* Data Table */}
+          {isLoading ? (
+            <SkeletonTable />
+          ) : (
           <motion.div
             ref={tableSectionRef}
             className="bg-white dark:bg-[#242938] rounded-xl border overflow-hidden relative"
@@ -1543,9 +1684,7 @@ export function Insurance() {
                   </tr>
                 </thead>
                 <tbody>
-                  {isLoading
-                    ? renderSkeleton()
-                    : paginatedPolicies.length === 0
+                  {paginatedPolicies.length === 0
                       ? renderEmptyState()
                       : paginatedPolicies.map((policy, index) => (
                         <tr
@@ -1554,17 +1693,17 @@ export function Insurance() {
                           className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
                           style={{ borderColor: colors.cardBorder }}
                         >
-                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.id}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.id}</td>
                           <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.lojista}</td>
                           <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.tipo}</td>
                           <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.seguradora}</td>
-                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.vigencia}</td>
-                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.vencimento}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.vigencia}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.vencimento}</td>
                           <td className="px-4 py-3" style={{ minWidth: '110px' }}>
                             {renderStatusBadge(policy.status)}
                           </td>
-                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
-                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.dias_restantes}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
+                          <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.dias_restantes}</td>
                         </tr>
                       ))
                   }
@@ -1626,6 +1765,7 @@ export function Insurance() {
               </div>
             </div>
           </motion.div>
+          )}
         </div>
 
           {/* Right Panel (350px fixed) - SEM PERFIL */}
@@ -1643,10 +1783,17 @@ export function Insurance() {
           />
 
           {/* 3. Atividade Recente */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl border flex-1 flex flex-col min-h-0"
-            style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-          >
-            <div className="px-4 py-3 border-b flex items-center justify-between shrink-0" style={{ borderColor: colors.cardBorder }}>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div 
+              key="atividade-recente"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.2 }}
+              className="bg-white dark:bg-[#242938] rounded-xl border flex-1 flex flex-col relative w-full min-h-[250px]"
+              style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
+            >
+              <div className="px-4 py-3 border-b flex items-center justify-between shrink-0" style={{ borderColor: colors.cardBorder }}>
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-[#8B1A1A]/10 dark:bg-[#E04444]/10 flex items-center justify-center">
                   <Activity className="w-3.5 h-3.5 text-[#8B1A1A] dark:text-[#E04444]" />
@@ -1697,8 +1844,9 @@ export function Insurance() {
                   return (
                     <div
                       key={atividade.id}
-                      className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer"
+                      className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer opacity-0"
                       onClick={() => handleVerApolice(atividade.luc)}
+                      style={{ animation: 'slideInTop 0.3s ease forwards', animationDelay: `${i * 60}ms` }}
                     >
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg} ${cfg.text}`}>
                         {cfg.icon}
@@ -1719,7 +1867,8 @@ export function Insurance() {
                 })
               )}
             </div>
-          </div>
+            </motion.div>
+          </AnimatePresence>
 
         </div>
       </div>
@@ -2412,6 +2561,14 @@ export function Insurance() {
           </div>
         )}
       </AnimatePresence>
+        </>
+      ) : (
+        <div className="flex-1 overflow-auto">
+          <div className="p-6 pt-0 space-y-6 max-w-[1600px] mx-auto w-full">
+            <AuditLog isTab />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

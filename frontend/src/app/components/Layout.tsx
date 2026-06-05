@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router";
+import { NavLink, useOutlet, useNavigate, useLocation } from "react-router";
 import {
   Home,
   FileText,
@@ -26,6 +26,8 @@ import { UserProfileProvider, type UserProfile } from "../contexts/UserProfileCo
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import { motion, AnimatePresence } from "motion/react";
+import { CommandPalette } from "./CommandPalette";
+
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
 
@@ -54,6 +56,7 @@ const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const outlet = useOutlet();
   const [darkMode, setDarkMode] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -114,6 +117,23 @@ export function Layout() {
       document.documentElement.dataset.theme = 'light';
     }
   }, []);
+
+  useEffect(() => {
+    const handleToggleTheme = () => toggleDarkMode();
+    const handleAbrirNotificacoes = () => setIsNotificationOpen(true);
+    const handleMarcarLidas = () => handleMarkAllRead();
+
+    window.addEventListener('toggle-theme', handleToggleTheme);
+    window.addEventListener('abrir-notificacoes', handleAbrirNotificacoes);
+    window.addEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
+
+    return () => {
+      window.removeEventListener('toggle-theme', handleToggleTheme);
+      window.removeEventListener('abrir-notificacoes', handleAbrirNotificacoes);
+      window.removeEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
+    };
+  }, [darkMode]); // Needs darkMode so toggleDarkMode closure has the latest value
+
 
   useEffect(() => {
     // Sync header search with URL params when on seguros page
@@ -266,7 +286,7 @@ export function Layout() {
         {/* Logo e Avatar */}
         <div className="h-14 flex items-center justify-between px-4 border-b" style={{ borderColor: '#a0191e50' }}>
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/seguros')}>
-            <img src={logo} alt="Logo" className="w-6 h-6" />
+            <img src={logo} alt="Logo" className="w-6 h-6 sidebar-logo" />
             <span className="font-bold text-base tracking-wide text-white hover:text-gray-200 transition-colors">Shopping Flamboyant</span>
           </div>
           <div className="flex items-center gap-4">
@@ -424,32 +444,35 @@ export function Layout() {
 
       {/* Sidebar Desktop */}
       <aside
-        className="text-white flex-col hidden md:flex transition-all duration-300"
+        className="text-white flex-col hidden md:flex transition-all duration-300 overflow-hidden h-screen sticky top-0"
         style={{
           backgroundColor: '#6e150e',
           width: isSidebarCollapsed ? '80px' : '256px'
         }}
       >
-        <div className="h-16 flex items-center justify-between px-4 border-b" style={{ borderColor: '#a0191e50' }}>
+        <div className={`flex ${isSidebarCollapsed ? 'flex-col items-center gap-3' : 'items-center justify-between'} pt-5 px-4 pb-4 mb-2 border-b`} style={{ borderColor: '#a0191e50' }}>
           {!isSidebarCollapsed && (
             <div className="flex items-center cursor-pointer flex-1" onClick={() => navigate('/seguros')}>
-              <img src={logo} alt="Logo" className="w-7 h-7 mr-3" />
-              <span className="font-bold text-lg tracking-wide text-white hover:text-gray-200 transition-colors">Flamboyant Shopping</span>
+              <img src={logo} alt="Logo" className="w-9 h-9 aspect-square mr-3 sidebar-logo" />
+              <div className="flex flex-col justify-center">
+                <span className="font-semibold text-[14px] text-white leading-tight">Flamboyant</span>
+                <span className="font-normal text-[12px] text-white opacity-70 leading-tight">Shopping</span>
+              </div>
             </div>
           )}
           {isSidebarCollapsed && (
-            <img src={logo} alt="Logo" className="w-7 h-7 mx-auto cursor-pointer" onClick={() => navigate('/seguros')} />
+            <img src={logo} alt="Logo" className="w-9 h-9 aspect-square cursor-pointer sidebar-logo" onClick={() => navigate('/seguros')} />
           )}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-2 text-white/80 hover:text-white hover:bg-[#a0191e50] rounded-lg transition-colors"
+            className="p-2 text-white/80 hover:text-white hover:bg-[#a0191e50] rounded-lg transition-colors flex-shrink-0"
             title={isSidebarCollapsed ? "Expandir menu" : "Recolher menu"}
           >
             {isSidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
         </div>
         
-        <nav className="flex-1 py-6 px-4 space-y-1">
+        <nav className="flex-1 pb-6 px-4 space-y-1 overflow-hidden min-h-0 flex flex-col justify-start">
           <div
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group transition-all duration-300 hover:bg-white/5 hover:translate-x-1`}
             title={isSidebarCollapsed ? "Dashboard" : ""}
@@ -548,8 +571,9 @@ export function Layout() {
         <header className="hidden md:flex h-16 bg-white dark:bg-[#242938] border-b border-gray-200 dark:border-[#2E3447] items-center justify-between px-6 z-10">
           <div className="flex-1 max-w-xl">
             {/* Search Placeholder */}
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+            <div className="relative flex items-center">
+              <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                Pressione <kbd className="px-1.5 py-0.5 rounded border bg-gray-100 dark:bg-[#1A1F2E] border-gray-200 dark:border-[#2E3447] ml-1">⌘K</kbd> ou <kbd className="px-1.5 py-0.5 rounded border bg-gray-100 dark:bg-[#1A1F2E] border-gray-200 dark:border-[#2E3447]">Ctrl+K</kbd> para buscar
               </span>
             </div>
           </div>
@@ -767,11 +791,22 @@ export function Layout() {
         <main className="flex-1 overflow-y-auto scroll-smooth p-4 md:p-6 bg-[#F7F4EF] dark:bg-[#0F1117]">
           <div className="w-full">
             <UserProfileProvider value={{ userProfile, canEdit }}>
-              <Outlet />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
+                >
+                  {outlet}
+                </motion.div>
+              </AnimatePresence>
             </UserProfileProvider>
           </div>
         </main>
       </div>
+      <CommandPalette />
     </div>
   );
 }

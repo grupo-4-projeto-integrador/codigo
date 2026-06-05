@@ -3,6 +3,7 @@ import { getFilaDeAcao } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
 import { Clock, AlertTriangle, AlertCircle, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
+import { motion, AnimatePresence } from "motion/react";
 
 export interface ActionQueuePanelProps {
   onSelectLuc: (luc: string) => void;
@@ -31,7 +32,15 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl border flex flex-col mb-4 shadow-sm dark:border-[#2E3447]">
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key="action-queue"
+        initial={{ opacity: 0, x: 40 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.1 }}
+        className="bg-white dark:bg-[#242938] rounded-xl border flex flex-col mb-4 shadow-sm dark:border-[#2E3447]"
+      >
       <div className="p-4 border-b border-gray-100 flex items-center justify-between dark:border-[#2E3447]">
         <div className="flex items-center gap-2">
           <h3 className="font-bold text-gray-900 dark:text-white text-lg">Fila de ação</h3>
@@ -106,6 +115,7 @@ export function ActionQueuePanel({ onSelectLuc }: ActionQueuePanelProps) {
         <div className="w-1.5 h-1.5 rounded-full bg-[#168821]"></div>
         Atualizado em {format(lastUpdate, "dd/MM/yyyy HH:mm")}
       </div>
-    </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

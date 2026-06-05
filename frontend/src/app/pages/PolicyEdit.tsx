@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 
 interface PolicyEditFormInputs {
+  luc: string;
   loja: string;
   tipos_cobertura: string[];
   seguradora: string;
@@ -39,6 +40,7 @@ export function PolicyEdit() {
 
   const { control, register, handleSubmit, reset } = useForm<PolicyEditFormInputs>({
     defaultValues: {
+      luc: id || "",
       loja: "",
       tipos_cobertura: [],
       seguradora: "",
@@ -101,6 +103,7 @@ export function PolicyEdit() {
         };
 
         reset({
+          luc: data.luc || id || "",
           loja: data.lojista || "",
           tipos_cobertura: (data.tipo || data.segmento || "").split(',').map((s: string) => s.trim()).filter(Boolean),
           seguradora: data.seguradora || "",
@@ -133,9 +136,12 @@ export function PolicyEdit() {
     if (!id) return;
     setSaving(true);
     
+    // Create a snapshot for optimistic UI rollback
+    const snapshot = { ...policyData };
+
     try {
       const payload = {
-        luc: id,
+        luc: data.luc || id,
         lojista: data.loja,
         loja: data.loja,
         tipos_cobertura: data.tipos_cobertura,
@@ -144,19 +150,31 @@ export function PolicyEdit() {
         vigencia: data.vigencia ? format(data.vigencia, "dd/MM/yyyy") : "",
         vencimento: data.vencimento ? format(data.vencimento, "dd/MM/yyyy") : "",
         cobertura: parseFloat(data.cobertura) || 0,
+        responsavel: data.responsavel,
         observacoes: data.observacoes || ""
       };
 
+      // Optimistic UI Update
+      setPolicyData({ ...snapshot, ...payload });
+
+      // Parallel/background API call
       await request(`/apolices/${id}`, {
-        method: "PUT",
+        method: "PATCH",
         body: JSON.stringify(payload)
       });
       
       toast.success("Apólice atualizada com sucesso!");
-      navigate(`/seguros/apolice/${id}`);
+      navigate(`/seguros/apolice/${payload.luc}`);
     } catch (err) {
       console.error(err);
-      toast.error("Falha ao salvar as alterações");
+      // Revert state on error
+      setPolicyData(snapshot);
+      toast.error("Não foi possível salvar · Alterações revertidas", {
+        action: {
+          label: 'Tentar novamente',
+          onClick: () => onSubmit(data) // Retry exactly the same submission
+        }
+      });
     } finally {
       setSaving(false);
     }
@@ -216,7 +234,7 @@ export function PolicyEdit() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">LUC</label>
-                <Input value={id} disabled className="bg-gray-100 dark:bg-[#1A1F2E] opacity-50 cursor-not-allowed" />
+                <Input {...register("luc")} className="dark:bg-[#1A1F2E]" />
               </div>
 
               <div className="space-y-2">
@@ -260,11 +278,16 @@ export function PolicyEdit() {
                   name="vigencia"
                   control={control}
                   render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Selecione a data de início"
-                    />
+                    <div>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Selecione a data de início"
+                      />
+                      {field.value && field.value < new Date(new Date().setHours(0,0,0,0)) && (
+                        <p className="text-[#c4151f] text-[10px] mt-1 font-medium">Data de vigência está no passado.</p>
+                      )}
+                    </div>
                   )}
                 />
               </div>
@@ -275,11 +298,16 @@ export function PolicyEdit() {
                   name="vencimento"
                   control={control}
                   render={({ field }) => (
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Selecione a data de vencimento"
-                    />
+                    <div>
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Selecione a data de vencimento"
+                      />
+                      {field.value && field.value < new Date(new Date().setHours(0,0,0,0)) && (
+                        <p className="text-[#c4151f] text-[10px] mt-1 font-medium">Data de vencimento está no passado.</p>
+                      )}
+                    </div>
                   )}
                 />
               </div>
@@ -288,7 +316,14 @@ export function PolicyEdit() {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Valor Segurado Base</label>
                 <Input 
                   type="number"
-                  {...register("cobertura")}
+                  min="0"
+                  step="0.01"
+                  {...register("cobertura", { min: 0 })}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === 'e') {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="0.00" 
                   className="dark:bg-[#1A1F2E]"
                 />
@@ -318,8 +353,7 @@ export function PolicyEdit() {
             documentos={documentos} 
             onUploadSuccess={() => getDocumentos(id!).then(docs => setDocumentos(docs || []))}
             onExportApolice={() => {
-              const policyRecord = { ...formData, id };
-              exportApoliceParaPDF(policyRecord, coberturas);
+              exportApoliceParaPDF(policyData, []);
             }}
           />
         </div>

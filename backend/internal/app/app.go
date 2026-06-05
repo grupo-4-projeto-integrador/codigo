@@ -4,11 +4,10 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"grupo4/seguros/internal/apolice"
+	"grupo4/seguros/internal/audit"
 	"grupo4/seguros/internal/database"
 	"grupo4/seguros/internal/middleware"
 	"grupo4/seguros/pkg/config"
@@ -28,7 +27,7 @@ func Run() error {
 	defer db.Close()
 
 	handler := buildHandler(db, cfg)
-	log.Printf("Servidor rodando em http://localhost%s", cfg.Addr())
+	log.Printf("Servidor rodando em http://%s", cfg.Addr())
 	return http.ListenAndServe(cfg.Addr(), handler)
 }
 
@@ -41,7 +40,28 @@ func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	apolice.RegisterRoutes(mux, db)
+	// Audit log — inicializar antes dos outros pacotes
+	auditSvc := audit.RegisterRoutes(mux, db)
+	// Cria a tabela se não existir (idempotente)
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS audit_logs (
+		id BIGSERIAL PRIMARY KEY,
+		user_id VARCHAR(255) NOT NULL DEFAULT 'sistema',
+		acao VARCHAR(100) NOT NULL,
+		entidade VARCHAR(100) NOT NULL,
+		entidade_id VARCHAR(255) NOT NULL DEFAULT '',
+		payload_anterior JSONB,
+		payload_novo JSONB,
+		ip VARCHAR(45) NOT NULL DEFAULT '',
+		user_agent TEXT NOT NULL DEFAULT '',
+		timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	); CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs (timestamp DESC);
+	CREATE INDEX IF NOT EXISTS idx_audit_acao ON audit_logs (acao);
+	CREATE INDEX IF NOT EXISTS idx_audit_entidade ON audit_logs (entidade);
+	CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_logs (user_id);`); err != nil {
+		log.Printf("Aviso: não foi possível criar tabela audit_logs: %v", err)
+	}
+
+	apolice.RegisterRoutesWithAudit(mux, db, auditSvc)
 	registerStaticFiles(mux, cfg.Frontend.Dir)
 
 	return middleware.Chain(mux,
@@ -53,32 +73,15 @@ func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 }
 
 func registerStaticFiles(mux *http.ServeMux, staticPath string) {
-	if staticPath == "" {
-		staticPath = filepath.Join("..", "frontend", "dist")
-	}
-
-	fs := http.FileServer(http.Dir(staticPath))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/api/") {
 			response.Fail(w, http.StatusNotFound, "Rota não encontrada", middleware.RequestIDFromContext(r.Context()), nil)
 			return
 		}
 
-		p := filepath.Join(staticPath, r.URL.Path)
-		if info, err := os.Stat(p); err == nil && !info.IsDir() {
-			fs.ServeHTTP(w, r)
-			return
-		}
-
-		if r.URL.Path == "/" {
-			if _, err := os.Stat(filepath.Join(staticPath, "index.html")); err == nil {
-				http.ServeFile(w, r, filepath.Join(staticPath, "index.html"))
-				return
-			}
-
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write([]byte(`<!doctype html>
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -96,13 +99,10 @@ func registerStaticFiles(mux *http.ServeMux, staticPath string) {
 <body>
   <main>
     <h1>API de Seguros online</h1>
-    <p>O backend está funcionando corretamente em <code>/</code>.</p>
-    <p>Verifique a saúde em <a href="/api/health">/api/health</a> ou abra o frontend em <a href="http://localhost">http://localhost</a> quando o ambiente estiver via Docker.</p>
-    <p>Se estiver rodando só o backend, use as rotas <code>/api/*</code>.</p>
+    <p>O backend está funcionando corretamente.</p>
+    <p>Acesse o frontend via ambiente de desenvolvimento (pnpm dev).</p>
   </main>
 </body>
 </html>`))
-			return
-		}
 	})
 }
