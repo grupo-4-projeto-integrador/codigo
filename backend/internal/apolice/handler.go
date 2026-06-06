@@ -55,6 +55,11 @@ type SegmentRiskItem struct {
 	DiasMedioAtraso int    `json:"dias_medio_atraso"`
 }
 
+type HealthScoreResponse struct {
+	Score int `json:"score"`
+	Delta int `json:"delta"`
+}
+
 type AtividadeRecenteResponse struct {
 	ID          string    `json:"id"`
 	Luc         string    `json:"luc"`
@@ -336,6 +341,72 @@ func (h *Handler) GetRiskBySegment(w http.ResponseWriter, r *http.Request) {
 	})
 
 	_ = response.Success(w, http.StatusOK, result, requestID)
+}
+
+func (h *Handler) GetHealthScore(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodGet {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
+		return
+	}
+
+	items, err := h.service.List()
+	if err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	score := calculateHealthScore(items, time.Now())
+	previousScore := calculateHealthScore(items, time.Now().AddDate(0, 0, -7))
+
+	payload := HealthScoreResponse{
+		Score: score,
+		Delta: score - previousScore,
+	}
+
+	_ = response.Success(w, http.StatusOK, payload, requestID)
+}
+
+func calculateHealthScore(items []Apolice, at time.Time) int {
+	if len(items) == 0 {
+		return 100
+	}
+
+	snapshot := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, at.Location())
+
+	conformes := 0
+	aVencer := 0
+	vencidas := 0
+
+	for _, item := range items {
+		if item.Vencimento.IsZero() {
+			continue
+		}
+		if !item.Vigencia.IsZero() {
+			vigencia := time.Date(item.Vigencia.Year(), item.Vigencia.Month(), item.Vigencia.Day(), 0, 0, 0, 0, at.Location())
+			if snapshot.Before(vigencia) {
+				continue
+			}
+		}
+
+		vencimento := time.Date(item.Vencimento.Year(), item.Vencimento.Month(), item.Vencimento.Day(), 0, 0, 0, 0, at.Location())
+		daysRemaining := int(vencimento.Sub(snapshot).Hours() / 24)
+
+		if daysRemaining < 0 {
+			vencidas++
+		} else if daysRemaining <= 30 {
+			aVencer++
+		} else {
+			conformes++
+		}
+	}
+
+	total := len(items)
+	rawScore := (float64(conformes) * 1.0) + (float64(aVencer) * 0.4) - (float64(vencidas) * 1.5)
+	
+	percentage := (rawScore / float64(total)) * 100
+	return int(math.Round(math.Max(0, math.Min(100, percentage))))
 }
 
 func atLocation(t time.Time) *time.Location {

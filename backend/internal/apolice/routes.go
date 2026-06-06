@@ -24,6 +24,7 @@ func RegisterRoutesWithAudit(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Ser
 	mux.HandleFunc("/api/kpis/expiring-by-week", handler.GetExpiringByWeek)
 	mux.HandleFunc("/api/kpis/coverage-history", handler.GetCoverageHistory)
 	mux.HandleFunc("/api/kpis/risk-by-segment", handler.GetRiskBySegment)
+	mux.HandleFunc("/api/kpis/health-score", handler.GetHealthScore)
 	mux.HandleFunc("GET /api/apolices/atividade-recente", handler.GetAtividadesRecentes)
 	mux.HandleFunc("/api/apolices/", handler.Item("/api/apolices"))
 	mux.HandleFunc("/api/map-layout", handler.GetMapLayout)
