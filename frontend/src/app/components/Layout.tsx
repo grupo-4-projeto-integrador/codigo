@@ -8,16 +8,16 @@ import {
   ShieldAlert,
   Shield,
   Bell,
-  Search,
   Moon,
   Sun,
-  MessageSquare,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
   AlertTriangle,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Presentation,
+  X as XIcon
 } from "lucide-react";
 import logo from "../../imports/image-4.png";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
@@ -27,6 +27,7 @@ import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import { motion, AnimatePresence } from "motion/react";
 import { CommandPalette } from "./CommandPalette";
+import { useFocusMode } from "../contexts/FocusModeContext";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
@@ -64,6 +65,7 @@ export function Layout() {
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const { isFocusMode, toggleFocusMode } = useFocusMode();
 
   // User profile management - Simula autenticação
   const [userProfile, setUserProfile] = useState<UserProfile>('relacionamento');
@@ -123,14 +125,23 @@ export function Layout() {
     const handleAbrirNotificacoes = () => setIsNotificationOpen(true);
     const handleMarcarLidas = () => handleMarkAllRead();
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        handleToggleTheme();
+      }
+    };
+
     window.addEventListener('toggle-theme', handleToggleTheme);
     window.addEventListener('abrir-notificacoes', handleAbrirNotificacoes);
     window.addEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('toggle-theme', handleToggleTheme);
       window.removeEventListener('abrir-notificacoes', handleAbrirNotificacoes);
       window.removeEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [darkMode]); // Needs darkMode so toggleDarkMode closure has the latest value
 
@@ -280,7 +291,8 @@ export function Layout() {
   };
   
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-[#F7F4EF] dark:bg-[#0F1117]">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-[#F7F4EF] dark:bg-[#0F1117] relative">
+
       {/* Mobile Header com Logo e Navegação Horizontal */}
       <div className="md:hidden flex flex-col sticky top-0 z-30" style={{ backgroundColor: '#6e150e' }}>
         {/* Logo e Avatar */}
@@ -444,10 +456,10 @@ export function Layout() {
 
       {/* Sidebar Desktop */}
       <aside
-        className="text-white flex-col hidden md:flex transition-all duration-300 overflow-hidden h-screen sticky top-0"
+        className={`text-white flex-col hidden md:flex transition-all duration-500 overflow-hidden h-screen sticky top-0 ${isFocusMode ? 'opacity-0 pointer-events-none' : ''}`}
         style={{
           backgroundColor: '#6e150e',
-          width: isSidebarCollapsed ? '80px' : '256px'
+          width: isFocusMode ? '0px' : isSidebarCollapsed ? '80px' : '256px'
         }}
       >
         <div className={`flex ${isSidebarCollapsed ? 'flex-col items-center gap-3' : 'items-center justify-between'} pt-5 px-4 pb-4 mb-2 border-b`} style={{ borderColor: '#a0191e50' }}>
@@ -471,8 +483,7 @@ export function Layout() {
             {isSidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
           </button>
         </div>
-        
-        <nav className="flex-1 pb-6 px-4 space-y-1 overflow-hidden min-h-0 flex flex-col justify-start">
+        <nav className="flex-1 pb-6 px-4 space-y-1 overflow-hidden min-h-0 flex flex-col justify-start mt-4">
           <div
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} px-4 py-3 rounded-lg text-sm font-medium text-white/50 opacity-50 cursor-not-allowed relative group transition-all duration-300 hover:bg-white/5 hover:translate-x-1`}
             title={isSidebarCollapsed ? "Dashboard" : ""}
@@ -568,7 +579,7 @@ export function Layout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header - Hidden on mobile */}
-        <header className="hidden md:flex h-16 bg-white dark:bg-[#242938] border-b border-gray-200 dark:border-[#2E3447] items-center justify-between px-6 z-10">
+        <header className={`hidden md:flex h-16 bg-white dark:bg-[#242938] border-b border-gray-200 dark:border-[#2E3447] items-center justify-between px-6 z-10 transition-all duration-500 overflow-hidden ${isFocusMode ? '!h-0 !py-0 border-none' : ''}`}>
           <div className="flex-1 max-w-xl">
             {/* Search Placeholder */}
             <div className="relative flex items-center">
@@ -579,6 +590,21 @@ export function Layout() {
           </div>
 
           <div className="flex items-center ml-6 space-x-4">
+
+            {/* Focus Mode Button */}
+            <button
+              id="focus-mode-btn"
+              onClick={toggleFocusMode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
+                isFocusMode
+                  ? 'bg-[#6e150e] text-white shadow-lg'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-[#2E3447]'
+              }`}
+              title="Ativar/desativar Modo Apresentação (F)"
+            >
+              <Presentation className="w-4 h-4" />
+              <span className="hidden xl:inline">Apresentação</span>
+            </button>
 
             <div ref={notificationRef} className="relative">
               <button
@@ -788,7 +814,7 @@ export function Layout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth p-4 md:p-6 bg-[#F7F4EF] dark:bg-[#0F1117]">
+        <main className={`flex-1 overflow-y-auto scroll-smooth bg-[#F7F4EF] dark:bg-[#0F1117] transition-all duration-500 ${isFocusMode ? 'p-0 h-screen overflow-hidden' : 'p-4 md:p-6'}`}>
           <div className="w-full">
             <UserProfileProvider value={{ userProfile, canEdit }}>
               <AnimatePresence mode="wait">

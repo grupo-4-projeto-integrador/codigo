@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router';
 import { Command } from 'cmdk';
 import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { listApolices } from '../../api/apolice';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [recentPolicies, setRecentPolicies] = useState<string[]>([]);
+  const [apolices, setApolices] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const renovarMatch = inputValue.toLowerCase().match(/^ren(?:ovar)?\s+(?:ap[oó]lice\s+)?([a-z0-9-]+)$/i);
@@ -33,6 +35,9 @@ export function CommandPalette() {
         }
       } catch (e) {
         // ignore
+      }
+      if (apolices.length === 0) {
+        listApolices().then(setApolices).catch(console.error);
       }
     }
   }, [open]);
@@ -62,7 +67,16 @@ export function CommandPalette() {
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             className="relative w-full max-w-[540px] bg-white dark:bg-[#1A1F2E] rounded-xl shadow-2xl border border-gray-100 dark:border-[#2E3447] overflow-hidden flex flex-col z-10"
           >
-            <Command label="Global Command Menu" shouldFilter={true}>
+            <Command 
+              label="Global Command Menu" 
+              shouldFilter={true}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  setOpen(false);
+                }
+              }}
+            >
               <Command.Input 
                 autoFocus
                 value={inputValue}
@@ -114,6 +128,32 @@ export function CommandPalette() {
                         <FileText className="w-4 h-4 opacity-70" />
                         <span>Apólice <span className="font-semibold">{luc}</span></span>
                       </div>
+                    </Command.Item>
+                  ))}
+                </Command.Group>
+              )}
+
+              {apolices.length > 0 && inputValue.length > 0 && (
+                <Command.Group heading="Apólices (Pesquisa)" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#2E3447]">
+                  {apolices.map((a) => (
+                    <Command.Item 
+                      key={a.luc}
+                      value={`${a.luc} ${a.fantasia || ''} ${a.lojista || ''} ${a.segmento || ''}`}
+                      onSelect={() => handleSelect(() => navigate(`/seguros/apolice/${encodeURIComponent(a.luc)}`))}
+                      className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 opacity-70" />
+                        <span className="flex flex-col">
+                          <span>Apólice <span className="font-semibold">{a.luc}</span></span>
+                          {(a.fantasia || a.lojista) && <span className="text-[10px] text-gray-400 dark:text-[#64748B] capitalize -mt-0.5">{a.fantasia || a.lojista}</span>}
+                        </span>
+                      </div>
+                      {a.segmento && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#242938] text-gray-500 dark:text-[#94A3B8] capitalize">
+                          {a.segmento}
+                        </span>
+                      )}
                     </Command.Item>
                   ))}
                 </Command.Group>

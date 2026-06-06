@@ -72,9 +72,22 @@ function getDaysDifference(from: Date, to: Date) {
 export interface ComplianceMapV2Props {
   selectedLuc: string | null;
   onSelectLuc: (luc: string | null) => void;
+  tileWidth?: string;
+  tileHeight?: string;
+  gap?: string;
+  hideHeader?: boolean;
+  itemsPerPage?: number;
 }
 
-export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Props) {
+export function ComplianceMapV2({ 
+  selectedLuc, 
+  onSelectLuc,
+  tileWidth = '44px',
+  tileHeight = '38px',
+  gap = '5px',
+  hideHeader = false,
+  itemsPerPage
+}: ComplianceMapV2Props) {
   const navigate = useNavigate();
   const [apolices, setApolices] = useState<ApoliceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +96,7 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
   const [mapFilters, setMapFiltersState] = useState(getMapFilters);
 
   // 5 lines * 13 columns = 65 items per page
-  const ITEMS_PER_PAGE = 65;
+  const ITEMS_PER_PAGE = itemsPerPage || (hideHeader ? 176 : 65);
 
   useEffect(() => {
     let active = true;
@@ -152,14 +165,35 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
     return max || 1;
   }, [apolices]);
 
-  // Pagination calculations
+
+
+  useEffect(() => {
+    if (selectedLuc && !loading && apolices.length > 0) {
+      const isFilteredOut = !allLucs.includes(selectedLuc);
+      if (isFilteredOut) {
+        const allSortedLucs = getSortedUniqueLucs(apolices, getMapFilters());
+        const lucIndex = allSortedLucs.indexOf(selectedLuc);
+        if (lucIndex !== -1) {
+          const targetPage = Math.floor(lucIndex / ITEMS_PER_PAGE) + 1;
+          setCurrentPage(targetPage);
+        }
+      } else {
+        const lucIndex = allLucs.indexOf(selectedLuc);
+        if (lucIndex !== -1) {
+          const targetPage = Math.floor(lucIndex / ITEMS_PER_PAGE) + 1;
+          if (targetPage !== currentPage) {
+            setCurrentPage(targetPage);
+          }
+        }
+      }
+    }
+  }, [selectedLuc, allLucs, ITEMS_PER_PAGE, currentPage, loading, apolices]);
+
   const totalPages = Math.ceil(allLucs.length / ITEMS_PER_PAGE);
   const paginatedLucs = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return allLucs.slice(start, start + ITEMS_PER_PAGE);
-  }, [allLucs, currentPage]);
-
-
+  }, [allLucs, currentPage, ITEMS_PER_PAGE]);
 
   const { totalLucs, percentualVencidas } = useMemo(() => {
     let vencidasUnicas = 0;
@@ -179,20 +213,21 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
   const handleNextPage = () => setCurrentPage((p: number) => Math.min(totalPages, p + 1));
   const handlePrevPage = () => setCurrentPage((p: number) => Math.max(1, p - 1));
 
-  // Side Panel logic
   const selectedPolicy: ApoliceRecord | null = selectedLuc ? policyByLuc.get(selectedLuc) ?? null : null;
   const selectedDetails = getStatusDetails(selectedPolicy?.status);
 
   return (
     <section
-      className="w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] relative"
+      className={hideHeader ? "w-full relative h-full flex flex-col" : "w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] relative"}
     >
       {/* Header */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="text-[12px] font-normal" style={{ color: 'var(--color-text-secondary)' }}>
-          <span className="font-medium">{totalLucs}</span> lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
+      {!hideHeader && (
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="text-[12px] font-normal" style={{ color: 'var(--color-text-secondary)' }}>
+            <span className="font-medium">{totalLucs}</span> lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
+          </div>
         </div>
-      </div>
+      )}
 
       {loading ? (
         <div className="flex h-64 items-center justify-center rounded-lg bg-gray-50 dark:bg-[#242938]">
@@ -203,10 +238,11 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
           {error}
         </div>
       ) : (
-        <>
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           {/* LUC Grid */}
-          <TooltipProvider delayDuration={100}>
-            <div className="mb-4 map-grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, 44px)', gridAutoRows: '38px', gap: '5px', justifyContent: 'start', width: '100%' }}>
+          <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar">
+            <TooltipProvider delayDuration={100}>
+              <div className="map-grid-container pb-2" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${tileWidth})`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}>
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
               const details = getStatusDetails(policy?.status);
@@ -246,8 +282,8 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
                       className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile ${isSelected ? 'sel' : ''}`}
                       aria-label={`LUC ${luc}`}
                       style={{
-                          width: '44px',
-                          height: '38px',
+                          width: tileWidth,
+                          height: tileHeight,
                           borderRadius: '10px',
                           flexShrink: 0,
                           color: details.text,
@@ -302,10 +338,11 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
             })}
             </div>
           </TooltipProvider>
+          </div>
 
           {/* Dot Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3" style={{ marginTop: '10px' }}>
+            <div className="flex items-center justify-center gap-3 shrink-0 py-2">
               <button
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
@@ -342,7 +379,7 @@ export function ComplianceMapV2({ selectedLuc, onSelectLuc }: ComplianceMapV2Pro
               </button>
             </div>
           )}
-        </>
+        </div>
       )}
     </section>
   );
@@ -373,16 +410,22 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
   const selectedDetails = getStatusDetails(selectedPolicy?.status);
 
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl border border-[#E5E7EB] dark:border-[#2E3447] relative overflow-hidden" style={{ display: 'flex', flexDirection: 'column' }}>
+    <motion.div 
+      initial={{ opacity: 0, x: 40 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20, transition: { duration: 0.1, delay: 0 } }}
+      transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.15 }}
+      className="bg-white dark:bg-[#242938] rounded-xl border border-[#E5E7EB] dark:border-[#2E3447] relative overflow-hidden shrink-0 flex flex-col h-full"
+    >
       <AnimatePresence mode="wait" initial={false}>
         {!selectedLuc ? (
           <motion.div
             key="empty"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            className="flex flex-col items-center justify-center min-h-[350px] w-full text-center p-8 bg-white dark:bg-[#242938]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col items-center justify-center h-full w-full text-center p-8 bg-white dark:bg-[#242938]"
           >
             <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] mb-4">
               <MapPin className="w-8 h-8 text-gray-300 dark:text-[#475569]" />
@@ -395,14 +438,14 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
         ) : (
           <motion.div
             key={selectedLuc}
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            className="flex flex-col w-full bg-white dark:bg-[#242938]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex flex-col h-full w-full bg-white dark:bg-[#242938]"
           >
       {/* Panel Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-100 bg-white dark:bg-[#242938] dark:border-[#2E3447]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-white dark:bg-[#242938] dark:border-[#2E3447]">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447]">
             <MapPin className="w-4 h-4 text-gray-500 dark:text-[#94A3B8]" />
@@ -417,10 +460,10 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
       </div>
 
       {/* Panel Content */}
-      <div style={{ padding: '12px' }} className="space-y-3">
+      <div style={{ padding: '8px 12px' }} className="space-y-2">
 
         {/* Status and Actions Row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-100 bg-gray-50 dark:bg-[#242938] dark:border-[#2E3447]">
             <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: selectedDetails.bg }}></div>
             <span className="font-semibold text-sm" style={{ color: selectedDetails.bg !== COLORS.semApolice.bg && selectedDetails.bg !== COLORS.aVencer.bg ? selectedDetails.bg : undefined }}>
@@ -464,104 +507,63 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
               <div className="grid grid-cols-2 gap-1.5">
 
 
-                <div className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
-                  <div className="flex items-center gap-2 mb-1 text-gray-500 dark:text-[#94A3B8]">
-                    <Shield className="w-3 h-3" />
-                    <span className="text-[11px] font-medium">Seguradora</span>
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
+                    <Shield className="w-2.5 h-2.5" />
+                    <span className="text-[10px] font-medium uppercase tracking-wide">Seguradora</span>
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm dark:text-white">{selectedPolicy.seguradora || "Não informada"}</p>
+                  <p className="font-semibold text-gray-900 text-[12px] truncate dark:text-white">{selectedPolicy.seguradora || "Não informada"}</p>
                 </div>
 
-                <div className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
-                  <div className="flex items-center gap-2 mb-1 text-gray-500 dark:text-[#94A3B8]">
-                    <FileText className="w-3 h-3" />
-                    <span className="text-[11px] font-medium">Segmento</span>
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
+                    <FileText className="w-2.5 h-2.5" />
+                    <span className="text-[10px] font-medium uppercase tracking-wide">Segmento</span>
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm dark:text-white">{selectedPolicy.segmento || selectedPolicy.tipo || "—"}</p>
+                  <p className="font-semibold text-gray-900 text-[12px] truncate dark:text-white">{selectedPolicy.segmento || selectedPolicy.tipo || "—"}</p>
                 </div>
 
-                <div className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
-                  <div className="flex items-center gap-2 mb-1 text-gray-500 dark:text-[#94A3B8]">
-                    <Calendar className="w-3 h-3" />
-                    <span className="text-[11px] font-medium">Vigência</span>
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
+                    <Calendar className="w-2.5 h-2.5" />
+                    <span className="text-[10px] font-medium uppercase tracking-wide">Vigência</span>
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm dark:text-white">{selectedPolicy.vigencia || "—"}</p>
+                  <p className="font-semibold text-gray-900 text-[12px] dark:text-white">{selectedPolicy.vigencia || "—"}</p>
                 </div>
 
-                <div className="p-3 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
-                  <div className="flex items-center gap-2 mb-1 text-gray-500 dark:text-[#94A3B8]">
-                    <Clock className="w-3 h-3" />
-                    <span className="text-[11px] font-medium">Vencimento</span>
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
+                    <Clock className="w-2.5 h-2.5" />
+                    <span className="text-[10px] font-medium uppercase tracking-wide">Vencimento</span>
                   </div>
-                  <p className="font-semibold text-gray-900 text-sm dark:text-white">{selectedPolicy.vencimento || "—"}</p>
+                  <p className="font-semibold text-gray-900 text-[12px] dark:text-white">{selectedPolicy.vencimento || "—"}</p>
                 </div>
 
-                <div className="col-span-2 p-3 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-medium text-gray-500 dark:text-[#94A3B8]">Cobertura</span>
-                    <p className="font-semibold text-gray-900 text-sm dark:text-white">
-                      {selectedPolicy.cobertura ? `R$ ${selectedPolicy.cobertura}` : "R$ 0,00"}
-                    </p>
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
+                    <Shield className="w-2.5 h-2.5" />
+                    <span className="text-[10px] font-medium uppercase tracking-wide">Cobertura</span>
                   </div>
+                  <p className="font-semibold text-gray-900 text-[12px] dark:text-white truncate">
+                    {selectedPolicy.cobertura ? `R$ ${selectedPolicy.cobertura}` : "R$ 0,00"}
+                  </p>
                 </div>
 
-                <div className="col-span-2 p-3 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
-                  <div className="flex items-center justify-between gap-3">
-                    {selectedPolicy.dias_restantes !== undefined && selectedPolicy.dias_restantes !== null ? (
-                      <span className={`font-bold text-base ${selectedPolicy.dias_restantes < 0 ? "text-[#a0191e]" : selectedPolicy.dias_restantes <= 15 ? "text-[#f59e0b]" : "text-[#168821]"}`}>
-                        {selectedPolicy.dias_restantes < 0 ? `${Math.abs(selectedPolicy.dias_restantes)} dias de atraso` : `${selectedPolicy.dias_restantes} dias`}
-                      </span>
-                    ) : (
-                      <span className="font-bold text-base text-gray-400">—</span>
-                    )}
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
+                    <AlertTriangle className="w-2.5 h-2.5" />
+                    <span className="text-[10px] font-medium uppercase tracking-wide">Status</span>
                   </div>
+                  {selectedPolicy.dias_restantes !== undefined && selectedPolicy.dias_restantes !== null ? (
+                    <span className={`font-bold text-[12px] truncate ${selectedPolicy.dias_restantes < 0 ? "text-[#a0191e]" : selectedPolicy.dias_restantes <= 15 ? "text-[#f59e0b]" : "text-[#168821]"}`}>
+                      {selectedPolicy.dias_restantes < 0 ? `${Math.abs(selectedPolicy.dias_restantes)} dias de atraso` : `${selectedPolicy.dias_restantes} dias rest.`}
+                    </span>
+                  ) : (
+                    <span className="font-bold text-[12px] text-gray-400">—</span>
+                  )}
                 </div>
               </div>
             </div>
-
-            {/* Responsavel Section */}
-            {(() => {
-              return (
-                <div style={{ borderTop: '0.5px solid var(--color-border-tertiary)', paddingTop: '12px', marginTop: '4px' }}>
-                  <p style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-secondary)', fontWeight: 600, marginBottom: '10px' }}>
-                    Responsável pelo Contrato
-                  </p>
-                  {selectedPolicy.responsavel ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '50%',
-                        backgroundColor: '#3e0000',
-                        color: '#bc9b7c',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}>
-                        {selectedPolicy.responsavel.trim().split(/\s+/).slice(0, 2).map(n => n[0]).join('').toUpperCase()}
-                      </div>
-                      <div>
-                        <p style={{ fontSize: '12px', fontWeight: 500, color: 'var(--color-text-primary)', lineHeight: 1.3 }}>
-                          {selectedPolicy.responsavel}
-                        </p>
-                        <p style={{ fontSize: '10px', color: 'var(--color-text-secondary)', marginTop: '1px' }}>
-                          Gestor de Apólices
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>Não atribuído</p>
-                  )}
-
-
-                </div>
-              );
-            })()}
-
-            {/* Responsavel Section */}
 
           </>
         ) : (
@@ -579,6 +581,6 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

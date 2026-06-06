@@ -20,6 +20,15 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { listAuditLogs, type AuditLog, type AuditFilter } from "../../api/audit";
+import { format, parseISO } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { DatePicker } from "../components/ui/date-picker";
 
 /* ─── Helpers ───────────────────────────────────────────────── */
 
@@ -34,7 +43,7 @@ function formatTimestamp(ts: string) {
 const ACAO_META: Record<string, { label: string; icon: React.ComponentType<any>; color: string; bg: string }> = {
   criar:             { label: "Criar",           icon: FileText,   color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
   editar:            { label: "Editar",          icon: Edit3,      color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
-  renovar:           { label: "Renovar",         icon: RotateCcw,  color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
+  renovar:           { label: "Renovar",         icon: RotateCcw,  color: "#a0191e", bg: "rgba(160,25,30,0.1)" },
   excluir:           { label: "Excluir",         icon: Trash2,     color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
   exportar:          { label: "Exportar",        icon: Download,   color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   login:             { label: "Login",           icon: LogIn,      color: "#06b6d4", bg: "rgba(6,182,212,0.1)" },
@@ -91,25 +100,35 @@ function PayloadDiff({ anterior, novo }: { anterior: string | null; novo: string
 /* ─── Row Detail Drawer ─────────────────────────────────────── */
 function LogDetailDrawer({ log, onClose }: { log: AuditLog; onClose: () => void }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 40 }}
-      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-      className="fixed right-0 top-0 h-full w-[420px] bg-white dark:bg-[#1A1F2E] border-l border-gray-200 dark:border-[#2E3447] shadow-2xl z-50 flex flex-col"
-    >
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-[#2E3447]">
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-[#8B1A1A]" />
-          <span className="font-bold text-gray-900 dark:text-white text-sm">Detalhes do Registro</span>
+    <div className="fixed inset-0 z-[100] flex justify-end">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="relative w-full max-w-lg md:w-[480px] bg-white dark:bg-[#1A1F2E] h-full shadow-2xl flex flex-col border-l border-[#a0191e]/20"
+        style={{ boxShadow: `-20px 0 60px rgba(62, 0, 0, 0.12)` }}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-[#2E3447]">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-[#a0191e]" />
+            <span className="font-bold text-gray-900 dark:text-white text-[15px]">Detalhes do Registro</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-[#a0191e]/10 text-gray-400 hover:text-[#a0191e] transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-[#242938] text-gray-500 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div className="grid grid-cols-2 gap-3">
@@ -139,13 +158,14 @@ function LogDetailDrawer({ log, onClose }: { log: AuditLog; onClose: () => void 
         </div>
 
         {log.user_agent && (
-          <div className="bg-gray-50 dark:bg-[#242938] rounded-lg p-3">
-            <div className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] mb-1">User Agent</div>
+          <div className="bg-gray-50 dark:bg-[#242938] rounded-lg p-3 border border-gray-100 dark:border-[#2E3447]">
+            <div className="text-[9px] uppercase tracking-wider text-[#a0191e]/70 dark:text-[#E04444]/70 mb-1 font-bold">User Agent</div>
             <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] break-all">{log.user_agent}</div>
           </div>
         )}
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
 
@@ -233,8 +253,8 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
       {!isTab && (
         <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#8B1A1A]/10 dark:bg-[#E04444]/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-[#8B1A1A] dark:text-[#E04444]" />
+          <div className="w-10 h-10 rounded-xl bg-[#a0191e]/10 dark:bg-[#E04444]/10 flex items-center justify-center">
+            <Shield className="w-5 h-5 text-[#a0191e] dark:text-[#E04444]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Audit Log</h1>
@@ -261,50 +281,60 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
             <label className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-medium flex items-center gap-1">
               <Filter className="w-3 h-3" /> Ação
             </label>
-            <select
-              value={filter.acao ?? ""}
-              onChange={e => applyFilter({ acao: e.target.value })}
-              className="h-9 px-3 rounded-lg border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+            <Select
+              value={filter.acao || "todas"}
+              onValueChange={v => applyFilter({ acao: v === "todas" ? "" : v })}
             >
-              {ACOES.map(a => (
-                <option key={a} value={a}>{a ? ACAO_META[a]?.label ?? a : "Todas"}</option>
-              ))}
-            </select>
+              <SelectTrigger className="h-9 w-[160px] border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-[13px]">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-white dark:bg-[#242938]">
+                <SelectItem value="todas" className="text-[13px]">Todas</SelectItem>
+                {ACOES.filter(Boolean).map(a => (
+                  <SelectItem key={a} value={a} className="text-[13px]">{ACAO_META[a]?.label ?? a}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Entidade */}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-medium">Entidade</label>
-            <select
-              value={filter.entidade ?? ""}
-              onChange={e => applyFilter({ entidade: e.target.value })}
-              className="h-9 px-3 rounded-lg border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+            <Select
+              value={filter.entidade || "todas"}
+              onValueChange={v => applyFilter({ entidade: v === "todas" ? "" : v })}
             >
-              {ENTIDADES.map(e => (
-                <option key={e} value={e}>{e || "Todas"}</option>
-              ))}
-            </select>
+              <SelectTrigger className="h-9 w-[160px] border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-[13px]">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent className="z-[100] bg-white dark:bg-[#242938]">
+                <SelectItem value="todas" className="text-[13px]">Todas</SelectItem>
+                {ENTIDADES.filter(Boolean).map(e => (
+                  <SelectItem key={e} value={e} className="text-[13px] capitalize">{e}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* De */}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-medium">De</label>
-            <input
-              type="date"
-              value={filter.de ?? ""}
-              onChange={e => applyFilter({ de: e.target.value })}
-              className="h-9 px-3 rounded-lg border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+            <DatePicker
+              value={filter.de ? parseISO(filter.de) : undefined}
+              onChange={(d) => applyFilter({ de: d ? format(d, "yyyy-MM-dd") : "" })}
+              placeholder="00/00/0000"
+              className="w-[140px]"
             />
           </div>
 
           {/* Até */}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-medium">Até</label>
-            <input
-              type="date"
-              value={filter.ate ?? ""}
-              onChange={e => applyFilter({ ate: e.target.value })}
-              className="h-9 px-3 rounded-lg border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+            <DatePicker
+              value={filter.ate ? parseISO(filter.ate) : undefined}
+              onChange={(d) => applyFilter({ ate: d ? format(d, "yyyy-MM-dd") : "" })}
+              placeholder="00/00/0000"
+              className="w-[140px]"
             />
           </div>
 
@@ -317,7 +347,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="LUC, ID, usuário…"
-                className="h-9 pl-8 pr-3 w-full rounded-lg border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-[#8B1A1A]/30"
+                className="h-9 pl-8 pr-3 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-left focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 dark:bg-[#1A1F2E] dark:border-input dark:focus-within:ring-offset-[#1A1F2E]"
               />
             </div>
           </form>
@@ -432,16 +462,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
       {/* Detail Drawer */}
       <AnimatePresence>
         {selectedLog && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/30 backdrop-blur-[2px] z-40"
-              onClick={() => setSelectedLog(null)}
-            />
-            <LogDetailDrawer log={selectedLog} onClose={() => setSelectedLog(null)} />
-          </>
+          <LogDetailDrawer log={selectedLog} onClose={() => setSelectedLog(null)} />
         )}
       </AnimatePresence>
     </div>

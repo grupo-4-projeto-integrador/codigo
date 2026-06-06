@@ -79,7 +79,7 @@ function buildRiskFromApolices(
     });
 }
 
-export function SegmentRiskChart() {
+export function SegmentRiskChart({ isPresentationMode = false }: { isPresentationMode?: boolean }) {
   const [data, setData] = useState<SegmentRiskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -179,6 +179,41 @@ export function SegmentRiskChart() {
     const max = Math.max(...data.map((item) => item.vencidas));
     return Math.max(Math.ceil(max / 10) * 10 + 10, 50);
   }, [data]);
+
+  if (isPresentationMode) {
+    return (
+      <div className="h-full flex flex-col pt-1">
+        <div className="flex-1 overflow-y-auto pr-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+          {loading ? (
+            <div className="h-full flex items-center justify-center animate-pulse bg-white/5 rounded-lg"></div>
+          ) : error ? (
+            <div className="h-full flex items-center justify-center text-[12px] text-[#a0191e]">{error}</div>
+          ) : data.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-[12px] text-gray-500">Nenhum risco.</div>
+          ) : (
+            <div className="space-y-[14px]">
+              {data.slice(0, 5).map((item, index) => {
+                const width = Math.max((item.vencidas / maxVencidas) * 100, item.vencidas > 0 ? 12 : 0);
+                const barColor = SEGMENT_BAR_COLORS[index % SEGMENT_BAR_COLORS.length];
+                
+                return (
+                  <div key={item.segmento} className="group relative">
+                    <div className="flex justify-between items-end mb-1">
+                      <span className="truncate text-[13px] font-bold text-gray-900 dark:text-white">{item.segmento}</span>
+                      <span className="text-[11px] font-bold text-gray-500 dark:text-white/50">{item.vencidas}vencidas</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-white/5 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${width}%`, background: barColor }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="h-full rounded-xl bg-white p-4 shadow-sm border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] flex flex-col">

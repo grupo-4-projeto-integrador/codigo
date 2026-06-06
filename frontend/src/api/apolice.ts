@@ -83,7 +83,7 @@ export async function getLojas(): Promise<any[]> {
 }
 
 export async function renovarApolice(luc: string, payload: { nova_vigencia: string, novo_valor: number }): Promise<{ message: string }> {
-  return request<{ message: string }>(/apolices//renovar, {
+  return request<{ message: string }>(`/apolices/${encodeURIComponent(luc)}/renovar`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -98,3 +98,6 @@ export async function getDocumentos(luc: string): Promise<any[]> {
   return request<any[]>(`/apolices/${encodeURIComponent(luc)}/documentos`);
 }
 
+export async function getHealthScore(): Promise<{ score: number, delta: number }> {
+  return request<{ score: number, delta: number }>('/kpis/health-score');
+}
