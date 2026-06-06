@@ -65,7 +65,7 @@ export function CommandPalette() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="relative w-full max-w-[540px] bg-white dark:bg-[#1A1F2E] rounded-xl shadow-2xl border border-gray-100 dark:border-[#2E3447] overflow-hidden flex flex-col z-10"
+            className="relative w-full max-w-[540px] bg-white dark:bg-[#0a0a0a] rounded-xl shadow-2xl border border-gray-100 dark:border-[#222222] overflow-hidden flex flex-col z-10"
           >
             <Command 
               label="Global Command Menu" 
@@ -82,7 +82,7 @@ export function CommandPalette() {
                 value={inputValue}
                 onValueChange={setInputValue}
                 placeholder="Digite um comando ou busque (ex: renovar AE-03)..." 
-                className="w-full px-4 py-4 text-[14px] bg-transparent border-b border-gray-100 dark:border-[#2E3447] outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-[#64748B]"
+                className="w-full px-4 py-4 text-[14px] bg-transparent border-b border-gray-100 dark:border-[#222222] outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-[#64748B]"
               />
             
             <Command.List className="max-h-[360px] overflow-y-auto p-2 scrollbar-hide">
@@ -117,7 +117,7 @@ export function CommandPalette() {
               </Command.Group>
 
               {recentPolicies.length > 0 && (
-                <Command.Group heading="Apólices Recentes" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#2E3447]">
+                <Command.Group heading="Apólices Recentes" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                   {recentPolicies.map((luc) => (
                     <Command.Item 
                       key={luc}
@@ -134,7 +134,7 @@ export function CommandPalette() {
               )}
 
               {apolices.length > 0 && inputValue.length > 0 && (
-                <Command.Group heading="Apólices (Pesquisa)" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#2E3447]">
+                <Command.Group heading="Apólices (Pesquisa)" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                   {apolices.map((a) => (
                     <Command.Item 
                       key={a.luc}
@@ -150,7 +150,7 @@ export function CommandPalette() {
                         </span>
                       </div>
                       {a.segmento && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#242938] text-gray-500 dark:text-[#94A3B8] capitalize">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#151515] text-gray-500 dark:text-[#94A3B8] capitalize">
                           {a.segmento}
                         </span>
                       )}
@@ -160,7 +160,7 @@ export function CommandPalette() {
               )}
 
               {renovarLuc && (
-                <Command.Group heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#2E3447]">
+                <Command.Group heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                   <Command.Item 
                     value={`renovar ${renovarLuc}`}
                     onSelect={() => handleSelect(() => {
@@ -175,7 +175,7 @@ export function CommandPalette() {
                 </Command.Group>
               )}
 
-              <Command.Group heading="Ações" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#2E3447]">
+              <Command.Group heading="Ações" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                 <Command.Item 
                   onSelect={() => handleSelect(() => {
                     const event = new CustomEvent('exportar-pdf');
@@ -222,13 +222,13 @@ export function CommandPalette() {
               </Command.Group>
             </Command.List>
             
-            <div className="px-4 py-3 border-t border-gray-100 dark:border-[#2E3447] flex items-center justify-between bg-gray-50 dark:bg-[#1E2435]/50">
+            <div className="px-4 py-3 border-t border-gray-100 dark:border-[#222222] flex items-center justify-between bg-gray-50 dark:bg-[#1E2435]/50">
               <span className="text-[11px] text-gray-500 dark:text-[#64748B] font-medium">Use as setas para navegar</span>
               <div className="flex gap-2">
-                <kbd className="inline-flex items-center gap-1 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-[#94A3B8] shadow-sm">
+                <kbd className="inline-flex items-center gap-1 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-[#94A3B8] shadow-sm">
                   Enter <span className="opacity-70">selecionar</span>
                 </kbd>
-                <kbd className="inline-flex items-center gap-1 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-[#94A3B8] shadow-sm">
+                <kbd className="inline-flex items-center gap-1 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:text-[#94A3B8] shadow-sm">
                   Esc <span className="opacity-70">fechar</span>
                 </kbd>
               </div>

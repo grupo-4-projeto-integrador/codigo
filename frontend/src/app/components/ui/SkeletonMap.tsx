@@ -2,7 +2,7 @@ import React from 'react';
 
 export function SkeletonMap() {
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl border border-gray-200 dark:border-[#2E3447] p-5 h-full flex flex-col relative overflow-hidden shadow-sm">
+    <div className="bg-white dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222222] p-5 h-full flex flex-col relative overflow-hidden shadow-sm">
       <div className="flex justify-between items-center mb-6">
         <div className="shimmer-effect h-6 w-48 rounded-md" />
         <div className="shimmer-effect h-8 w-24 rounded-md" />

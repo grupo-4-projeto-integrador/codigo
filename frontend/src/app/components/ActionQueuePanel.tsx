@@ -76,9 +76,9 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20, transition: { duration: 0.1, delay: 0 } }}
         transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.1 }}
-        className="bg-white dark:bg-[#242938] rounded-xl border flex flex-col h-full shadow-sm dark:border-[#2E3447]"
+        className="bg-white dark:bg-[#151515] rounded-xl border flex flex-col h-full shadow-sm dark:border-[#222222]"
       >
-      <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between dark:border-[#2E3447]">
+      <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between dark:border-[#222222]">
         <div className="flex items-center gap-1.5">
           <h3 className="font-bold text-gray-900 dark:text-white text-[13px]">Fila de ação</h3>
           <span className="bg-[#8B1A1A] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -121,11 +121,11 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
               <button 
                 key={lucStr}
                 onClick={() => onSelectLuc(lucStr)}
-                className={`group flex items-center px-3 py-1.5 gap-2 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left dark:border-[#2E3447] dark:hover:bg-[#2A3143] ${index === items.length - 1 ? 'border-b-0' : ''}`}
+                className={`group flex items-center px-3 py-1.5 gap-2 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left dark:border-[#222222] dark:hover:bg-[#1f1f1f] ${index === items.length - 1 ? 'border-b-0' : ''}`}
               >
                 <div className="font-bold text-gray-400 dark:text-[#64748B] text-[10px] w-3 text-center">{index + 1}</div>
                 
-                <div className={`relative z-[1] bg-white group-hover:bg-gray-50 dark:bg-[#242938] dark:group-hover:bg-[#2A3143] ${isVencida ? 'text-[#D93030]' : 'text-orange-500'} flex-shrink-0`}>
+                <div className={`relative z-[1] bg-white group-hover:bg-gray-50 dark:bg-[#151515] dark:group-hover:bg-[#1f1f1f] ${isVencida ? 'text-[#D93030]' : 'text-orange-500'} flex-shrink-0`}>
                   <Clock className="w-3 h-3" />
                 </div>
                 
@@ -148,7 +148,7 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
         )}
       </div>
 
-      <div className="py-1.5 px-3 mt-auto border-t border-gray-50 bg-gray-50/50 flex items-center justify-center gap-1.5 dark:border-[#2E3447] dark:bg-[#1A1F2E]/50 rounded-b-xl text-[8px] text-gray-500 dark:text-[#64748B] uppercase tracking-wider">
+      <div className="py-1.5 px-3 mt-auto border-t border-gray-50 bg-gray-50/50 flex items-center justify-center gap-1.5 dark:border-[#222222] dark:bg-[#0a0a0a]/50 rounded-b-xl text-[8px] text-gray-500 dark:text-[#64748B] uppercase tracking-wider">
         <div className="w-1 h-1 rounded-full bg-[#168821]"></div>
         Atualizado {format(lastUpdate, "HH:mm")}
       </div>

@@ -10,7 +10,7 @@ type Props = {
 
 export default function InsuranceTableHeader({ colors, sortColumn, sortDirection, onSort }: Props) {
   return (
-    <thead className="bg-[#F7F8FA] dark:bg-[#1A1F2E]">
+    <thead className="bg-[#F7F8FA] dark:bg-[#0a0a0a]">
       <tr>
         <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>LUC</th>
 

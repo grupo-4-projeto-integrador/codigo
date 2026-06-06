@@ -148,7 +148,7 @@ export function SinistroForm() {
         <img src={img2} alt="" className="w-full h-full object-contain" />
       </div>
 
-      <div className="bg-white dark:bg-[#242938] rounded-2xl shadow-xl p-8 relative z-10 border-t-4 border-[#8B1A1A]">
+      <div className="bg-white dark:bg-[#151515] rounded-2xl shadow-xl p-8 relative z-10 border-t-4 border-[#8B1A1A]">
         {/* Logo Flamboyant */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

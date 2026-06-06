@@ -87,7 +87,7 @@ export function Dashboard() {
         {/* KPI Sidebar */}
         <div className="flex flex-col gap-4 xl:gap-3">
           {/* Rate ring card */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-5 flex items-center gap-4">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-5 flex items-center gap-4">
             {/* Circular progress */}
             <div className="relative w-16 h-16 flex-shrink-0">
               <svg viewBox="0 0 36 36" className="w-16 h-16 -rotate-90">
@@ -96,7 +96,7 @@ export function Dashboard() {
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="3"
-                  className="text-gray-100 dark:text-[#1A1F2E]"
+                  className="text-gray-100 dark:text-[#0a0a0a]"
                 />
                 <circle
                   cx="18" cy="18" r="15.9"
@@ -127,7 +127,7 @@ export function Dashboard() {
           </div>
 
           {/* Ativas */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="w-10 h-10 bg-green-50 dark:bg-green-900/20 text-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -139,7 +139,7 @@ export function Dashboard() {
           </div>
 
           {/* A Vencer */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="w-10 h-10 bg-orange-50 dark:bg-orange-900/20 text-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
               <Clock className="w-5 h-5" />
             </div>
@@ -152,7 +152,7 @@ export function Dashboard() {
           </div>
 
           {/* Vencidas */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-red-100 dark:border-[#3A1A1A] p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-red-100 dark:border-[#3A1A1A] p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
             <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 text-[#D93030] rounded-lg flex items-center justify-center flex-shrink-0">
               <ShieldAlert className="w-5 h-5" />
             </div>
@@ -197,7 +197,7 @@ export function Dashboard() {
       {/* ── Secondary Row: Chart + Spacer ────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Bar Chart */}
-        <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6 lg:col-span-2">
+        <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6 lg:col-span-2">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-5">
             Incidência por Área — Últimos 30 dias
           </h3>
@@ -235,7 +235,7 @@ export function Dashboard() {
         </div>
 
         {/* Status Summary mini-card */}
-        <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6 flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6 flex flex-col justify-between">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
             Resumo de Status
           </h3>
@@ -254,8 +254,8 @@ export function Dashboard() {
       </div>
 
       {/* ── Recent Policies Table ─────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 dark:border-[#2E3447] flex justify-between items-center bg-gray-50/50 dark:bg-[#1A1F2E]/50">
+      <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100 dark:border-[#222222] flex justify-between items-center bg-gray-50/50 dark:bg-[#0a0a0a]/50">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Últimas Ocorrências</h3>
           <div className="relative w-56">
             <input
@@ -263,15 +263,15 @@ export function Dashboard() {
               placeholder="Filtrar tabela..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 dark:border-[#2E3447] dark:bg-[#1A1F2E] dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-[#8B1A1A] focus:border-[#8B1A1A]"
+              className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 dark:border-[#222222] dark:bg-[#0a0a0a] dark:text-white rounded-md focus:outline-none focus:ring-1 focus:ring-[#8B1A1A] focus:border-[#8B1A1A]"
             />
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2" />
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-[#2E3447]">
-            <thead className="bg-gray-50 dark:bg-[#1A1F2E]">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-[#222222]">
+            <thead className="bg-gray-50 dark:bg-[#0a0a0a]">
               <tr>
                 {["Nº Sinistro", "Local / Lojista", "Vigência", "Status", "Gravidade", ""].map(
                   (h) => (
@@ -286,11 +286,11 @@ export function Dashboard() {
                 )}
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-[#242938] divide-y divide-gray-100 dark:divide-[#2E3447]">
+            <tbody className="bg-white dark:bg-[#151515] divide-y divide-gray-100 dark:divide-[#222222]">
               {filteredPolicies.map((policy) => (
                 <tr
                   key={policy.id}
-                  className="hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer"
+                  className="hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors cursor-pointer"
                 >
                   <td className="px-5 py-3.5 whitespace-nowrap text-xs font-mono font-medium text-gray-900 dark:text-white">
                     {policy.id}
@@ -378,7 +378,7 @@ function StatusBar({
           {value} <span className="font-normal text-gray-400">({pct}%)</span>
         </span>
       </div>
-      <div className="h-1.5 bg-gray-100 dark:bg-[#1A1F2E] rounded-full overflow-hidden">
+      <div className="h-1.5 bg-gray-100 dark:bg-[#0a0a0a] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}

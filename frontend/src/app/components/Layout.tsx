@@ -370,8 +370,8 @@ export function Layout() {
             />
 
             {/* Notification Panel */}
-            <div className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white dark:bg-[#242938] shadow-2xl z-50 overflow-y-auto">
-              <div className="sticky top-0 bg-white dark:bg-[#242938] border-b border-gray-200 dark:border-[#2E3447] p-4">
+            <div className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white dark:bg-[#151515] shadow-2xl z-50 overflow-y-auto">
+              <div className="sticky top-0 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-base font-bold text-gray-900 dark:text-[#F1F5F9]">Notificações</h3>
@@ -389,12 +389,12 @@ export function Layout() {
               </div>
 
               {/* Apólices Vencidas */}
-              <div className="border-b border-gray-200 dark:border-[#2E3447]">
-                <div className="px-4 py-3 bg-gray-50 dark:bg-[#1A1F2E]">
+              <div className="border-b border-gray-200 dark:border-[#222222]">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0a0a]">
                   <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices Vencidas (1)</h4>
                 </div>
                 <div
-                  className="p-4 active:bg-gray-50 dark:active:bg-[#1A1F2E] transition-colors"
+                  className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
                   onClick={() => {
                     setIsNotificationOpen(false);
                     navigate('/seguros');
@@ -414,12 +414,12 @@ export function Layout() {
               </div>
 
               {/* Apólices a Vencer */}
-              <div className="border-b border-gray-200 dark:border-[#2E3447]">
-                <div className="px-4 py-3 bg-gray-50 dark:bg-[#1A1F2E]">
+              <div className="border-b border-gray-200 dark:border-[#222222]">
+                <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0a0a]">
                   <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices a Vencer (1)</h4>
                 </div>
                 <div
-                  className="p-4 active:bg-gray-50 dark:active:bg-[#1A1F2E] transition-colors"
+                  className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
                   onClick={() => {
                     setIsNotificationOpen(false);
                     navigate('/seguros');
@@ -438,7 +438,7 @@ export function Layout() {
                 </div>
               </div>
 
-              <div className="p-4 bg-gray-50 dark:bg-[#1A1F2E] text-center">
+              <div className="p-4 bg-gray-50 dark:bg-[#0a0a0a] text-center">
                 <button
                   onClick={() => {
                     setIsNotificationOpen(false);
@@ -579,12 +579,12 @@ export function Layout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header - Hidden on mobile */}
-        <header className={`hidden md:flex h-16 bg-white dark:bg-[#242938] border-b border-gray-200 dark:border-[#2E3447] items-center justify-between px-6 z-10 transition-all duration-500 overflow-hidden ${isFocusMode ? '!h-0 !py-0 border-none' : ''}`}>
+        <header className={`hidden md:flex h-16 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] items-center justify-between px-6 z-10 transition-all duration-500 overflow-hidden ${isFocusMode ? '!h-0 !py-0 border-none' : ''}`}>
           <div className="flex-1 max-w-xl">
             {/* Search Placeholder */}
             <div className="relative flex items-center">
               <span className="text-[11px] font-medium" style={{ color: 'var(--color-text-secondary)' }}>
-                Pressione <kbd className="px-1.5 py-0.5 rounded border bg-gray-100 dark:bg-[#1A1F2E] border-gray-200 dark:border-[#2E3447] ml-1">⌘K</kbd> ou <kbd className="px-1.5 py-0.5 rounded border bg-gray-100 dark:bg-[#1A1F2E] border-gray-200 dark:border-[#2E3447]">Ctrl+K</kbd> para buscar
+                Pressione <kbd className="px-1.5 py-0.5 rounded border bg-gray-100 dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] ml-1">⌘K</kbd> ou <kbd className="px-1.5 py-0.5 rounded border bg-gray-100 dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222]">Ctrl+K</kbd> para buscar
               </span>
             </div>
           </div>
@@ -598,7 +598,7 @@ export function Layout() {
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
                 isFocusMode
                   ? 'bg-[#6e150e] text-white shadow-lg'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-[#2E3447]'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-[#222222]'
               }`}
               title="Ativar/desativar Modo Apresentação (F)"
             >
@@ -625,9 +625,9 @@ export function Layout() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.18 }}
-                  className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg shadow-xl overflow-hidden z-50"
+                  className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg shadow-xl overflow-hidden z-50"
                 >
-                  <div className="p-3 border-b border-gray-200 dark:border-[#2E3447] flex justify-between items-center bg-white dark:bg-[#242938]">
+                  <div className="p-3 border-b border-gray-200 dark:border-[#222222] flex justify-between items-center bg-white dark:bg-[#151515]">
                     <div className="flex items-center gap-2">
                       <h3 className="text-xs font-bold text-gray-900 dark:text-[#F1F5F9]">Notificações</h3>
                       <AnimatePresence mode="popLayout">
@@ -655,8 +655,8 @@ export function Layout() {
                   <div className="max-h-[300px] overflow-y-auto">
                     {/* Apólices Vencidas */}
                     {vencidas.length > 0 && (
-                      <div className="border-b border-gray-100 dark:border-[#2E3447]">
-                        <div className="px-3 py-1.5 bg-gray-50/50 dark:bg-[#1A1F2E]/50">
+                      <div className="border-b border-gray-100 dark:border-[#222222]">
+                        <div className="px-3 py-1.5 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
                           <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Vencidas ({vencidas.length})</h4>
                         </div>
                         <AnimatePresence>
@@ -676,7 +676,7 @@ export function Layout() {
                                 setIsNotificationOpen(false);
                                 navigate(`/seguros?search=${n.luc}`);
                               }}
-                              className={`group flex items-start gap-2 p-2.5 border-b border-gray-50 dark:border-[#2E3447]/50 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] cursor-pointer transition-colors ${bgClass}`}
+                              className={`group flex items-start gap-2 p-2.5 border-b border-gray-50 dark:border-[#222222]/50 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] cursor-pointer transition-colors ${bgClass}`}
                             >
                               <div className={`w-[6px] h-[6px] rounded-full mt-1.5 flex-shrink-0 ${dotClass}`} />
                               <div className="flex-1 min-w-0">
@@ -702,8 +702,8 @@ export function Layout() {
 
                     {/* Apólices a Vencer */}
                     {aVencer.length > 0 && (
-                      <div className="border-b border-gray-100 dark:border-[#2E3447]">
-                        <div className="px-3 py-1.5 bg-gray-50/50 dark:bg-[#1A1F2E]/50">
+                      <div className="border-b border-gray-100 dark:border-[#222222]">
+                        <div className="px-3 py-1.5 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
                           <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">A Vencer em 30 dias ({aVencer.length})</h4>
                         </div>
                         <AnimatePresence>
@@ -723,7 +723,7 @@ export function Layout() {
                                 setIsNotificationOpen(false);
                                 navigate(`/seguros?search=${n.luc}`);
                               }}
-                              className={`group flex items-start gap-2 p-2.5 border-b border-gray-50 dark:border-[#2E3447]/50 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] cursor-pointer transition-colors ${bgClass}`}
+                              className={`group flex items-start gap-2 p-2.5 border-b border-gray-50 dark:border-[#222222]/50 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] cursor-pointer transition-colors ${bgClass}`}
                             >
                               <div className={`w-[6px] h-[6px] rounded-full mt-1.5 flex-shrink-0 ${dotClass}`} />
                               <div className="flex-1 min-w-0">
@@ -748,7 +748,7 @@ export function Layout() {
                     )}
                   </div>
 
-                  <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-[#1A1F2E] border-t border-gray-200 dark:border-[#2E3447]">
+                  <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-[#0a0a0a] border-t border-gray-200 dark:border-[#222222]">
                     <button onClick={handleArchiveRead} className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors">
                       Arquivar lidas
                     </button>
@@ -764,7 +764,7 @@ export function Layout() {
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <div className="relative flex items-center space-x-3 border-l border-gray-200 dark:border-[#2E3447] pl-4" ref={profileMenuRef}>
+            <div className="relative flex items-center space-x-3 border-l border-gray-200 dark:border-[#222222] pl-4" ref={profileMenuRef}>
               <div className="flex flex-col text-right">
                 <span className="text-sm font-medium text-gray-900 dark:text-[#F1F5F9]">{currentProfile.userName}</span>
                 <span className="text-xs text-gray-500 dark:text-[#94A3B8]">{currentProfile.name}</span>
@@ -778,7 +778,7 @@ export function Layout() {
 
               {/* Profile Dropdown Menu */}
               {isProfileMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg shadow-lg overflow-hidden z-50">
+                <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg shadow-lg overflow-hidden z-50">
                   <div className="py-2">
                     {(Object.keys(profileConfig) as UserProfile[])?.map((profileKey) => {
                       const profile = profileConfig[profileKey];
@@ -790,8 +790,8 @@ export function Layout() {
                           onClick={() => handleProfileChange(profileKey)}
                           className={`w-full flex items-center space-x-3 px-4 py-3 transition-colors ${
                             isActive
-                              ? 'bg-gray-100 dark:bg-[#1A1F2E]'
-                              : 'hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'
+                              ? 'bg-gray-100 dark:bg-[#0a0a0a]'
+                              : 'hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'
                           }`}
                         >
                           <UserAvatar profile={profile} sizeClass="w-10 h-10 text-base" sizeStyle={{ width: '40px', height: '40px' }} />

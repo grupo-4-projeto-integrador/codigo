@@ -183,7 +183,7 @@ export function PolicyNew() {
         <div className="flex flex-col gap-6">
           
           {/* Header Card */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
             <div className="flex items-start justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Nova Apólice</h1>
@@ -193,7 +193,7 @@ export function PolicyNew() {
           </div>
 
           {/* Edit Form */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
             <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-6">Dados da Apólice</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -202,7 +202,7 @@ export function PolicyNew() {
                 <Input 
                   {...register("luc", { required: true })}
                   placeholder="Ex: AE-03"
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                   onBlur={(e) => handleLucChange(e.target.value)}
                 />
               </div>
@@ -213,7 +213,7 @@ export function PolicyNew() {
                   {...register("loja")}
                   readOnly={lojaIsReadOnly}
                   placeholder="Nome da loja" 
-                  className={lojaIsReadOnly ? "bg-gray-50 dark:bg-[#1A1F2E]/50 text-gray-500" : "dark:bg-[#1A1F2E]"}
+                  className={lojaIsReadOnly ? "bg-gray-50 dark:bg-[#0a0a0a]/50 text-gray-500" : "dark:bg-[#0a0a0a]"}
                 />
               </div>
 
@@ -240,7 +240,7 @@ export function PolicyNew() {
                   {...register("seguradora", { required: true })}
                   placeholder="Ex: Porto Seguro"
                   autoComplete="off"
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
               </div>
 
@@ -299,7 +299,7 @@ export function PolicyNew() {
                     }
                   }}
                   placeholder="0.00" 
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
               </div>
 
@@ -310,7 +310,7 @@ export function PolicyNew() {
                   placeholder="Nome do responsável" 
                   autoComplete="off"
                   list="usuarios-list"
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
                 <datalist id="usuarios-list">
                   {usuarios.map(u => (
@@ -324,7 +324,7 @@ export function PolicyNew() {
                 <Input 
                   {...register("observacoes")}
                   placeholder="Informações adicionais" 
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
               </div>
 
@@ -333,7 +333,7 @@ export function PolicyNew() {
                 <Input 
                   type="file"
                   accept=".pdf"
-                  className="dark:bg-[#1A1F2E] file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#c4151f]/10 file:text-[#c4151f] hover:file:bg-[#c4151f]/20 cursor-pointer"
+                  className="dark:bg-[#0a0a0a] file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#c4151f]/10 file:text-[#c4151f] hover:file:bg-[#c4151f]/20 cursor-pointer"
                 />
               </div>
 
@@ -343,26 +343,26 @@ export function PolicyNew() {
 
         {/* Side Column (Sticky) */}
         <div className="sticky top-5 flex flex-col gap-4">
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
             
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">Resumo da Apólice</h3>
             
             <div className="flex flex-col gap-2 mb-6 text-sm">
-              <div className="flex justify-between border-b border-gray-100 dark:border-[#2E3447] pb-2">
+              <div className="flex justify-between border-b border-gray-100 dark:border-[#222222] pb-2">
                 <span className="text-gray-500">Loja</span>
                 <span className="font-semibold text-gray-900 dark:text-white truncate max-w-[140px] text-right">{formValues.loja || "-"}</span>
               </div>
-              <div className="flex justify-between border-b border-gray-100 dark:border-[#2E3447] pb-2">
+              <div className="flex justify-between border-b border-gray-100 dark:border-[#222222] pb-2">
                 <span className="text-gray-500">Segmento</span>
                 <span className="font-semibold text-gray-900 dark:text-white max-w-[150px] truncate text-right" title={formValues.tipos_cobertura?.join(', ')}>
                   {formValues.tipos_cobertura?.length > 0 ? formValues.tipos_cobertura.join(', ') : "-"}
                 </span>
               </div>
-              <div className="flex justify-between border-b border-gray-100 dark:border-[#2E3447] pb-2">
+              <div className="flex justify-between border-b border-gray-100 dark:border-[#222222] pb-2">
                 <span className="text-gray-500">Seguradora</span>
                 <span className="font-semibold text-gray-900 dark:text-white">{formValues.seguradora || "-"}</span>
               </div>
-              <div className="flex justify-between border-b border-gray-100 dark:border-[#2E3447] pb-2">
+              <div className="flex justify-between border-b border-gray-100 dark:border-[#222222] pb-2">
                 <span className="text-gray-500">Vigência</span>
                 <span className="font-semibold text-right text-gray-900 dark:text-white">
                   {formValues.vigencia ? format(formValues.vigencia, "dd/MM/yyyy") : "-"} a {formValues.vencimento ? format(formValues.vencimento, "dd/MM/yyyy") : "-"}
@@ -406,7 +406,7 @@ export function PolicyNew() {
                 type="button"
                 onClick={() => navigate('/seguros')}
                 disabled={saving}
-                className="w-full bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <X className="w-4 h-4" />
                 Cancelar

@@ -3,7 +3,7 @@ import React from 'react';
 export function SkeletonCard() {
   return (
     <div 
-      className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]" 
+      className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]" 
       style={{ border: 'none' }}
     >
       <div className="flex items-start justify-between gap-4">

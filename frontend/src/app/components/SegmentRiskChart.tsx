@@ -216,7 +216,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
   }
 
   return (
-    <section className="h-full rounded-xl bg-white p-4 shadow-sm border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] flex flex-col">
+    <section className="h-full rounded-xl bg-white p-4 shadow-sm border border-gray-100 dark:bg-[#0a0a0a] dark:border-[#222222] flex flex-col">
       <div className="mb-3">
         <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white">Risco por Segmento</h3>
         <p className="text-[11px] text-gray-500 dark:text-[#94A3B8] mt-0.5">
@@ -268,7 +268,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
                     </div>
                   </div>
 
-                  <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-[#242938] overflow-hidden">
+                  <div className="h-1.5 w-full rounded-full bg-gray-100 dark:bg-[#151515] overflow-hidden">
                     <motion.div
                       className="h-full rounded-full"
                       initial={{ width: 0 }}

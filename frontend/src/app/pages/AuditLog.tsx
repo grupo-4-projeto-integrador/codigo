@@ -114,10 +114,10 @@ function LogDetailDrawer({ log, onClose }: { log: AuditLog; onClose: () => void 
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="relative w-full max-w-lg md:w-[480px] bg-white dark:bg-[#1A1F2E] h-full shadow-2xl flex flex-col border-l border-[#a0191e]/20"
+        className="relative w-full max-w-lg md:w-[480px] bg-white dark:bg-[#0a0a0a] h-full shadow-2xl flex flex-col border-l border-[#a0191e]/20"
         style={{ boxShadow: `-20px 0 60px rgba(62, 0, 0, 0.12)` }}
       >
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-[#2E3447]">
+        <div className="flex items-center justify-between p-5 border-b border-gray-100 dark:border-[#222222]">
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-[#a0191e]" />
             <span className="font-bold text-gray-900 dark:text-white text-[15px]">Detalhes do Registro</span>
@@ -140,14 +140,14 @@ function LogDetailDrawer({ log, onClose }: { log: AuditLog; onClose: () => void 
             { label: "IP", value: log.ip || "—" },
             { label: "Timestamp", value: formatTimestamp(log.timestamp) },
           ].map(({ label, value }) => (
-            <div key={label} className="bg-gray-50 dark:bg-[#242938] rounded-lg p-3">
+            <div key={label} className="bg-gray-50 dark:bg-[#151515] rounded-lg p-3">
               <div className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] mb-1">{label}</div>
               <div className="text-[13px] font-medium text-gray-900 dark:text-white break-all">{value}</div>
             </div>
           ))}
         </div>
 
-        <div className="bg-gray-50 dark:bg-[#242938] rounded-lg p-3">
+        <div className="bg-gray-50 dark:bg-[#151515] rounded-lg p-3">
           <div className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] mb-2">Ação</div>
           <AcaoBadge acao={log.acao} />
         </div>
@@ -158,7 +158,7 @@ function LogDetailDrawer({ log, onClose }: { log: AuditLog; onClose: () => void 
         </div>
 
         {log.user_agent && (
-          <div className="bg-gray-50 dark:bg-[#242938] rounded-lg p-3 border border-gray-100 dark:border-[#2E3447]">
+          <div className="bg-gray-50 dark:bg-[#151515] rounded-lg p-3 border border-gray-100 dark:border-[#222222]">
             <div className="text-[9px] uppercase tracking-wider text-[#a0191e]/70 dark:text-[#E04444]/70 mb-1 font-bold">User Agent</div>
             <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] break-all">{log.user_agent}</div>
           </div>
@@ -265,7 +265,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
         </div>
         <button
           onClick={() => load(filter)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-[#94A3B8] hover:bg-gray-100 dark:hover:bg-[#242938] transition-colors"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-gray-600 dark:text-[#94A3B8] hover:bg-gray-100 dark:hover:bg-[#151515] transition-colors"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           Atualizar
@@ -274,7 +274,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
       )}
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-[#242938] rounded-xl border border-gray-100 dark:border-[#2E3447] p-4">
+      <div className="bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#222222] p-4">
         <div className="flex flex-wrap gap-3 items-end">
           {/* Ação */}
           <div className="flex flex-col gap-1">
@@ -285,10 +285,10 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
               value={filter.acao || "todas"}
               onValueChange={v => applyFilter({ acao: v === "todas" ? "" : v })}
             >
-              <SelectTrigger className="h-9 w-[160px] border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-[13px]">
+              <SelectTrigger className="h-9 w-[160px] border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white text-[13px]">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
-              <SelectContent className="z-[100] bg-white dark:bg-[#242938]">
+              <SelectContent className="z-[100] bg-white dark:bg-[#151515]">
                 <SelectItem value="todas" className="text-[13px]">Todas</SelectItem>
                 {ACOES.filter(Boolean).map(a => (
                   <SelectItem key={a} value={a} className="text-[13px]">{ACAO_META[a]?.label ?? a}</SelectItem>
@@ -304,10 +304,10 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
               value={filter.entidade || "todas"}
               onValueChange={v => applyFilter({ entidade: v === "todas" ? "" : v })}
             >
-              <SelectTrigger className="h-9 w-[160px] border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E] text-gray-900 dark:text-white text-[13px]">
+              <SelectTrigger className="h-9 w-[160px] border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#0a0a0a] text-gray-900 dark:text-white text-[13px]">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
-              <SelectContent className="z-[100] bg-white dark:bg-[#242938]">
+              <SelectContent className="z-[100] bg-white dark:bg-[#151515]">
                 <SelectItem value="todas" className="text-[13px]">Todas</SelectItem>
                 {ENTIDADES.filter(Boolean).map(e => (
                   <SelectItem key={e} value={e} className="text-[13px] capitalize">{e}</SelectItem>
@@ -347,7 +347,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="LUC, ID, usuário…"
-                className="h-9 pl-8 pr-3 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-left focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 dark:bg-[#1A1F2E] dark:border-input dark:focus-within:ring-offset-[#1A1F2E]"
+                className="h-9 pl-8 pr-3 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-left focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 dark:bg-[#0a0a0a] dark:border-input dark:focus-within:ring-offset-[#0a0a0a]"
               />
             </div>
           </form>
@@ -355,7 +355,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
           {hasFilters && (
             <button
               onClick={clearFilters}
-              className="h-9 mt-auto px-3 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-[#1A1F2E] transition-colors"
+              className="h-9 mt-auto px-3 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-[#0a0a0a] transition-colors"
             >
               <X className="w-3.5 h-3.5" /> Limpar
             </button>
@@ -364,7 +364,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-[#242938] rounded-xl border border-gray-100 dark:border-[#2E3447] overflow-hidden">
+      <div className="bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#222222] overflow-hidden">
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <AlertCircle className="w-10 h-10 text-red-400" />
@@ -376,13 +376,13 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
           </div>
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Shield className="w-10 h-10 text-gray-200 dark:text-[#2E3447]" />
+            <Shield className="w-10 h-10 text-gray-200 dark:text-[#222222]" />
             <p className="text-gray-400 text-sm">Nenhum evento encontrado com os filtros atuais.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-[#F7F8FA] dark:bg-[#1A1F2E] border-b border-gray-100 dark:border-[#2E3447]">
+              <thead className="bg-[#F7F8FA] dark:bg-[#0a0a0a] border-b border-gray-100 dark:border-[#222222]">
                 <tr>
                   {["#", "Timestamp", "Usuário", "Ação", "Entidade", "ID Entidade", "IP", ""].map(h => (
                     <th
@@ -402,7 +402,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.01 }}
                     onClick={() => setSelectedLog(log)}
-                    className="border-b border-gray-50 dark:border-[#2E3447] cursor-pointer hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-colors"
+                    className="border-b border-gray-50 dark:border-[#222222] cursor-pointer hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-colors"
                   >
                     <td className="px-4 py-3 text-[12px] text-gray-400 dark:text-[#64748B] table-number">{log.id}</td>
                     <td className="px-4 py-3 text-[12px] text-gray-600 dark:text-[#94A3B8] whitespace-nowrap table-number">
@@ -435,7 +435,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-[#2E3447]">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-[#222222]">
             <span className="text-[12px] text-gray-400 dark:text-[#64748B]">
               Página {filter.page} de {totalPages} · {total.toLocaleString("pt-BR")} registros
             </span>

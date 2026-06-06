@@ -147,7 +147,7 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
   };
 
   return (
-    <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
+    <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
       <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-4">Documentos</h3>
       
       {displayDocs.length === 0 && uploadingDocs.length === 0 ? (
@@ -156,7 +156,7 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           {/* Uploading Docs */}
           {uploadingDocs.map(doc => (
-            <div key={doc.tempId} className={`relative flex flex-col justify-center p-3 border rounded-lg overflow-hidden ${doc.error ? 'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-900/30' : 'border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1A1F2E]'}`}>
+            <div key={doc.tempId} className={`relative flex flex-col justify-center p-3 border rounded-lg overflow-hidden ${doc.error ? 'border-red-200 bg-red-50 dark:bg-red-900/10 dark:border-red-900/30' : 'border-gray-200 dark:border-[#222222] bg-white dark:bg-[#0a0a0a]'}`}>
               {/* Progress bar background */}
               {!doc.error && (
                 <div 
@@ -192,7 +192,7 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
           {displayDocs.map(doc => {
             const displayName = doc.nome === 'Apolice_Completa.pdf' ? `apólice_${policyId}.pdf` : doc.nome;
             return (
-            <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-[#2E3447] rounded-lg hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer group">
+            <div key={doc.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-[#222222] rounded-lg hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors cursor-pointer group">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center justify-center">
                   <FileText className="w-4 h-4" />
@@ -232,7 +232,7 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
         className={`mt-2 rounded-[10px] p-4 text-center cursor-pointer transition-colors
           ${isDragActive 
             ? 'border-[#c4151f] bg-[#c4151f]/[0.04]' 
-            : 'border-gray-300 dark:border-[#2E3447] hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'
+            : 'border-gray-300 dark:border-[#222222] hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'
           }`}
         style={{
           borderWidth: '1.5px',

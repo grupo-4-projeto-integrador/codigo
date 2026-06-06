@@ -33,6 +33,27 @@ const COLORS = {
   semApolice: { bg: "#E5E7EB", text: "#374151", label: "Sem apólice" },
 };
 
+const TIME_OFFSETS = [
+  { label: 'Hoje', days: 0 },
+  { label: '7d atrás', days: 7 },
+  { label: '15d atrás', days: 15 },
+  { label: '30d atrás', days: 30 },
+];
+
+function getStatusAtDate(vencimento: string | undefined, daysBack: number) {
+  if (!vencimento) return undefined;
+  const venc = parseTooltipDate(vencimento);
+  if (!venc) return undefined;
+  const refDate = new Date();
+  refDate.setDate(refDate.getDate() - daysBack);
+  const ref = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
+  const due = new Date(venc.getFullYear(), venc.getMonth(), venc.getDate());
+  const diff = Math.floor((due.getTime() - ref.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return 'Vencida';
+  if (diff <= 15) return 'A Vencer';
+  return 'Ativa';
+}
+
 function getStatusDetails(status?: string) {
   if (!status) return COLORS.semApolice;
   const s = status.toLowerCase().trim();
@@ -82,7 +103,7 @@ export interface ComplianceMapV2Props {
 export function ComplianceMapV2({ 
   selectedLuc, 
   onSelectLuc,
-  tileWidth = '44px',
+  tileWidth = '43px',
   tileHeight = '38px',
   gap = '5px',
   hideHeader = false,
@@ -94,9 +115,10 @@ export function ComplianceMapV2({
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [mapFilters, setMapFiltersState] = useState(getMapFilters);
+  const [timeOffsetIdx, setTimeOffsetIdx] = useState(0);
 
-  // 5 lines * 13 columns = 65 items per page
-  const ITEMS_PER_PAGE = itemsPerPage || (hideHeader ? 176 : 65);
+  // 6 lines * 13 columns = 78 items per page
+  const ITEMS_PER_PAGE = itemsPerPage || (hideHeader ? 176 : 78);
 
   useEffect(() => {
     let active = true;
@@ -218,19 +240,43 @@ export function ComplianceMapV2({
 
   return (
     <section
-      className={hideHeader ? "w-full relative h-full flex flex-col" : "w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] relative"}
+      className={hideHeader ? "w-full relative h-full flex flex-col" : "w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#0a0a0a] dark:border-[#222222] relative"}
     >
       {/* Header */}
       {!hideHeader && (
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="text-[12px] font-normal" style={{ color: 'var(--color-text-secondary)' }}>
             <span className="font-medium">{totalLucs}</span> lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
+          </div>
+          {/* Temporal Slider */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#1f1f1f] rounded-full p-0.5">
+            {TIME_OFFSETS.map((t, i) => (
+              <button
+                key={t.days}
+                onClick={() => setTimeOffsetIdx(i)}
+                className={`relative px-3 py-1 rounded-full text-[11px] font-semibold transition-all duration-200 ${
+                  timeOffsetIdx === i
+                    ? 'text-white'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }`}
+              >
+                {timeOffsetIdx === i && (
+                  <motion.span
+                    layoutId="time-pill"
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: '#a0191e' }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{t.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="flex h-64 items-center justify-center rounded-lg bg-gray-50 dark:bg-[#242938]">
+        <div className="flex h-64 items-center justify-center rounded-lg bg-gray-50 dark:bg-[#151515]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#168821]"></div>
         </div>
       ) : error ? (
@@ -242,10 +288,12 @@ export function ComplianceMapV2({
           {/* LUC Grid */}
           <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar">
             <TooltipProvider delayDuration={100}>
-              <div className="map-grid-container pb-2" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${tileWidth})`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}>
+              <div className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${tileWidth})`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}>
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
-              const details = getStatusDetails(policy?.status);
+              const daysBack = TIME_OFFSETS[timeOffsetIdx].days;
+              const historicalStatus = daysBack === 0 ? policy?.status : getStatusAtDate(policy?.vencimento, daysBack);
+              const details = getStatusDetails(historicalStatus);
               const isSelected = selectedLuc === luc;
               const hasSelection = selectedLuc !== null;
               const baseScale = 1;
@@ -297,7 +345,7 @@ export function ComplianceMapV2({
                         opacity: isDimmed ? 0.12 : (hasSelection && !isSelected ? 0.65 : 1),
                         outline: isSelected ? `2px solid ${details.bg}` : `0px solid transparent`,
                         outlineOffset: isSelected ? '2px' : '0px',
-                        boxShadow: isSelected ? `0 0 0 2px #f9e4a0, 0 4px 16px rgba(196,21,31,0.3)` : 'none',
+                        boxShadow: isSelected ? `0 6px 16px rgba(0,0,0,0.25)` : 'none',
                         filter: isSelected ? 'brightness(1.05)' : 'brightness(1)',
                         backgroundColor: details.bg
                       }}
@@ -319,7 +367,7 @@ export function ComplianceMapV2({
                   <TooltipContent
                     side="top"
                     sideOffset={10}
-                    className="w-[240px] rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-left text-gray-900 shadow-xl dark:border-[#2E3447] dark:bg-[#1A1F2E] dark:text-white"
+                    className="w-[240px] rounded-xl border border-[#E5E7EB] bg-white px-3 py-2.5 text-left text-gray-900 shadow-xl dark:border-[#222222] dark:bg-[#0a0a0a] dark:text-white"
                   >
                     <div className="space-y-1">
                       <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2 }}>
@@ -415,7 +463,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20, transition: { duration: 0.1, delay: 0 } }}
       transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.15 }}
-      className="bg-white dark:bg-[#242938] rounded-xl border border-[#E5E7EB] dark:border-[#2E3447] relative overflow-hidden shrink-0 flex flex-col h-full"
+      className="bg-white dark:bg-[#151515] rounded-xl border border-[#E5E7EB] dark:border-[#222222] relative overflow-hidden shrink-0 flex flex-col h-full"
     >
       <AnimatePresence mode="wait" initial={false}>
         {!selectedLuc ? (
@@ -425,9 +473,9 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-col items-center justify-center h-full w-full text-center p-8 bg-white dark:bg-[#242938]"
+            className="flex flex-col items-center justify-center h-full w-full text-center p-8 bg-white dark:bg-[#151515]"
           >
-            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447] mb-4">
+            <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#0a0a0a] dark:border-[#222222] mb-4">
               <MapPin className="w-8 h-8 text-gray-300 dark:text-[#475569]" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Nenhuma unidade selecionada</h3>
@@ -442,12 +490,12 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-col h-full w-full bg-white dark:bg-[#242938]"
+            className="flex flex-col h-full w-full bg-white dark:bg-[#151515]"
           >
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-white dark:bg-[#242938] dark:border-[#2E3447]">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-white dark:bg-[#151515] dark:border-[#222222]">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#1A1F2E] dark:border-[#2E3447]">
+          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#0a0a0a] dark:border-[#222222]">
             <MapPin className="w-4 h-4 text-gray-500 dark:text-[#94A3B8]" />
           </div>
           <div>
@@ -464,7 +512,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
 
         {/* Status and Actions Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-100 bg-gray-50 dark:bg-[#242938] dark:border-[#2E3447]">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-100 bg-gray-50 dark:bg-[#151515] dark:border-[#222222]">
             <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: selectedDetails.bg }}></div>
             <span className="font-semibold text-sm" style={{ color: selectedDetails.bg !== COLORS.semApolice.bg && selectedDetails.bg !== COLORS.aVencer.bg ? selectedDetails.bg : undefined }}>
               {selectedDetails.label}
@@ -475,7 +523,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
             <div style={{ display: 'flex', gap: '6px' }}>
               <button
                 onClick={() => onEditApolice?.(selectedPolicy.id)}
-                className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-md transition-colors dark:bg-[#242938] dark:border-[#2E3447] dark:text-white dark:hover:bg-[#1A1F2E]"
+                className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-md transition-colors dark:bg-[#151515] dark:border-[#222222] dark:text-white dark:hover:bg-[#0a0a0a]"
                 style={{ fontSize: '12px', padding: '4px 10px', fontWeight: 600 }}
               >
                 Editar
@@ -507,7 +555,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
               <div className="grid grid-cols-2 gap-1.5">
 
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
                   <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
                     <Shield className="w-2.5 h-2.5" />
                     <span className="text-[10px] font-medium uppercase tracking-wide">Seguradora</span>
@@ -515,7 +563,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
                   <p className="font-semibold text-gray-900 text-[12px] truncate dark:text-white">{selectedPolicy.seguradora || "Não informada"}</p>
                 </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
                   <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
                     <FileText className="w-2.5 h-2.5" />
                     <span className="text-[10px] font-medium uppercase tracking-wide">Segmento</span>
@@ -523,7 +571,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
                   <p className="font-semibold text-gray-900 text-[12px] truncate dark:text-white">{selectedPolicy.segmento || selectedPolicy.tipo || "—"}</p>
                 </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
                   <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
                     <Calendar className="w-2.5 h-2.5" />
                     <span className="text-[10px] font-medium uppercase tracking-wide">Vigência</span>
@@ -531,7 +579,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
                   <p className="font-semibold text-gray-900 text-[12px] dark:text-white">{selectedPolicy.vigencia || "—"}</p>
                 </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
                   <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
                     <Clock className="w-2.5 h-2.5" />
                     <span className="text-[10px] font-medium uppercase tracking-wide">Vencimento</span>
@@ -539,7 +587,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
                   <p className="font-semibold text-gray-900 text-[12px] dark:text-white">{selectedPolicy.vencimento || "—"}</p>
                 </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
                   <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
                     <Shield className="w-2.5 h-2.5" />
                     <span className="text-[10px] font-medium uppercase tracking-wide">Cobertura</span>
@@ -549,7 +597,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
                   </p>
                 </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#242938] dark:border-[#2E3447]">
+                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
                   <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
                     <AlertTriangle className="w-2.5 h-2.5" />
                     <span className="text-[10px] font-medium uppercase tracking-wide">Status</span>
@@ -568,7 +616,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 dark:bg-[#2E3447]">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 dark:bg-[#222222]">
               <AlertTriangle className="w-8 h-8 text-gray-300 dark:text-gray-500" />
             </div>
             <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Nenhuma apólice</h4>

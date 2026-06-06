@@ -19,7 +19,7 @@ export default function InsuranceList({ policies, colors, isDarkMode, onView, on
   return (
     <tbody>
       {policies?.map((policy, index) => (
-        <tr key={index} className="border-b h-12 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]" style={{ borderColor: colors.cardBorder }}>
+        <tr key={index} className="border-b h-12 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]" style={{ borderColor: colors.cardBorder }}>
           <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.luc}</td>
           <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.fantasia}</td>
           <td className="px-4 py-3" style={{ color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: 400 }}>{policy.segmento}</td>

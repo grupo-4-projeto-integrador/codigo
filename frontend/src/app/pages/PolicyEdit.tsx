@@ -213,7 +213,7 @@ export function PolicyEdit() {
         <div className="flex flex-col gap-6">
           
           {/* Header Card */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -228,13 +228,13 @@ export function PolicyEdit() {
           </div>
 
           {/* Edit Form */}
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
             <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-6">Dados da Apólice</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">LUC</label>
-                <Input {...register("luc")} className="dark:bg-[#1A1F2E]" />
+                <Input {...register("luc")} className="dark:bg-[#0a0a0a]" />
               </div>
 
               <div className="space-y-2">
@@ -242,7 +242,7 @@ export function PolicyEdit() {
                 <Input 
                   {...register("loja")}
                   placeholder="Nome da loja" 
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
               </div>
 
@@ -268,7 +268,7 @@ export function PolicyEdit() {
                   {...register("seguradora")}
                   placeholder="Ex: Porto Seguro"
                   autoComplete="off"
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
               </div>
 
@@ -325,7 +325,7 @@ export function PolicyEdit() {
                     }
                   }}
                   placeholder="0.00" 
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
               </div>
 
@@ -336,7 +336,7 @@ export function PolicyEdit() {
                   placeholder="Nome do responsável" 
                   autoComplete="off"
                   list="usuarios-list"
-                  className="dark:bg-[#1A1F2E]"
+                  className="dark:bg-[#0a0a0a]"
                 />
                 <datalist id="usuarios-list">
                   {usuarios.map(u => (
@@ -360,7 +360,7 @@ export function PolicyEdit() {
 
         {/* Side Column (Sticky) */}
         <div className="sticky top-5 flex flex-col gap-4">
-          <div className="bg-white dark:bg-[#242938] rounded-xl shadow-sm border border-gray-100 dark:border-[#2E3447] p-6">
+          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
             
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">Salvar Alterações</h3>
             <p className="text-xs text-gray-500 dark:text-[#94A3B8] text-center mb-6">
@@ -385,7 +385,7 @@ export function PolicyEdit() {
                 type="button"
                 onClick={() => navigate(`/seguros/apolice/${id}`)}
                 disabled={saving}
-                className="w-full bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] font-semibold text-sm py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <X className="w-4 h-4" />
                 Cancelar

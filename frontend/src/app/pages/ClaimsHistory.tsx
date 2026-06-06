@@ -68,7 +68,7 @@ export function ClaimsHistory() {
             <input
               type="text"
               placeholder="Buscar por Nº do Sinistro ou Loja..."
-              className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#2E3447] rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none transition-all text-gray-900 dark:text-[#F1F5F9] placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
+              className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#222222] rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none transition-all text-gray-900 dark:text-[#F1F5F9] placeholder:text-gray-400 dark:placeholder:text-[#64748B]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -76,7 +76,7 @@ export function ClaimsHistory() {
           
           <div className="flex gap-4">
             <select 
-              className="bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#2E3447] text-gray-700 dark:text-[#F1F5F9] px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+              className="bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#222222] text-gray-700 dark:text-[#F1F5F9] px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
@@ -87,14 +87,14 @@ export function ClaimsHistory() {
               <option value="Recusado">Recusado</option>
             </select>
             
-            <select className="bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#2E3447] text-gray-700 dark:text-[#F1F5F9] px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none hidden sm:block">
+            <select className="bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#222222] text-gray-700 dark:text-[#F1F5F9] px-4 py-2.5 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none hidden sm:block">
               <option value="Todos">Gravidade: Todas</option>
               <option value="Alta">Alta</option>
               <option value="Média">Média</option>
               <option value="Baixa">Baixa</option>
             </select>
             
-            <button className="flex items-center justify-center bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#2E3447] p-2.5 rounded-lg text-gray-600 dark:text-[#94A3B8] hover:bg-gray-50 dark:hover:bg-[#2A3143] hover:text-[#8B1A1A] transition-colors" title="Filtros Avançados">
+            <button className="flex items-center justify-center bg-white dark:bg-[#1E2435] border border-[#E8DCCB] dark:border-[#222222] p-2.5 rounded-lg text-gray-600 dark:text-[#94A3B8] hover:bg-gray-50 dark:hover:bg-[#1f1f1f] hover:text-[#8B1A1A] transition-colors" title="Filtros Avançados">
               <Filter className="w-5 h-5" />
             </button>
           </div>

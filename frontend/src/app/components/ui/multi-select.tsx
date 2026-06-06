@@ -48,7 +48,7 @@ export function MultiSelect({
   return (
     <Command onKeyDown={handleKeyDown} className="overflow-visible bg-transparent">
       <div
-        className="group border border-gray-200 px-3 py-2 text-sm rounded-md focus-within:ring-2 focus-within:ring-gray-400 focus-within:ring-offset-2 dark:bg-[#1A1F2E] dark:border-gray-700 min-h-[40px]"
+        className="group border border-gray-200 px-3 py-2 text-sm rounded-md focus-within:ring-2 focus-within:ring-gray-400 focus-within:ring-offset-2 dark:bg-[#0a0a0a] dark:border-gray-700 min-h-[40px]"
       >
         <div className="flex gap-1 overflow-x-auto pb-1 items-center hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
           {selected.map((item) => {

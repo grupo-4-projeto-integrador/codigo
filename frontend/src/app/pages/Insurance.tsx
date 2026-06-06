@@ -240,7 +240,7 @@ export function Insurance() {
     tan: "#bc9b7c",
     cream: "#f9e4a0",
     pageBg: isDarkMode ? "#0F1117" : "#faf8f5",
-    cardBorder: isDarkMode ? "#2E3447" : "#f0ede8"
+    cardBorder: isDarkMode ? "#222222" : "#f0ede8"
   };
 
   // Mini sparkline data for top cards
@@ -1055,7 +1055,7 @@ export function Insurance() {
           {(activeFiltersCount > 0 || searchQuery) && (
             <button
               onClick={() => { handleClearFilters(); setSearchQuery(''); }}
-              className="px-4 py-2 bg-gray-100 dark:bg-[#242938] hover:bg-gray-200 dark:hover:bg-[#2E3447] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-gray-100 dark:bg-[#151515] hover:bg-gray-200 dark:hover:bg-[#222222] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium transition-colors"
             >
               Limpar busca e filtros
             </button>
@@ -1112,7 +1112,7 @@ export function Insurance() {
             <SyncFeedback lastSync={lastSyncTime} />
             <button
               onClick={() => { setLastSyncTime(new Date()); /* triggers visual sync, real sync can be added here */ }}
-              className="ml-1 p-1 hover:bg-gray-100 dark:hover:bg-[#2E3447] rounded-md transition-colors"
+              className="ml-1 p-1 hover:bg-gray-100 dark:hover:bg-[#222222] rounded-md transition-colors"
               title="Sincronizar agora"
             >
               <Activity className="w-3 h-3" />
@@ -1129,7 +1129,7 @@ export function Insurance() {
 
             {/* Health Score Widget */}
             {healthScore && (
-              <div className="flex items-center gap-4 pl-6 border-l border-gray-200 dark:border-[#2E3447]">
+              <div className="flex items-center gap-4 pl-6 border-l border-gray-200 dark:border-[#222222]">
                 <div className="flex flex-col">
                   <span className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-bold mb-0.5" style={{ letterSpacing: '0.12em' }}>Health Score</span>
                   <div className="flex items-end gap-2">
@@ -1160,7 +1160,7 @@ export function Insurance() {
                   placeholder="Buscar por loja, LUC ou segmento..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#242938] border border-gray-200 dark:border-[#2E3447] rounded-lg text-[13px] focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
                   style={{ color: colors.brandMaroon }}
                 />
               </div>
@@ -1168,11 +1168,11 @@ export function Insurance() {
               <div className="relative flex items-center">
                 <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
                   <SelectTrigger
-                    className={`h-9 w-[175px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'}`}
+                    className={`h-9 w-[175px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
                   >
                     <SelectValue placeholder="Seguradora" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#2E3447] z-[100] bg-white dark:bg-[#242938]">
+                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#222222] z-[100] bg-white dark:bg-[#151515]">
                     <SelectItem value="todas" className="text-[13px] font-medium cursor-pointer">Todas Seguradoras</SelectItem>
                     {uniqueSeguradoras.map(seguradora => (
                       <SelectItem key={seguradora} value={seguradora} className="text-[13px] font-medium cursor-pointer">{seguradora}</SelectItem>
@@ -1189,11 +1189,11 @@ export function Insurance() {
               <div className="relative flex items-center">
                 <Select value={tipoFilter} onValueChange={setTipoFilter}>
                   <SelectTrigger
-                    className={`h-9 w-[150px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'}`}
+                    className={`h-9 w-[150px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
                   >
                     <SelectValue placeholder="Segmento" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#2E3447] z-[100] bg-white dark:bg-[#242938]">
+                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#222222] z-[100] bg-white dark:bg-[#151515]">
                     <SelectItem value="todos" className="text-[13px] font-medium cursor-pointer">Todos Segmentos</SelectItem>
                     {uniqueTipos.map(tipo => (
                       <SelectItem key={tipo} value={tipo} className="text-[13px] font-medium cursor-pointer">{tipo}</SelectItem>
@@ -1210,11 +1210,11 @@ export function Insurance() {
               <div className="relative flex items-center">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger
-                    className={`h-9 w-[140px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#242938] border-gray-200 dark:border-[#2E3447] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'}`}
+                    className={`h-9 w-[140px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
                   >
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#2E3447] z-[100] bg-white dark:bg-[#242938]">
+                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#222222] z-[100] bg-white dark:bg-[#151515]">
                     <SelectItem value="todas" className="text-[13px] font-medium cursor-pointer">Todos Status</SelectItem>
                     <SelectItem value="ativa" className="text-[13px] font-medium cursor-pointer">Ativa</SelectItem>
                     <SelectItem value="a vencer" className="text-[13px] font-medium cursor-pointer">A Vencer</SelectItem>
@@ -1233,7 +1233,7 @@ export function Insurance() {
                   <ShadcnTooltip>
                     <TooltipTrigger asChild>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#242938] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors shadow-sm ml-1">
+                        <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1">
                           <IconDownload size={18} stroke={1.5} />
                         </button>
                       </DropdownMenuTrigger>
@@ -1289,7 +1289,7 @@ export function Insurance() {
         </div>
 
         {/* Tabs */}
-        <div className={`flex items-center gap-6 border-b border-gray-200 dark:border-[#2E3447] transition-all duration-300 ${isFocusMode ? 'mb-2 px-6' : 'mb-4'}`}>
+        <div className={`flex items-center gap-6 border-b border-gray-200 dark:border-[#222222] transition-all duration-300 ${isFocusMode ? 'mb-2 px-6' : 'mb-4'}`}>
           <button
             onClick={() => setActiveTab('visao-geral')}
             className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'visao-geral' ? 'text-[#c4151f] dark:text-[#E04444]' : 'text-gray-500 hover:text-gray-700 dark:text-[#94A3B8] dark:hover:text-gray-300'}`}
@@ -1315,107 +1315,285 @@ export function Insurance() {
         <>
           <div className={`grid grid-cols-1 ${isFocusMode ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_350px]'} flex-1 gap-x-6 gap-y-3 md:gap-y-4 lg:gap-y-6 min-h-0 px-6 overflow-y-auto pb-4 items-stretch`}>
 
-              {/* Metric Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-                {isLoading ? (
-                  <>
-                    <SkeletonCard />
-                    <SkeletonCard />
-                    <SkeletonCard />
-                    <SkeletonCard />
-                  </>
-                ) : (
-                  <>
-                    {/* Card 1 - Taxa de Conformidade */}
-                    <div
-                      className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-                      style={{ border: 'none' }}
-                    >
-                      <CardPulseOverlay value={conformidadeCount} color="rgba(16, 185, 129, 0.15)" />
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
-                            TAXA DE CONFORMIDADE
-                          </p>
+            {/* Metric Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+              {isLoading ? (
+                <>
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </>
+              ) : (
+                <>
+                  {/* Card 1 - Taxa de Conformidade */}
+                  <div
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    style={{ border: 'none' }}
+                  >
+                    <CardPulseOverlay value={conformidadeCount} color="rgba(16, 185, 129, 0.15)" />
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                          TAXA DE CONFORMIDADE
+                        </p>
 
-                          <div className="mt-2 flex items-end gap-1 leading-none">
-                            <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
-                              {animatedConformidade}
-                            </span>
-                            <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
-                              / {conformidadeTotal}
-                            </span>
-                          </div>
-
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
-                              apólices conformes
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-[#639922]">
-                              {weeklyVariation >= 0 ? '↑' : '↓'} {Math.abs(weeklyVariation)}% vs semana anterior
-                            </span>
-                          </div>
+                        <div className="mt-2 flex items-end gap-1 leading-none">
+                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
+                            {animatedConformidade}
+                          </span>
+                          <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
+                            / {conformidadeTotal}
+                          </span>
                         </div>
 
-                        <div className="relative h-[44px] w-[44px] flex-shrink-0">
-                          <svg viewBox="0 0 44 44" width="44" height="44" className="block -rotate-90">
-                            <circle cx="22" cy="22" r="17" fill="none" stroke="var(--color-border-tertiary)" strokeWidth="4" />
-                            <circle
-                              cx="22"
-                              cy="22"
-                              r="17"
-                              fill="none"
-                              stroke="#639922"
-                              strokeWidth="4"
-                              strokeLinecap="round"
-                              strokeDasharray={`${(complianceRate / 100) * 106.8} ${106.8 - (complianceRate / 100) * 106.8}`}
-                              strokeDashoffset="0"
-                            />
-                          </svg>
-                          <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-[#0F172A] dark:text-white">
-                            {Math.round(complianceRate)}%
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                            apólices conformes
+                          </span>
+                          <span className="flex items-center gap-1 text-[11px] font-medium text-[#639922]">
+                            {weeklyVariation >= 0 ? '↑' : '↓'} {Math.abs(weeklyVariation)}% vs semana anterior
                           </span>
                         </div>
                       </div>
 
-                      <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
-                        Evolução 8 semanas
+                      <div className="relative h-[44px] w-[44px] flex-shrink-0">
+                        <svg viewBox="0 0 44 44" width="44" height="44" className="block -rotate-90">
+                          <circle cx="22" cy="22" r="17" fill="none" stroke="var(--color-border-tertiary)" strokeWidth="4" />
+                          <circle
+                            cx="22"
+                            cy="22"
+                            r="17"
+                            fill="none"
+                            stroke="#639922"
+                            strokeWidth="4"
+                            strokeLinecap="round"
+                            strokeDasharray={`${(complianceRate / 100) * 106.8} ${106.8 - (complianceRate / 100) * 106.8}`}
+                            strokeDashoffset="0"
+                          />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-semibold text-[#0F172A] dark:text-white">
+                          {Math.round(complianceRate)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                      Evolução 8 semanas
+                    </div>
+
+                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                      <svg
+                        width="100%"
+                        height="44"
+                        viewBox="0 0 280 44"
+                        preserveAspectRatio="none"
+                        className="block overflow-hidden"
+                        aria-label="Evolução de conformidade nas últimas 8 semanas"
+                      >
+                        <defs>
+                          <linearGradient id={`kpi-history-gradient-${sparklineGradientId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#639922" stopOpacity="0.45" />
+                            <stop offset="75%" stopColor="#639922" stopOpacity="0.08" />
+                            <stop offset="100%" stopColor="#639922" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+
+                        {sparklineArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={sparklineArea} fill={`url(#kpi-history-gradient-${sparklineGradientId})`} />}
+
+                        {sparklineLine && (
+                          <>
+                            <motion.path
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                              d={sparklineLine}
+                              fill="none"
+                              stroke="#639922"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <circle cx="280" cy={(() => {
+                              const values = sparklineValues;
+                              const minY = 36;
+                              const maxY = 8;
+                              const minValue = Math.min(...values);
+                              const maxValue = Math.max(...values);
+                              const range = Math.max(maxValue - minValue, 1);
+                              const normalized = (values[values.length - 1] - minValue) / range;
+                              return minY - normalized * (minY - maxY);
+                            })()} r="2.5" fill="#639922" />
+                          </>
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Card 2 - A Vencer */}
+                  <div
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    style={{ border: 'none' }}
+                  >
+                    <CardPulseOverlay value={expiringPolicies} color="rgba(245, 158, 11, 0.15)" />
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                          A VENCER
+                        </p>
+
+                        <div className="mt-2 flex items-end gap-1 leading-none">
+                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#BA7517] kpi-number">
+                            {animatedExpiring}
+                          </span>
+                          <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
+                            apólices
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                            nos próximos 15 dias
+                          </span>
+                          <span className="text-[11px] font-medium text-[#BA7517]">
+                            {percAVencer}% do total
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                        <svg
-                          width="100%"
-                          height="44"
-                          viewBox="0 0 280 44"
-                          preserveAspectRatio="none"
-                          className="block overflow-hidden"
-                          aria-label="Evolução de conformidade nas últimas 8 semanas"
-                        >
-                          <defs>
-                            <linearGradient id={`kpi-history-gradient-${sparklineGradientId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#639922" stopOpacity="0.45" />
-                              <stop offset="75%" stopColor="#639922" stopOpacity="0.08" />
-                              <stop offset="100%" stopColor="#639922" stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
+                      <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#BA7517]">
+                        <Clock className="h-[15px] w-[15px]" />
+                      </div>
+                    </div>
 
-                          {sparklineArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={sparklineArea} fill={`url(#kpi-history-gradient-${sparklineGradientId})`} />}
+                    <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                      Vencimentos por semana
+                    </div>
 
-                          {sparklineLine && (
-                            <>
-                              <motion.path
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                d={sparklineLine}
-                                fill="none"
-                                stroke="#639922"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <circle cx="280" cy={(() => {
-                                const values = sparklineValues;
+                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                      <svg
+                        width="100%"
+                        height="44"
+                        viewBox="0 0 280 44"
+                        preserveAspectRatio="none"
+                        className="block overflow-hidden"
+                        aria-label="Vencimentos por semana"
+                      >
+                        <defs>
+                          <linearGradient id={`expiring-history-gradient-${expiringSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#BA7517" stopOpacity="0.45" />
+                            <stop offset="75%" stopColor="#BA7517" stopOpacity="0.08" />
+                            <stop offset="100%" stopColor="#BA7517" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+
+                        {expiringArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={expiringArea} fill={`url(#expiring-history-gradient-${expiringSparklineId})`} />}
+
+                        {expiringLine && (
+                          <>
+                            <motion.path
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                              d={expiringLine}
+                              fill="none"
+                              stroke="#BA7517"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <circle cx="280" cy={(() => {
+                              const values = expiringSparklineValues;
+                              const minY = 36;
+                              const maxY = 8;
+                              const minValue = Math.min(...values);
+                              const maxValue = Math.max(...values);
+                              const range = Math.max(maxValue - minValue, 1);
+                              const normalized = (values[values.length - 1] - minValue) / range;
+                              return minY - normalized * (minY - maxY);
+                            })()} r="2.5" fill="#BA7517" />
+                          </>
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Card 3 - Vencidas */}
+                  <div
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    style={{ border: 'none' }}
+                  >
+                    <CardPulseOverlay value={expiredPolicies} color="rgba(159, 18, 57, 0.15)" />
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                          VENCIDAS
+                        </p>
+
+                        <div className="mt-2 flex items-end gap-1 leading-none">
+                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number">
+                            {animatedExpired}
+                          </span>
+                          <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
+                            apólices
+                          </span>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                            requerem ação imediata
+                          </span>
+                          <span className="flex items-center gap-1 text-[11px] font-medium text-[#A32D2D]">
+                            ↑ {percVencidas}% do total
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#A32D2D]">
+                        <AlertCircle className="h-[15px] w-[15px]" />
+                      </div>
+                    </div>
+
+                    <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                      Acumulado 8 semanas
+                    </div>
+
+                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                      <svg
+                        width="100%"
+                        height="44"
+                        viewBox="0 0 280 44"
+                        preserveAspectRatio="none"
+                        className="block overflow-hidden"
+                        aria-label="Acumulado de vencidas nas últimas 8 semanas"
+                      >
+                        <defs>
+                          <linearGradient id={`expired-history-gradient-${expiredSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.50" />
+                            <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.10" />
+                            <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+
+                        {vencidasArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={vencidasArea} fill={`url(#expired-history-gradient-${expiredSparklineId})`} />}
+
+                        {vencidasLine && (
+                          <>
+                            <motion.path
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                              d={vencidasLine}
+                              fill="none"
+                              stroke="#A32D2D"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <circle
+                              cx="280"
+                              cy={(() => {
+                                const values = vencidasHistory;
                                 const minY = 36;
                                 const maxY = 8;
                                 const minValue = Math.min(...values);
@@ -1423,481 +1601,303 @@ export function Insurance() {
                                 const range = Math.max(maxValue - minValue, 1);
                                 const normalized = (values[values.length - 1] - minValue) / range;
                                 return minY - normalized * (minY - maxY);
-                              })()} r="2.5" fill="#639922" />
-                            </>
+                              })()}
+                              r="2.5"
+                              fill="#A32D2D"
+                            />
+                          </>
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Card 4 - Valor Segurado */}
+                  <div
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    style={{ border: 'none' }}
+                  >
+                    <CardPulseOverlay value={totalCobertura} color="rgba(59, 130, 246, 0.15)" />
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                          COBERTURA TOTAL
+                        </p>
+
+                        <div className="mt-2 flex items-end gap-1 leading-none">
+                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
+                            {formattedCoverageTotal.value}
+                          </span>
+                          {formattedCoverageTotal.suffix && (
+                            <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
+                              {formattedCoverageTotal.suffix}
+                            </span>
                           )}
-                        </svg>
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
+                            valor total assegurado
+                          </span>
+                          <span className="flex items-center gap-1 text-[11px] font-medium text-[#639922]">
+                            <ChevronUp className="w-3 h-3" /> {Math.abs(Math.round(((coverageDisponivelValues[coverageDisponivelValues.length - 1] ?? totalCobertura) - (coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura)) / Math.max(coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura, 1) * 100))}% vs semana anterior
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#94A3B8]">
+                        <ShieldCheck className="h-[15px] w-[15px]" />
                       </div>
                     </div>
 
-                    {/* Card 2 - A Vencer */}
-                    <div
-                      className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-                      style={{ border: 'none' }}
-                    >
-                      <CardPulseOverlay value={expiringPolicies} color="rgba(245, 158, 11, 0.15)" />
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
-                            A VENCER
-                          </p>
-
-                          <div className="mt-2 flex items-end gap-1 leading-none">
-                            <span className="text-[28px] font-light tracking-[-0.02em] text-[#BA7517] kpi-number">
-                              {animatedExpiring}
-                            </span>
-                            <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
-                              apólices
-                            </span>
-                          </div>
-
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
-                              nos próximos 15 dias
-                            </span>
-                            <span className="text-[11px] font-medium text-[#BA7517]">
-                              {percAVencer}% do total
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#BA7517]">
-                          <Clock className="h-[15px] w-[15px]" />
-                        </div>
-                      </div>
-
-                      <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
-                        Vencimentos por semana
-                      </div>
-
-                      <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                        <svg
-                          width="100%"
-                          height="44"
-                          viewBox="0 0 280 44"
-                          preserveAspectRatio="none"
-                          className="block overflow-hidden"
-                          aria-label="Vencimentos por semana"
-                        >
-                          <defs>
-                            <linearGradient id={`expiring-history-gradient-${expiringSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#BA7517" stopOpacity="0.45" />
-                              <stop offset="75%" stopColor="#BA7517" stopOpacity="0.08" />
-                              <stop offset="100%" stopColor="#BA7517" stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
-
-                          {expiringArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={expiringArea} fill={`url(#expiring-history-gradient-${expiringSparklineId})`} />}
-
-                          {expiringLine && (
-                            <>
-                              <motion.path
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                d={expiringLine}
-                                fill="none"
-                                stroke="#BA7517"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <circle cx="280" cy={(() => {
-                                const values = expiringSparklineValues;
-                                const minY = 36;
-                                const maxY = 8;
-                                const minValue = Math.min(...values);
-                                const maxValue = Math.max(...values);
-                                const range = Math.max(maxValue - minValue, 1);
-                                const normalized = (values[values.length - 1] - minValue) / range;
-                                return minY - normalized * (minY - maxY);
-                              })()} r="2.5" fill="#BA7517" />
-                            </>
-                          )}
-                        </svg>
-                      </div>
+                    <div className="mt-3 flex items-center gap-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                      <span>Cobertura disponível vs. sinistros</span>
+                      <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
+                        <span className="inline-block h-2 w-2 rounded-full bg-[#639922]" />
+                        <span>Disponível</span>
+                      </span>
+                      <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
+                        <span className="inline-block h-2 w-2 rounded-full border-2 border-dashed border-[#A32D2D]" />
+                        <span>Sinistros pagos</span>
+                      </span>
                     </div>
 
-                    {/* Card 3 - Vencidas */}
-                    <div
-                      className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-                      style={{ border: 'none' }}
-                    >
-                      <CardPulseOverlay value={expiredPolicies} color="rgba(159, 18, 57, 0.15)" />
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
-                            VENCIDAS
-                          </p>
+                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                      <svg
+                        width="100%"
+                        height="44"
+                        viewBox="0 0 280 44"
+                        preserveAspectRatio="none"
+                        className="block overflow-hidden"
+                        aria-label="Cobertura disponível versus sinistros pagos nas últimas 8 semanas"
+                      >
+                        <defs>
+                          <linearGradient id={`coverage-available-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#639922" stopOpacity="0.40" />
+                            <stop offset="75%" stopColor="#639922" stopOpacity="0.06" />
+                            <stop offset="100%" stopColor="#639922" stopOpacity="0" />
+                          </linearGradient>
+                          <linearGradient id={`coverage-paid-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.35" />
+                            <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.06" />
+                            <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
 
-                          <div className="mt-2 flex items-end gap-1 leading-none">
-                            <span className="text-[28px] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number">
-                              {animatedExpired}
-                            </span>
-                            <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
-                              apólices
-                            </span>
-                          </div>
+                        {coverageDisponivelArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coverageDisponivelArea} fill={`url(#coverage-available-gradient-${coverageSparklineId})`} />}
+                        {coveragePagoArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coveragePagoArea} fill={`url(#coverage-paid-gradient-${coverageSparklineId})`} />}
 
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
-                              requerem ação imediata
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-[#A32D2D]">
-                              ↑ {percVencidas}% do total
-                            </span>
-                          </div>
-                        </div>
+                        {coverageDisponivelLine && (
+                          <>
+                            <motion.path
+                              initial={{ pathLength: 0 }}
+                              animate={{ pathLength: 1 }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                              d={coverageDisponivelLine}
+                              fill="none"
+                              stroke="#639922"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <circle cx="280" cy={(() => {
+                              const values = coverageDisponivelValues;
+                              const minY = 36;
+                              const maxY = 8;
+                              const normalized = values[values.length - 1] / coverageGlobalMax;
+                              return minY - normalized * (minY - maxY);
+                            })()} r="2.5" fill="#639922" />
+                          </>
+                        )}
 
-                        <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#A32D2D]">
-                          <AlertCircle className="h-[15px] w-[15px]" />
-                        </div>
-                      </div>
-
-                      <div className="mt-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
-                        Acumulado 8 semanas
-                      </div>
-
-                      <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                        <svg
-                          width="100%"
-                          height="44"
-                          viewBox="0 0 280 44"
-                          preserveAspectRatio="none"
-                          className="block overflow-hidden"
-                          aria-label="Acumulado de vencidas nas últimas 8 semanas"
-                        >
-                          <defs>
-                            <linearGradient id={`expired-history-gradient-${expiredSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.50" />
-                              <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.10" />
-                              <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
-
-                          {vencidasArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={vencidasArea} fill={`url(#expired-history-gradient-${expiredSparklineId})`} />}
-
-                          {vencidasLine && (
-                            <>
-                              <motion.path
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                d={vencidasLine}
-                                fill="none"
-                                stroke="#A32D2D"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <circle
-                                cx="280"
-                                cy={(() => {
-                                  const values = vencidasHistory;
-                                  const minY = 36;
-                                  const maxY = 8;
-                                  const minValue = Math.min(...values);
-                                  const maxValue = Math.max(...values);
-                                  const range = Math.max(maxValue - minValue, 1);
-                                  const normalized = (values[values.length - 1] - minValue) / range;
-                                  return minY - normalized * (minY - maxY);
-                                })()}
-                                r="2.5"
-                                fill="#A32D2D"
-                              />
-                            </>
-                          )}
-                        </svg>
-                      </div>
+                        {coveragePagoLine && (
+                          <>
+                            <motion.path
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+                              d={coveragePagoLine}
+                              fill="none"
+                              stroke="#A32D2D"
+                              strokeWidth="1.5"
+                              strokeDasharray="4 3"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <circle cx="280" cy={(() => {
+                              const values = coveragePagoValues;
+                              const minY = 36;
+                              const maxY = 8;
+                              const normalized = values[values.length - 1] / coverageGlobalMax;
+                              return minY - normalized * (minY - maxY);
+                            })()} r="2.5" fill="#A32D2D" />
+                          </>
+                        )}
+                      </svg>
                     </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-                    {/* Card 4 - Valor Segurado */}
-                    <div
-                      className="relative bg-white dark:bg-[#242938] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
-                      style={{ border: 'none' }}
-                    >
-                      <CardPulseOverlay value={totalCobertura} color="rgba(59, 130, 246, 0.15)" />
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
-                            COBERTURA TOTAL
-                          </p>
+            {/* ActionQueuePanel aligned with Metric Cards */}
+            <div className={`w-full transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'block'}`}>
+              <ActionQueuePanel onSelectLuc={setSelectedMapLuc} />
+            </div>
 
-                          <div className="mt-2 flex items-end gap-1 leading-none">
-                            <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
-                              {formattedCoverageTotal.value}
-                            </span>
-                            {formattedCoverageTotal.suffix && (
-                              <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
-                                {formattedCoverageTotal.suffix}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
-                              valor total assegurado
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] font-medium text-[#639922]">
-                              <ChevronUp className="w-3 h-3" /> {Math.abs(Math.round(((coverageDisponivelValues[coverageDisponivelValues.length - 1] ?? totalCobertura) - (coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura)) / Math.max(coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura, 1) * 100))}% vs semana anterior
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex h-[44px] w-[44px] flex-shrink-0 items-center justify-center text-[15px] text-[#94A3B8]">
-                          <ShieldCheck className="h-[15px] w-[15px]" />
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-center gap-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
-                        <span>Cobertura disponível vs. sinistros</span>
-                        <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
-                          <span className="inline-block h-2 w-2 rounded-full bg-[#639922]" />
-                          <span>Disponível</span>
-                        </span>
-                        <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
-                          <span className="inline-block h-2 w-2 rounded-full border-2 border-dashed border-[#A32D2D]" />
-                          <span>Sinistros pagos</span>
-                        </span>
-                      </div>
-
-                      <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                        <svg
-                          width="100%"
-                          height="44"
-                          viewBox="0 0 280 44"
-                          preserveAspectRatio="none"
-                          className="block overflow-hidden"
-                          aria-label="Cobertura disponível versus sinistros pagos nas últimas 8 semanas"
-                        >
-                          <defs>
-                            <linearGradient id={`coverage-available-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#639922" stopOpacity="0.40" />
-                              <stop offset="75%" stopColor="#639922" stopOpacity="0.06" />
-                              <stop offset="100%" stopColor="#639922" stopOpacity="0" />
-                            </linearGradient>
-                            <linearGradient id={`coverage-paid-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.35" />
-                              <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.06" />
-                              <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
-                            </linearGradient>
-                          </defs>
-
-                          {coverageDisponivelArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coverageDisponivelArea} fill={`url(#coverage-available-gradient-${coverageSparklineId})`} />}
-                          {coveragePagoArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coveragePagoArea} fill={`url(#coverage-paid-gradient-${coverageSparklineId})`} />}
-
-                          {coverageDisponivelLine && (
-                            <>
-                              <motion.path
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                d={coverageDisponivelLine}
-                                fill="none"
-                                stroke="#639922"
-                                strokeWidth="1.5"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <circle cx="280" cy={(() => {
-                                const values = coverageDisponivelValues;
-                                const minY = 36;
-                                const maxY = 8;
-                                const normalized = values[values.length - 1] / coverageGlobalMax;
-                                return minY - normalized * (minY - maxY);
-                              })()} r="2.5" fill="#639922" />
-                            </>
-                          )}
-
-                          {coveragePagoLine && (
-                            <>
-                              <motion.path
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-                                d={coveragePagoLine}
-                                fill="none"
-                                stroke="#A32D2D"
-                                strokeWidth="1.5"
-                                strokeDasharray="4 3"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <circle cx="280" cy={(() => {
-                                const values = coveragePagoValues;
-                                const minY = 36;
-                                const maxY = 8;
-                                const normalized = values[values.length - 1] / coverageGlobalMax;
-                                return minY - normalized * (minY - maxY);
-                              })()} r="2.5" fill="#A32D2D" />
-                            </>
-                          )}
-                        </svg>
-                      </div>
-                    </div>
-                  </>
+            <div
+              className="h-full"
+              style={{
+                display: "grid",
+                gridTemplateColumns: isFocusMode ? "1fr" : "60fr 40fr",
+                gap: "16px",
+                transition: "grid-template-columns 0.5s ease",
+              }}
+            >
+              <div style={{ minHeight: 0 }}>
+                {isLoading ? (
+                  <SkeletonMap />
+                ) : (
+                  <ComplianceMapV2
+                    selectedLuc={selectedMapLuc}
+                    onSelectLuc={setSelectedMapLuc}
+                  />
                 )}
               </div>
-
-              {/* ActionQueuePanel aligned with Metric Cards */}
-              <div className={`w-full transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'block'}`}>
-                <ActionQueuePanel onSelectLuc={setSelectedMapLuc} />
-              </div>
-
-              <div
-                className="h-full"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: isFocusMode ? "1fr" : "60fr 40fr",
-                  gap: "16px",
-                  transition: "grid-template-columns 0.5s ease",
-                }}
-              >
-                <div style={{ minHeight: 0 }}>
-                  {isLoading ? (
-                    <SkeletonMap />
-                  ) : (
-                    <ComplianceMapV2
-                      selectedLuc={selectedMapLuc}
-                      onSelectLuc={setSelectedMapLuc}
-                    />
-                  )}
+              {!isFocusMode && (
+                <div style={{ position: 'relative', minHeight: 0 }}>
+                  <div style={{ position: 'absolute', inset: 0 }}>
+                    <SegmentRiskChart />
+                  </div>
                 </div>
-                {!isFocusMode && (
-                  <div style={{ position: 'relative', minHeight: 0 }}>
-                    <div style={{ position: 'absolute', inset: 0 }}>
-                      <SegmentRiskChart />
-                    </div>
+              )}
+            </div>
+
+            {/* ComplianceSidePanel aligned with Map & Risk Chart */}
+            <div className={`w-full transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'block'}`}>
+              <ComplianceSidePanel
+                selectedLuc={selectedMapLuc}
+                onClose={() => setSelectedMapLuc(null)}
+                onViewApolice={handleVerApolice}
+                onEditApolice={handleEditarApolice}
+              />
+            </div>
+
+            {/* Data Table — Hidden in Focus Mode */}
+            {!isFocusMode && (isLoading ? (
+              <SkeletonTable />
+            ) : (
+              <motion.div
+                ref={tableSectionRef}
+                className="bg-white dark:bg-[#151515] rounded-xl border overflow-hidden relative"
+                style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                {/* Table wrapper */}
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[800px] text-left border-collapse">
+                    <thead className="bg-[#F7F8FA] dark:bg-[#0a0a0a]">
+                      <tr>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>LUC</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
+
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedPolicies.length === 0
+                        ? renderEmptyState()
+                        : paginatedPolicies.map((policy, index) => (
+                          <tr
+                            key={index}
+                            onClick={() => handleVerApolice(policy.id)}
+                            onMouseEnter={() => setHoveredPolicyId(policy.id)}
+                            onMouseLeave={() => setHoveredPolicyId(null)}
+                            className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
+                            style={{ borderColor: colors.cardBorder }}
+                          >
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.id}</td>
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.lojista}</td>
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.tipo}</td>
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.seguradora}</td>
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.vigencia}</td>
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.vencimento}</td>
+                            <td className="px-4 py-3" style={{ minWidth: '110px' }}>
+                              {renderStatusBadge(policy.status)}
+                            </td>
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
+                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.dias_restantes}</td>
+                          </tr>
+                        ))
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination */}
+                <div className="px-4 md:px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px]" style={{ backgroundColor: colors.pageBg, color: colors.brandMaroon }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500 font-medium">Linhas por página:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => {
+                        setItemsPerPage(Number(e.target.value));
+                        setCurrentPage(1); // Resetar para a primeira página ao mudar
+                      }}
+                      className="border rounded px-2 py-1 bg-white dark:bg-[#0a0a0a] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                      style={{ borderColor: colors.cardBorder }}
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
                   </div>
-                )}
-              </div>
+                  <div className="flex gap-1 flex-wrap justify-center items-center">
+                    <button
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
+                      className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+                    >
+                      <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                    </button>
 
-              {/* ComplianceSidePanel aligned with Map & Risk Chart */}
-              <div className={`w-full transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'block'}`}>
-                <ComplianceSidePanel
-                  selectedLuc={selectedMapLuc}
-                  onClose={() => setSelectedMapLuc(null)}
-                  onViewApolice={handleVerApolice}
-                  onEditApolice={handleEditarApolice}
-                />
-              </div>
-
-              {/* Data Table — Hidden in Focus Mode */}
-              {!isFocusMode && (isLoading ? (
-                <SkeletonTable />
-              ) : (
-                <motion.div
-                  ref={tableSectionRef}
-                  className="bg-white dark:bg-[#242938] rounded-xl border overflow-hidden relative"
-                  style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-                  transition={{ duration: 0.2, ease: "easeOut" }}
-                >
-                  {/* Table wrapper */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[800px] text-left border-collapse">
-                      <thead className="bg-[#F7F8FA] dark:bg-[#1A1F2E]">
-                        <tr>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>LUC</th>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
-
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
-                          <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paginatedPolicies.length === 0
-                          ? renderEmptyState()
-                          : paginatedPolicies.map((policy, index) => (
-                            <tr
-                              key={index}
-                              onClick={() => handleVerApolice(policy.id)}
-                              onMouseEnter={() => setHoveredPolicyId(policy.id)}
-                              onMouseLeave={() => setHoveredPolicyId(null)}
-                              className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
-                              style={{ borderColor: colors.cardBorder }}
-                            >
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.id}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.lojista}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.tipo}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100">{policy.seguradora}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.vigencia}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.vencimento}</td>
-                              <td className="px-4 py-3" style={{ minWidth: '110px' }}>
-                                {renderStatusBadge(policy.status)}
-                              </td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.dias_restantes}</td>
-                            </tr>
-                          ))
-                        }
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Pagination */}
-                  <div className="px-4 md:px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px]" style={{ backgroundColor: colors.pageBg, color: colors.brandMaroon }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500 font-medium">Linhas por página:</span>
-                      <select
-                        value={itemsPerPage}
-                        onChange={(e) => {
-                          setItemsPerPage(Number(e.target.value));
-                          setCurrentPage(1); // Resetar para a primeira página ao mudar
-                        }}
-                        className="border rounded px-2 py-1 bg-white dark:bg-[#1A1F2E] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
-                        style={{ borderColor: colors.cardBorder }}
-                      >
-                        <option value={5}>5</option>
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={50}>50</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-1 flex-wrap justify-center items-center">
+                    {getPageNumbers().map((page, index) => (
                       <button
-                        onClick={handlePreviousPage}
-                        disabled={currentPage === 1}
-                        className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+                        key={index}
+                        onClick={() => typeof page === 'number' && handlePageClick(page)}
+                        disabled={typeof page !== 'number'}
+                        className={`w-7 h-7 rounded flex items-center justify-center text-[12px] font-medium transition-all outline-none ${page === currentPage
+                          ? 'bg-[#c4151f]/10 text-[#c4151f] border border-[#c4151f] dark:bg-[#c4151f]/20 dark:text-[#E23B44] dark:border-[#E23B44]'
+                          : typeof page === 'number'
+                            ? 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#151515] border border-transparent'
+                            : 'bg-transparent text-gray-400 cursor-default border border-transparent'
+                          }`}
                       >
-                        <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                        {page}
                       </button>
+                    ))}
 
-                      {getPageNumbers().map((page, index) => (
-                        <button
-                          key={index}
-                          onClick={() => typeof page === 'number' && handlePageClick(page)}
-                          disabled={typeof page !== 'number'}
-                          className={`w-7 h-7 rounded flex items-center justify-center text-[12px] font-medium transition-all outline-none ${page === currentPage
-                            ? 'bg-[#c4151f]/10 text-[#c4151f] border border-[#c4151f] dark:bg-[#c4151f]/20 dark:text-[#E23B44] dark:border-[#E23B44]'
-                            : typeof page === 'number'
-                              ? 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#242938] border border-transparent'
-                              : 'bg-transparent text-gray-400 cursor-default border border-transparent'
-                            }`}
-                        >
-                          {page}
-                        </button>
-                      ))}
-
-                      <button
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalFilteredPages}
-                        className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
-                      >
-                        <ChevronRight className="w-4 h-4" strokeWidth={2} />
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalFilteredPages}
+                      className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+                    >
+                      <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                    </button>
                   </div>
-                </motion.div>
-              ))}
+                </div>
+              </motion.div>
+            ))}
 
-              {/* Atividade Recente aligned with Table */}
-              <div className={`w-full flex-col min-h-[250px] transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'flex'}`}>
-                {/* 3. Atividade Recente */}
+            {/* Atividade Recente aligned with Table */}
+            <div className={`w-full flex-col min-h-[250px] transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'flex'}`}>
+              {/* 3. Atividade Recente */}
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key="atividade-recente"
@@ -1905,7 +1905,7 @@ export function Insurance() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20, transition: { duration: 0.1, delay: 0 } }}
                   transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.2 }}
-                  className="bg-white dark:bg-[#242938] rounded-xl border flex-1 flex flex-col relative w-full min-h-[250px]"
+                  className="bg-white dark:bg-[#151515] rounded-xl border flex-1 flex flex-col relative w-full min-h-[250px]"
                   style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
                 >
                   <div className="px-4 py-3 border-b flex items-center justify-between shrink-0" style={{ borderColor: colors.cardBorder }}>
@@ -1923,9 +1923,9 @@ export function Insurance() {
                       <div className="flex flex-col gap-3 p-4">
                         {[1, 2, 3].map(i => (
                           <div key={i} className="flex items-start gap-3 animate-pulse">
-                            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#1A1F2E] shrink-0" />
+                            <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#0a0a0a] shrink-0" />
                             <div className="flex-1 space-y-1.5">
-                              <div className="h-3 bg-gray-200 dark:bg-[#1A1F2E] rounded w-3/4" />
+                              <div className="h-3 bg-gray-200 dark:bg-[#0a0a0a] rounded w-3/4" />
                               <div className="h-2.5 bg-gray-100 dark:bg-[#1E2435] rounded w-1/2" />
                             </div>
                           </div>
@@ -1933,7 +1933,7 @@ export function Insurance() {
                       </div>
                     ) : atividadesRecentes.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#1A1F2E] flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center">
                           <Clock className="w-5 h-5 text-gray-400" />
                         </div>
                         <p className="text-[12px] text-gray-400 dark:text-[#64748B] text-center">Nenhuma atividade registrada ainda.<br />Crie ou edite uma apólice para começar.</p>
@@ -1959,7 +1959,7 @@ export function Insurance() {
                         return (
                           <div
                             key={atividade.id}
-                            className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors cursor-pointer opacity-0"
+                            className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors cursor-pointer opacity-0"
                             onClick={() => handleVerApolice(atividade.luc)}
                             style={{ animation: 'slideInTop 0.3s ease forwards', animationDelay: `${i * 60}ms` }}
                           >
@@ -1990,8 +1990,8 @@ export function Insurance() {
           {/* Modal Ver Apólice */}
           {showViewApoliceModal && selectedPolicy && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(8px)' }}>
-              <div className="bg-white dark:bg-[#242938] rounded-xl w-full max-w-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
-                <div className="sticky top-0 bg-white dark:bg-[#242938] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
+              <div className="bg-white dark:bg-[#151515] rounded-xl w-full max-w-3xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
+                <div className="sticky top-0 bg-white dark:bg-[#151515] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
                   <div>
                     <div className="flex items-center gap-3">
                       <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Apólice {selectedPolicy.id}</h2>
@@ -2082,7 +2082,7 @@ export function Insurance() {
                         element.click();
                         document.body.removeChild(element);
                       }}
-                      className={`${canEdit ? 'flex-1' : 'w-full'} px-4 py-3 border dark:border-[#2E3447] rounded-lg text-[13px] font-semibold transition-all hover:bg-gray-50 dark:hover:bg-[#1A1F2E]`}
+                      className={`${canEdit ? 'flex-1' : 'w-full'} px-4 py-3 border dark:border-[#222222] rounded-lg text-[13px] font-semibold transition-all hover:bg-gray-50 dark:hover:bg-[#0a0a0a]`}
                       style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
                     >
                       Download
@@ -2106,8 +2106,8 @@ export function Insurance() {
           {/* Modal Renovar Apólice */}
           {showRenovarModal && selectedPolicy && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(8px)' }}>
-              <div className="bg-white dark:bg-[#242938] rounded-xl w-full max-w-2xl max-h-[95vh] md:max-h-auto overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
-                <div className="bg-white dark:bg-[#242938] border-b p-6 flex items-center justify-between rounded-t-xl" style={{ borderColor: colors.cardBorder }}>
+              <div className="bg-white dark:bg-[#151515] rounded-xl w-full max-w-2xl max-h-[95vh] md:max-h-auto overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
+                <div className="bg-white dark:bg-[#151515] border-b p-6 flex items-center justify-between rounded-t-xl" style={{ borderColor: colors.cardBorder }}>
                   <div>
                     <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Renovar Apólice</h2>
                     <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Confirme a renovação da apólice {selectedPolicy.id}</p>
@@ -2209,11 +2209,11 @@ export function Insurance() {
                   <div className="flex gap-3 pt-4 border-t" style={{ borderColor: colors.cardBorder }}>
                     <motion.button
                       onClick={handleCloseModals}
-                      className="flex-1 px-4 py-3 border dark:border-[#2E3447] rounded-lg text-[13px] font-semibold"
+                      className="flex-1 px-4 py-3 border dark:border-[#222222] rounded-lg text-[13px] font-semibold"
                       style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
                       whileHover={{
                         scale: 1.05,
-                        backgroundColor: isDarkMode ? '#1A1F2E' : '#F9FAFB',
+                        backgroundColor: isDarkMode ? '#0a0a0a' : '#F9FAFB',
                         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
                       }}
                       whileTap={{ scale: 0.98 }}
@@ -2249,7 +2249,7 @@ export function Insurance() {
                 onClick={handleCloseModals}
               >
                 <motion.div
-                  className="bg-white dark:bg-[#242938] rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                  className="bg-white dark:bg-[#151515] rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
                   style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}
                   onClick={(e) => e.stopPropagation()}
                   initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -2257,7 +2257,7 @@ export function Insurance() {
                   exit={{ opacity: 0, scale: 0.95, y: 20 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
                 >
-                  <div className="bg-white dark:bg-[#242938] border-b p-6 flex items-center justify-between rounded-t-xl" style={{ borderColor: colors.cardBorder }}>
+                  <div className="bg-white dark:bg-[#151515] border-b p-6 flex items-center justify-between rounded-t-xl" style={{ borderColor: colors.cardBorder }}>
                     <div>
                       <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Conformidade das Lojas</h2>
                       <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Lojas com apólices vencidas que precisam de regularização</p>
@@ -2290,7 +2290,7 @@ export function Insurance() {
 
                     {/* Lista de Lojas Não Conformes */}
                     <div className="border rounded-lg overflow-hidden" style={{ borderColor: colors.cardBorder }}>
-                      <div className="bg-gray-50 dark:bg-[#1A1F2E] px-4 py-3 border-b" style={{ borderColor: colors.cardBorder }}>
+                      <div className="bg-gray-50 dark:bg-[#0a0a0a] px-4 py-3 border-b" style={{ borderColor: colors.cardBorder }}>
                         <div className="grid grid-cols-12 gap-4 text-[11px] font-bold text-gray-600 dark:text-[#94A3B8] uppercase">
                           <div className="col-span-3">Loja</div>
                           <div className="col-span-6">Motivo da Não Conformidade</div>
@@ -2302,7 +2302,7 @@ export function Insurance() {
                         {nonConformingStores.map((store, index) => (
                           <motion.div
                             key={index}
-                            className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#1A1F2E] transition-colors"
+                            className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: index * 0.05, duration: 0.3, ease: "easeOut" }}
@@ -2348,11 +2348,11 @@ export function Insurance() {
                     <div className="flex gap-3 pt-4 border-t" style={{ borderColor: colors.cardBorder }}>
                       <motion.button
                         onClick={handleCloseModals}
-                        className="flex-1 px-4 py-3 border dark:border-[#2E3447] rounded-lg text-[13px] font-semibold"
+                        className="flex-1 px-4 py-3 border dark:border-[#222222] rounded-lg text-[13px] font-semibold"
                         style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
                         whileHover={{
                           scale: 1.05,
-                          backgroundColor: isDarkMode ? '#1A1F2E' : '#F9FAFB',
+                          backgroundColor: isDarkMode ? '#0a0a0a' : '#F9FAFB',
                           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)"
                         }}
                         whileTap={{ scale: 0.98 }}
@@ -2386,8 +2386,8 @@ export function Insurance() {
           {/* Modal Upload de Apólice */}
           {showUploadModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(8px)' }}>
-              <div className="bg-white dark:bg-[#242938] rounded-xl w-full max-w-2xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
-                <div className="sticky top-0 bg-white dark:bg-[#242938] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
+              <div className="bg-white dark:bg-[#151515] rounded-xl w-full max-w-2xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
+                <div className="sticky top-0 bg-white dark:bg-[#151515] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
                   <div>
                     <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Upload de Apólice</h2>
                     <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Envie o arquivo PDF da apólice</p>
@@ -2415,7 +2415,7 @@ export function Insurance() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragging ? 'border-[#1c3d32] bg-[#1c3d32]/5' : 'border-gray-300 hover:border-[#1c3d32] hover:bg-gray-50 dark:hover:bg-[#1A1F2E]'
+                    className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${isDragging ? 'border-[#1c3d32] bg-[#1c3d32]/5' : 'border-gray-300 hover:border-[#1c3d32] hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'
                       }`}
                     onClick={() => document.getElementById('file-upload')?.click()}
                   >
@@ -2501,7 +2501,7 @@ export function Insurance() {
                   <div className="flex gap-3 pt-4 border-t" style={{ borderColor: colors.cardBorder }}>
                     <button
                       onClick={handleCloseModals}
-                      className="flex-1 px-4 py-3 border dark:border-[#2E3447] rounded-lg text-[13px] font-semibold transition-all hover:bg-gray-50 dark:hover:bg-[#1A1F2E]"
+                      className="flex-1 px-4 py-3 border dark:border-[#222222] rounded-lg text-[13px] font-semibold transition-all hover:bg-gray-50 dark:hover:bg-[#0a0a0a]"
                       style={{ color: colors.brandMaroon, borderColor: colors.cardBorder }}
                     >
                       Cancelar
@@ -2538,12 +2538,12 @@ export function Insurance() {
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 10 }}
                   transition={{ type: 'spring', duration: 0.5, bounce: 0 }}
-                  className="relative bg-white dark:bg-[#242938] rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-[#2E3447] flex flex-col max-h-[90vh]"
+                  className="relative bg-white dark:bg-[#151515] rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl border border-gray-100 dark:border-[#222222] flex flex-col max-h-[90vh]"
                 >
                   {/* Header */}
-                  <div className="p-6 border-b border-gray-100 dark:border-[#2E3447] bg-gray-50/50 dark:bg-[#1A1F2E]/50 flex items-center justify-between">
+                  <div className="p-6 border-b border-gray-100 dark:border-[#222222] bg-gray-50/50 dark:bg-[#0a0a0a]/50 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#242938] flex items-center justify-center shadow-sm border border-gray-100 dark:border-[#2E3447]">
+                      <div className="w-12 h-12 rounded-xl bg-white dark:bg-[#151515] flex items-center justify-center shadow-sm border border-gray-100 dark:border-[#222222]">
                         <Shield className="w-6 h-6 text-[#168821] dark:text-[#22c55e]" />
                       </div>
                       <div>
@@ -2553,7 +2553,7 @@ export function Insurance() {
                     </div>
                     <button
                       onClick={handleCloseModals}
-                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-[#242938] dark:hover:text-gray-300 rounded-lg transition-colors"
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-[#151515] dark:hover:text-gray-300 rounded-lg transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -2570,7 +2570,7 @@ export function Insurance() {
                             required
                             disabled
                             value={formData.luc}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-gray-100 dark:bg-[#1A1F2E] text-gray-500 dark:text-gray-400 outline-none cursor-not-allowed"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#222222] bg-gray-100 dark:bg-[#0a0a0a] text-gray-500 dark:text-gray-400 outline-none cursor-not-allowed"
                           />
                         </div>
 
@@ -2581,7 +2581,7 @@ export function Insurance() {
                             required
                             value={formData.lojista}
                             onChange={(e) => setFormData({ ...formData, lojista: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
                           />
                         </div>
 
@@ -2591,7 +2591,7 @@ export function Insurance() {
                             required
                             value={formData.tipo}
                             onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
                           >
                             <option value="Seguro Incêndio">Incêndio e Explosão</option>
                             <option value="Responsabilidade Civil">Responsabilidade Civil</option>
@@ -2610,7 +2610,7 @@ export function Insurance() {
                             required
                             value={formData.seguradora}
                             onChange={(e) => setFormData({ ...formData, seguradora: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
                           />
                         </div>
 
@@ -2622,7 +2622,7 @@ export function Insurance() {
                             value={formData.vigencia}
                             onChange={(e) => setFormData({ ...formData, vigencia: e.target.value })}
                             placeholder="DD/MM/AAAA"
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
                           />
                         </div>
 
@@ -2634,7 +2634,7 @@ export function Insurance() {
                             value={formData.vencimento}
                             onChange={(e) => setFormData({ ...formData, vencimento: e.target.value })}
                             placeholder="DD/MM/AAAA"
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
                           />
                         </div>
 
@@ -2645,18 +2645,18 @@ export function Insurance() {
                             required
                             value={formData.cobertura}
                             onChange={(e) => setFormData({ ...formData, cobertura: e.target.value })}
-                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#2E3447] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
+                            className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#1E2435] text-gray-900 dark:text-white focus:ring-2 focus:ring-[#168821]/20 focus:border-[#168821] transition-all outline-none"
                           />
                         </div>
                       </div>
                     </div>
 
                     {/* Footer */}
-                    <div className="p-6 border-t border-gray-100 dark:border-[#2E3447] bg-gray-50/50 dark:bg-[#1A1F2E]/50 flex items-center justify-end gap-3 mt-auto">
+                    <div className="p-6 border-t border-gray-100 dark:border-[#222222] bg-gray-50/50 dark:bg-[#0a0a0a]/50 flex items-center justify-end gap-3 mt-auto">
                       <button
                         type="button"
                         onClick={handleCloseModals}
-                        className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-[#2E3447] transition-colors"
+                        className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-[#222222] transition-colors"
                       >
                         Cancelar
                       </button>

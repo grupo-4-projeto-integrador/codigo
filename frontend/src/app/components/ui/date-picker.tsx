@@ -67,7 +67,7 @@ export function DatePicker({ value, onChange, placeholder = "DD/MM/AAAA", classN
       <div 
         className={`flex items-center gap-2 w-full h-9 rounded-md border border-input bg-background px-3 py-2 text-sm text-left
           focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2
-          dark:bg-[#1A1F2E] dark:border-input dark:focus-within:ring-offset-[#1A1F2E]`}
+          dark:bg-[#0a0a0a] dark:border-input dark:focus-within:ring-offset-[#0a0a0a]`}
       >
         <CalendarIcon 
           className="h-4 w-4 shrink-0 opacity-50 cursor-pointer" 
@@ -86,7 +86,7 @@ export function DatePicker({ value, onChange, placeholder = "DD/MM/AAAA", classN
 
       {open && (
         <div
-          className="absolute top-full left-0 z-[9999] mt-1 rounded-md border border-border bg-white dark:bg-[#242938] shadow-lg"
+          className="absolute top-full left-0 z-[9999] mt-1 rounded-md border border-border bg-white dark:bg-[#151515] shadow-lg"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <Calendar

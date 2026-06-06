@@ -57,11 +57,11 @@
 
 .dark {
   /* JP Mall Design System - Dark Mode */
-  --color-bg: #0F1117;
-  --color-surface: #1A1F2E;
-  --color-card: #242938;
-  --color-border: #2E3447;
-  --color-input-bg: #1E2435;
+  --color-bg: #0a0a0a;
+  --color-surface: #151515;
+  --color-card: #151515;
+  --color-border: #222222;
+  --color-input-bg: #1f1f1f;
 
   --color-primary: #8B1A1A;
   --color-action: #E04444;
@@ -77,21 +77,21 @@
   --color-error: #E04444;
   --color-info: #60A5FA;
 
-  --bg-table-alt: #1A1F2E;
+  --bg-table-alt: #151515;
 
   /* Legacy tokens for compatibility */
-  --background: #0F1117;
+  --background: #0a0a0a;
   --foreground: #F1F5F9;
-  --card: #242938;
+  --card: #151515;
   --card-foreground: #F1F5F9;
   --primary: #8B1A1A;
   --primary-foreground: #F1F5F9;
-  --muted: #1A1F2E;
+  --muted: #1f1f1f;
   --muted-foreground: #64748B;
-  --border: #2E3447;
-  --input-background: #1E2435;
+  --border: #222222;
+  --input-background: #1f1f1f;
   --ring: #E04444;
-  --popover: #242938;
+  --popover: #151515;
   --popover-foreground: #F1F5F9;
   --color-border: rgba(255,255,255,0.07);
 }
