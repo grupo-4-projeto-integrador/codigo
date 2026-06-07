@@ -1,25 +1,142 @@
 import { useEffect, useState } from "react";
 import { getFilaDeAcao } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
-import { Clock, AlertTriangle, AlertCircle, RefreshCw } from "lucide-react";
+import { Clock, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 export interface ActionQueuePanelProps {
   onSelectLuc: (luc: string) => void;
   isPresentationMode?: boolean;
 }
 
+function SortableQueueItem({ item, index, isLast, onSelectLuc }: { item: ApoliceRecord, index: number, isLast: boolean, onSelectLuc: (luc: string) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: item.id || item.luc });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    position: 'relative' as const,
+  };
+
+  const isVencida = item.dias_restantes !== undefined && item.dias_restantes < 0;
+  const daysText = isVencida 
+    ? `Vencida há ${Math.abs(item.dias_restantes!)} dias` 
+    : `Vence em ${item.dias_restantes} dias`;
+  
+  const val = Number((item as any).cobertura) || 0;
+  let formattedVal = "R$ 0,00";
+  if (val >= 1000000) {
+    formattedVal = `R$ ${(val / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} KK`;
+  } else if (val >= 1000) {
+    formattedVal = `R$ ${(val / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} K`;
+  } else {
+    formattedVal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  }
+
+  const lucStr = item.id || item.luc;
+  const lojaStr = item.lojista || item.fantasia || "Loja";
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`group flex items-center px-3 py-1.5 gap-2 border-b border-gray-50 bg-white hover:bg-gray-50 transition-colors text-left dark:border-[#222222] dark:bg-[#151515] dark:hover:bg-[#1f1f1f] ${isLast ? 'border-b-0' : ''} ${isDragging ? 'shadow-md opacity-90' : ''}`}
+    >
+      <div 
+        {...attributes} 
+        {...listeners} 
+        className="w-4 h-full flex items-center justify-center cursor-grab text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        title="Arrastar para reordenar"
+      >
+        <span className="text-[12px] leading-none mb-1">⠿</span>
+      </div>
+      
+      <div className="font-bold text-gray-400 dark:text-[#64748B] text-[10px] w-3 text-center">{index + 1}</div>
+      
+      <div className={`relative z-[1] flex-shrink-0 bg-white group-hover:bg-gray-50 dark:bg-[#151515] dark:group-hover:bg-[#1f1f1f] ${isVencida ? 'text-[#D93030]' : 'text-orange-500'}`}>
+        <Clock className="w-3 h-3" />
+      </div>
+      
+      <div className="flex-1 min-w-0 pr-2 cursor-pointer" onClick={() => onSelectLuc(lucStr)}>
+        <div className="flex flex-col gap-0.5">
+          <div className={`mb-0.5 ${isVencida ? 'text-[#c4151f] text-[11px] font-normal normal-case tracking-normal' : 'text-orange-500 text-[12px] font-bold uppercase tracking-wide'}`}>
+            {daysText}
+          </div>
+          <span className="font-bold text-[11px] text-gray-900 dark:text-white leading-tight break-words uppercase">{lojaStr}</span>
+          <span className="text-[9px] text-gray-500 dark:text-[#94A3B8] leading-tight break-words font-medium">{lucStr}</span>
+        </div>
+      </div>
+      
+      <div className="font-bold text-[11px] text-gray-900 whitespace-nowrap dark:text-white flex-shrink-0 cursor-pointer" onClick={() => onSelectLuc(lucStr)}>
+        {formattedVal}
+      </div>
+    </div>
+  );
+}
+
 export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: ActionQueuePanelProps) {
   const [items, setItems] = useState<ApoliceRecord[]>([]);
+  const [originalItems, setOriginalItems] = useState<ApoliceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const fetchItems = async () => {
     setLoading(true);
     try {
       let data = await getFilaDeAcao();
       data = data.slice(0, 3);
+      setOriginalItems([...data]);
+
+      const storedOrder = localStorage.getItem('actionQueueOrder');
+      if (storedOrder) {
+        try {
+          const orderIds = JSON.parse(storedOrder);
+          data.sort((a, b) => {
+            const idA = a.id || a.luc;
+            const idB = b.id || b.luc;
+            const indexA = orderIds.indexOf(idA);
+            const indexB = orderIds.indexOf(idB);
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            if (indexA !== -1) return -1;
+            if (indexB !== -1) return 1;
+            return 0;
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
       setItems(data);
       setLastUpdate(new Date());
     } catch (error) {
@@ -32,6 +149,30 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
   useEffect(() => {
     fetchItems();
   }, []);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setItems((items) => {
+        const oldIndex = items.findIndex((item) => (item.id || item.luc) === active.id);
+        const newIndex = items.findIndex((item) => (item.id || item.luc) === over.id);
+        const newItems = arrayMove(items, oldIndex, newIndex);
+        localStorage.setItem('actionQueueOrder', JSON.stringify(newItems.map(i => i.id || i.luc)));
+        return newItems;
+      });
+    }
+  };
+
+  const handleRestore = () => {
+    localStorage.removeItem('actionQueueOrder');
+    setItems([...originalItems]);
+  };
+
+  const isManualOrderActive = !!localStorage.getItem('actionQueueOrder');
+  const hasInversion = items.some((item, i) => {
+    return items.slice(i + 1).some(lowerItem => (Number(lowerItem.cobertura) || 0) > (Number(item.cobertura) || 0));
+  });
+  const showWarning = isManualOrderActive && hasInversion;
 
   if (isPresentationMode) {
     return (
@@ -97,54 +238,31 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
             Nenhuma ação pendente no momento.
           </div>
         ) : (
-          items.map((item, index) => {
-            const isVencida = item.dias_restantes !== undefined && item.dias_restantes < 0;
-            const daysText = isVencida 
-              ? `Vencida há ${Math.abs(item.dias_restantes!)} dias` 
-              : `Vence em ${item.dias_restantes} dias`;
-            
-            const val = Number((item as any).cobertura) || 0;
-            let formattedVal = "R$ 0,00";
-            if (val >= 1000000) {
-              // 2.630.000 -> 2,630 KK
-              formattedVal = `R$ ${(val / 1000000).toLocaleString('pt-BR', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} KK`;
-            } else if (val >= 1000) {
-              formattedVal = `R$ ${(val / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} K`;
-            } else {
-              formattedVal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-            }
-
-            const lucStr = item.id || item.luc;
-            const lojaStr = item.lojista || item.fantasia || "Loja";
-
-            return (
-              <button 
-                key={lucStr}
-                onClick={() => onSelectLuc(lucStr)}
-                className={`group flex items-center px-3 py-1.5 gap-2 border-b border-gray-50 hover:bg-gray-50 transition-colors text-left dark:border-[#222222] dark:hover:bg-[#1f1f1f] ${index === items.length - 1 ? 'border-b-0' : ''}`}
-              >
-                <div className="font-bold text-gray-400 dark:text-[#64748B] text-[10px] w-3 text-center">{index + 1}</div>
-                
-                <div className={`relative z-[1] bg-white group-hover:bg-gray-50 dark:bg-[#151515] dark:group-hover:bg-[#1f1f1f] ${isVencida ? 'text-[#D93030]' : 'text-orange-500'} flex-shrink-0`}>
-                  <Clock className="w-3 h-3" />
-                </div>
-                
-                <div className="flex-1 min-w-0 pr-2">
-                  <div className="flex flex-col gap-0.5">
-                    <div className={`mb-0.5 ${isVencida ? 'text-[#c4151f] text-[11px] font-normal normal-case tracking-normal' : 'text-orange-500 text-[12px] font-bold uppercase tracking-wide'}`}>
-                      {daysText}
-                    </div>
-                    <span className="font-bold text-[11px] text-gray-900 dark:text-white leading-tight break-words uppercase">{lojaStr}</span>
-                    <span className="text-[9px] text-gray-500 dark:text-[#94A3B8] leading-tight break-words font-medium">{lucStr}</span>
-                  </div>
-                </div>
-                
-                <div className="font-bold text-[11px] text-gray-900 whitespace-nowrap dark:text-white flex-shrink-0">
-                  {formattedVal}
-                </div>
-              </button>
-            )
-          })
+          <>
+            {showWarning && (
+              <div className="px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-between border-b border-yellow-100 dark:border-yellow-900/30">
+                <span className="text-[10px] text-yellow-800 dark:text-yellow-500 font-medium flex items-center gap-1.5">
+                  <AlertTriangle className="w-3 h-3" /> Ordenação manual ativa
+                </span>
+                <button onClick={handleRestore} className="text-[10px] text-[#c4151f] hover:underline font-bold">
+                  Restaurar automática
+                </button>
+              </div>
+            )}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={items.map(i => i.id || i.luc)} strategy={verticalListSortingStrategy}>
+                {items.map((item, index) => (
+                  <SortableQueueItem 
+                    key={item.id || item.luc} 
+                    item={item} 
+                    index={index} 
+                    isLast={index === items.length - 1} 
+                    onSelectLuc={onSelectLuc} 
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </>
         )}
       </div>
 

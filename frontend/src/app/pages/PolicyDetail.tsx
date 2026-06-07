@@ -36,6 +36,13 @@ export function PolicyDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
+  const formatCNPJ = (cnpj?: string) => {
+    if (!cnpj) return "CNPJ não informado";
+    const num = String(cnpj).replace(/\D/g, "");
+    if (num.length !== 14) return cnpj;
+    return `${num.substring(0, 2)}.${num.substring(2, 5)}.${num.substring(5, 8)}/${num.substring(8, 12)}-${num.substring(12, 14)}`;
+  };
+
   const [policy, setPolicy] = useState<ApoliceRecord | null>(null);
   const [coberturas, setCoberturas] = useState<any[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
@@ -327,6 +334,7 @@ export function PolicyDetail() {
                 <div>
                   <p className="text-xs text-gray-500 dark:text-[#94A3B8]">Segurado (Lojista)</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate" title={policy.lojista}>{policy.lojista}</p>
+                  <div style={{fontSize:"10px",color:"var(--color-text-secondary)"}}>{formatCNPJ(policy.cnpj)}</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">

@@ -284,7 +284,7 @@ export function CommandPalette() {
                   {searchResults.map((a) => (
                     <Command.Item 
                       key={a.luc}
-                      value={`${a.luc} ${a.fantasia || ''} ${a.lojista || ''} ${a.segmento || ''}`}
+                      value={`${a.luc} ${a.fantasia || ''} ${a.lojista || ''} ${a.segmento || ''} ${a.cnpj || ''}`}
                       onSelect={() => handleSelect(() => navigate(`/seguros/apolice/${encodeURIComponent(a.luc)}`))}
                       className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
                     >
@@ -292,7 +292,7 @@ export function CommandPalette() {
                         <FileText className="w-4 h-4 opacity-70" />
                         <span className="flex flex-col">
                           <span>Apólice <span className="font-semibold">{a.luc}</span></span>
-                          {(a.fantasia || a.lojista) && <span className="text-[10px] text-gray-400 dark:text-[#64748B] capitalize -mt-0.5">{a.fantasia || a.lojista}</span>}
+                          {(a.fantasia || a.lojista || a.cnpj) && <span className="text-[10px] text-gray-400 dark:text-[#64748B] capitalize -mt-0.5">{a.fantasia || a.lojista} {a.cnpj ? `· ${a.cnpj}` : ''}</span>}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">

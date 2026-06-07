@@ -90,6 +90,13 @@ const formatDate = (val: any) => {
   return val;
 };
 
+const formatCNPJ = (cnpj?: string) => {
+  if (!cnpj) return "Não informado";
+  const num = String(cnpj).replace(/\D/g, "");
+  if (num.length !== 14) return cnpj;
+  return `${num.substring(0, 2)}.${num.substring(2, 5)}.${num.substring(5, 8)}/${num.substring(8, 12)}-${num.substring(12, 14)}`;
+};
+
 export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
   const doc = new jsPDF();
 
@@ -127,9 +134,11 @@ export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
   // Coluna Esquerda
   doc.text("Número / LUC:", 14, 52);
   doc.text("Seguradora:", 14, 58);
+  doc.text("CNPJ Segurado:", 14, 64);
   doc.setTextColor(0, 0, 0);
   doc.text(apolice.luc || apolice.id || "-", 45, 52);
   doc.text(apolice.seguradora || "-", 40, 58);
+  doc.text(formatCNPJ(apolice.cnpj), 45, 64);
 
   // Coluna Direita
   doc.setTextColor(80, 80, 80);
@@ -142,23 +151,23 @@ export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
   // 4. Seção Vigência
   doc.setFontSize(12);
   doc.setTextColor(30, 30, 30);
-  doc.text("Vigência e Valores", 14, 70);
+  doc.text("Vigência e Valores", 14, 76);
 
   doc.setFontSize(10);
   doc.setTextColor(80, 80, 80);
-  doc.text("Início:", 14, 77);
-  doc.text("Vencimento:", 14, 83);
-  doc.text("Valor Segurado:", 14, 89);
+  doc.text("Início:", 14, 83);
+  doc.text("Vencimento:", 14, 89);
+  doc.text("Valor Segurado:", 14, 95);
   
   doc.setTextColor(0, 0, 0);
-  doc.text(formatDate(apolice.vigencia), 45, 77);
-  doc.text(formatDate(apolice.vencimento), 45, 83);
-  doc.text(formatValue(apolice.cobertura), 45, 89);
+  doc.text(formatDate(apolice.vigencia), 45, 83);
+  doc.text(formatDate(apolice.vencimento), 45, 89);
+  doc.text(formatValue(apolice.cobertura), 45, 95);
 
   // 5. Coberturas Contratadas (AutoTable)
   doc.setFontSize(12);
   doc.setTextColor(30, 30, 30);
-  doc.text("Coberturas Contratadas", 14, 102);
+  doc.text("Coberturas Contratadas", 14, 108);
 
   const tableBody = coberturas.length > 0 
     ? coberturas.map(c => [
@@ -169,7 +178,7 @@ export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
     : [["Nenhuma cobertura detalhada encontrada.", "", ""]];
 
   autoTable(doc, {
-    startY: 106,
+    startY: 112,
     head: [["Cobertura", "Descrição", "Valor"]],
     body: tableBody,
     theme: "striped",
