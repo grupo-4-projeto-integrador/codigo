@@ -16,6 +16,8 @@ import { MultiSelect } from "../components/ui/multi-select";
 import { DatePicker } from "../components/ui/date-picker";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { DeleteApoliceButton } from "../components/DeleteApoliceButton";
+import { useUserProfile } from "../contexts/UserProfileContext";
 
 interface PolicyEditFormInputs {
   luc: string;
@@ -37,6 +39,7 @@ export function PolicyEdit() {
   const [saving, setSaving] = useState(false);
   const [policyData, setPolicyData] = useState<any>({});
   const [documentos, setDocumentos] = useState<any[]>([]);
+  const { canEdit } = useUserProfile();
 
   const { control, register, handleSubmit, reset } = useForm<PolicyEditFormInputs>({
     defaultValues: {
@@ -390,6 +393,12 @@ export function PolicyEdit() {
                 <X className="w-4 h-4" />
                 Cancelar
               </button>
+
+              {canEdit && (
+                <div className="pt-2 border-t border-gray-100 dark:border-[#222222] mt-2">
+                  <DeleteApoliceButton id={id!} />
+                </div>
+              )}
             </div>
 
           </div>

@@ -25,6 +25,7 @@ type Response struct {
 	Cobertura     float64 `json:"cobertura"`
 	DiasRestantes int     `json:"dias_restantes"`
 	Responsavel   string  `json:"responsavel"`
+	ResponsavelID *int64  `json:"responsavel_id,omitempty"`
 	Observacoes   string  `json:"observacoes"`
 }
 
@@ -65,6 +66,10 @@ func ParseDate(value string) (time.Time, error) {
 type RenovacaoPayload struct {
 	NovaVigencia string  `json:"nova_vigencia"`
 	NovoValor    float64 `json:"novo_valor"`
+}
+
+type UpdateResponsavelPayload struct {
+	ResponsavelID int64 `json:"responsavel_id"`
 }
 
 type DocumentoDTO struct {

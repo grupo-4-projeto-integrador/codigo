@@ -11,16 +11,21 @@ import { Insurance } from "./pages/Insurance";
 import { PolicyDetail } from "./pages/PolicyDetail";
 import { PolicyEdit } from "./pages/PolicyEdit";
 import { PolicyNew } from "./pages/PolicyNew";
+import { PrivateRoute } from "./components/PrivateRoute";
 
 export const router = createBrowserRouter([
   {
-    path: "/",
+    path: "/login",
     Component: Login,
   },
   {
     path: "/",
-    Component: Layout,
+    Component: PrivateRoute,
     children: [
+      {
+        path: "/",
+        Component: Layout,
+        children: [
       { path: "dashboard", Component: Dashboard },
       { path: "novo-sinistro", Component: NewClaim },
       { path: "sinistro/:id", Component: ClaimDetails },
@@ -31,6 +36,8 @@ export const router = createBrowserRouter([
       { path: "seguros/apolice/:id/editar", Component: PolicyEdit },
       { path: "lojistas", Component: StoreDirectory },
       { path: "relatorios", Component: Reports },
+        ],
+      },
     ],
   },
 ]);

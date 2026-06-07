@@ -43,7 +43,7 @@ function formatTimestamp(ts: string) {
 const ACAO_META: Record<string, { label: string; icon: React.ComponentType<any>; color: string; bg: string }> = {
   criar:             { label: "Criar",           icon: FileText,   color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
   editar:            { label: "Editar",          icon: Edit3,      color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
-  renovar:           { label: "Renovar",         icon: RotateCcw,  color: "#a0191e", bg: "rgba(160,25,30,0.1)" },
+  renovar:           { label: "Renovar",         icon: RotateCcw,  color: "#168821", bg: "rgba(22,136,33,0.1)" },
   excluir:           { label: "Excluir",         icon: Trash2,     color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
   exportar:          { label: "Exportar",        icon: Download,   color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   login:             { label: "Login",           icon: LogIn,      color: "#06b6d4", bg: "rgba(6,182,212,0.1)" },

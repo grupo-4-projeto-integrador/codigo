@@ -8,6 +8,7 @@ import (
 
 	"grupo4/seguros/internal/apolice"
 	"grupo4/seguros/internal/audit"
+	"grupo4/seguros/internal/auth"
 	"grupo4/seguros/internal/database"
 	"grupo4/seguros/internal/middleware"
 	"grupo4/seguros/pkg/config"
@@ -61,7 +62,10 @@ func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 		log.Printf("Aviso: não foi possível criar tabela audit_logs: %v", err)
 	}
 
-	apolice.RegisterRoutesWithAudit(mux, db, auditSvc)
+	// Auth — rotas públicas de login
+	auth.RegisterRoutes(mux, db, cfg.JWTSecret)
+
+	apolice.RegisterRoutesWithAudit(mux, db, auditSvc, cfg.JWTSecret)
 	registerStaticFiles(mux, cfg.Frontend.Dir)
 
 	return middleware.Chain(mux,

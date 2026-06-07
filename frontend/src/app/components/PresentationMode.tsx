@@ -137,7 +137,7 @@ export function PresentationMode({
         style={{ backdropFilter: 'blur(8px)' }}
       >
         <span className="text-[12px] font-semibold tracking-wide">Modo Apresentação</span>
-        <kbd className="text-[10px] opacity-60 bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">F</kbd>
+        <kbd className="text-[10px] opacity-60 bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">Ctrl+Shift+P</kbd>
         <span className="opacity-30 mx-1">·</span>
         <kbd className="text-[10px] opacity-60 bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">Esc</kbd>
         <button

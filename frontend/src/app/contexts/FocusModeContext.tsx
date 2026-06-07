@@ -19,23 +19,7 @@ export function FocusModeProvider({ children }: { children: ReactNode }) {
   const exitFocusMode = () => setIsFocusMode(false);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target as HTMLElement).isContentEditable
-      ) return;
-
-      if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        setIsFocusMode(prev => !prev);
-      } else if (e.key === 'Escape' && isFocusMode) {
-        setIsFocusMode(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // Escutando apenas o custom event despachado pelo layout ou hook
   }, [isFocusMode]);
 
   // Add/remove class on body for CSS targeting

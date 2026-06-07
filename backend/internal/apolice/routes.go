@@ -5,39 +5,70 @@ import (
 	"net/http"
 
 	"grupo4/seguros/internal/audit"
+	"grupo4/seguros/internal/auth"
 )
 
-// RegisterRoutes mantém compatibilidade retroativa (sem auditoria).
+// RegisterRoutes mantém compatibilidade retroativa (sem auditoria/auth).
 func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
-	RegisterRoutesWithAudit(mux, db, nil)
+	RegisterRoutesWithAudit(mux, db, nil, "")
 }
 
-// RegisterRoutesWithAudit registra rotas com o serviço de auditoria injetado.
-func RegisterRoutesWithAudit(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Service) {
+// RegisterRoutesWithAudit registra rotas com auditoria e autenticação JWT injetados.
+func RegisterRoutesWithAudit(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Service, jwtSecret string) {
 	repo := NewRepository(db)
 	service := NewService(repo)
 	handler := NewHandler(service, auditSvc)
 
-	mux.HandleFunc("/api/apolices", handler.Collection)
-	mux.HandleFunc("/api/fila-de-acao", handler.FilaDeAcao)
-	mux.HandleFunc("/api/kpis/history", handler.GetKPIHistory)
-	mux.HandleFunc("/api/kpis/expiring-by-week", handler.GetExpiringByWeek)
-	mux.HandleFunc("/api/kpis/coverage-history", handler.GetCoverageHistory)
-	mux.HandleFunc("/api/kpis/risk-by-segment", handler.GetRiskBySegment)
-	mux.HandleFunc("/api/kpis/health-score", handler.GetHealthScore)
-	mux.HandleFunc("GET /api/apolices/atividade-recente", handler.GetAtividadesRecentes)
-	mux.HandleFunc("/api/apolices/", handler.Item("/api/apolices"))
-	mux.HandleFunc("/api/map-layout", handler.GetMapLayout)
+	// Helper: exige apenas token válido (todos os roles)
+	onlyAuth := func(h http.Handler) http.Handler {
+		if jwtSecret == "" {
+			return h
+		}
+		return auth.AuthMiddleware(jwtSecret)(h)
+	}
+	// Helper: exige token + role específico
+	requireRole := func(h http.Handler, roles ...string) http.Handler {
+		if jwtSecret == "" {
+			return h
+		}
+		return auth.RequireRole(jwtSecret, roles...)(h)
+	}
+
+	// ── Rotas de leitura — todos os roles autenticados ──────────────────────────
+	mux.Handle("/api/apolices", onlyAuth(http.HandlerFunc(handler.Collection)))
+	mux.Handle("/api/fila-de-acao", onlyAuth(http.HandlerFunc(handler.FilaDeAcao)))
+	mux.Handle("/api/kpis/history", onlyAuth(http.HandlerFunc(handler.GetKPIHistory)))
+	mux.Handle("/api/kpis/expiring-by-week", onlyAuth(http.HandlerFunc(handler.GetExpiringByWeek)))
+	mux.Handle("/api/kpis/coverage-history", onlyAuth(http.HandlerFunc(handler.GetCoverageHistory)))
+	mux.Handle("/api/kpis/risk-by-segment", onlyAuth(http.HandlerFunc(handler.GetRiskBySegment)))
+	mux.Handle("/api/kpis/health-score", onlyAuth(http.HandlerFunc(handler.GetHealthScore)))
+	mux.Handle("GET /api/apolices/atividade-recente", onlyAuth(http.HandlerFunc(handler.GetAtividadesRecentes)))
+	mux.Handle("/api/apolices/", onlyAuth(http.HandlerFunc(handler.Item("/api/apolices"))))
+	mux.Handle("/api/map-layout", onlyAuth(http.HandlerFunc(handler.GetMapLayout)))
+	mux.Handle("/api/lojas", onlyAuth(http.HandlerFunc(handler.GetLojas)))
+
+	// Sub-recursos de leitura
+	mux.Handle("GET /api/apolices/{id}/coberturas", onlyAuth(http.HandlerFunc(handler.GetCoberturas)))
+	mux.Handle("GET /api/apolices/{id}/historico", onlyAuth(http.HandlerFunc(handler.GetHistorico)))
+	mux.Handle("GET /api/apolices/{id}/documentos", onlyAuth(http.HandlerFunc(handler.GetDocumentos)))
+	mux.Handle("GET /api/documentos/{id}/download", onlyAuth(http.HandlerFunc(handler.DownloadDocumento)))
+	mux.Handle("GET /api/apolices/{id}/documentos/{docId}/download", onlyAuth(http.HandlerFunc(handler.DownloadDocumento)))
+
+	// Retrocompatibilidade sem prefixo /api/ (sem auth para não quebrar scripts legados)
 	mux.HandleFunc("/apolices", handler.Collection)
 	mux.HandleFunc("/apolices/", handler.Item("/apolices"))
 
-	mux.HandleFunc("GET /api/apolices/{id}/coberturas", handler.GetCoberturas)
-	mux.HandleFunc("GET /api/apolices/{id}/historico", handler.GetHistorico)
-	mux.HandleFunc("PATCH /api/apolices/{id}/observacoes", handler.UpdateObservacoes)
-	mux.HandleFunc("POST /api/apolices/{id}/renovar", handler.RenovarApolice)
-	mux.HandleFunc("GET /api/lojas", handler.GetLojas)
+	// ── Escrita — admin e gestor ────────────────────────────────────────────────
+	mux.Handle("POST /api/apolices", requireRole(http.HandlerFunc(handler.Collection), "admin", "gestor"))
+	mux.Handle("PUT /api/apolices/{id}", requireRole(http.HandlerFunc(handler.Item("/api/apolices")), "admin", "gestor"))
+	mux.Handle("PATCH /api/apolices/{id}", requireRole(http.HandlerFunc(handler.Item("/api/apolices")), "admin", "gestor"))
+	mux.Handle("PATCH /api/apolices/{id}/observacoes", requireRole(http.HandlerFunc(handler.UpdateObservacoes), "admin", "gestor"))
+	mux.Handle("PATCH /api/apolices/{id}/responsavel", requireRole(http.HandlerFunc(handler.UpdateApoliceResponsavel), "admin", "gestor"))
+	mux.Handle("POST /api/apolices/{id}/renovar", requireRole(http.HandlerFunc(handler.RenovarApolice), "admin", "gestor"))
+	mux.Handle("POST /api/apolices/{id}/documentos", requireRole(http.HandlerFunc(handler.UploadDocumento), "admin", "gestor"))
 
-	mux.HandleFunc("GET /api/documentos/{id}/download", handler.DownloadDocumento)
-	mux.HandleFunc("GET /api/apolices/{id}/documentos", handler.GetDocumentos)
-	mux.HandleFunc("POST /api/apolices/{id}/documentos", handler.UploadDocumento)
+	// ── Exclusão — somente admin ────────────────────────────────────────────────
+	mux.Handle("DELETE /api/apolices/{id}", requireRole(http.HandlerFunc(handler.Item("/api/apolices")), "admin"))
+
+	// Audit logs — protegida pelo pacote audit via RequireRole injetado no app.go
 }

@@ -285,10 +285,17 @@ export function ComplianceMapV2({
         </div>
       ) : (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          {/* LUC Grid */}
           <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar">
             <TooltipProvider delayDuration={100}>
-              <div className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${tileWidth})`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}>
+              <AnimatePresence mode="wait">
+                <motion.div 
+                  key={currentPage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${tileWidth})`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}
+                >
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
               const daysBack = TIME_OFFSETS[timeOffsetIdx].days;
@@ -384,8 +391,9 @@ export function ComplianceMapV2({
                 </Tooltip>
               );
             })}
-            </div>
-          </TooltipProvider>
+                </motion.div>
+              </AnimatePresence>
+            </TooltipProvider>
           </div>
 
           {/* Dot Pagination */}

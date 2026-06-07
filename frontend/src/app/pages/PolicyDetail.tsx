@@ -10,7 +10,6 @@ import {
   Check,
   User, 
   AlertTriangle,
-  Trash2,
   Loader2
 } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
@@ -22,20 +21,11 @@ import joaoCarlosImg from "../../assets/joao-carlos.jpg";
 import { DocumentListWithUpload } from "../components/DocumentListWithUpload";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
-import { 
-  AlertDialog, 
-  AlertDialogTrigger, 
-  AlertDialogContent, 
-  AlertDialogHeader, 
-  AlertDialogTitle, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogCancel, 
-  AlertDialogAction 
-} from "../components/ui/alert-dialog";
 import { Input } from "../components/ui/input";
 import { DatePicker } from "../components/ui/date-picker";
 import { Button } from "../components/ui/button";
+import { DeleteApoliceButton } from "../components/DeleteApoliceButton";
+import { RequireRole } from "../components/RequireRole";
 import { format, addYears } from "date-fns";
 import { toast } from "sonner";
 import { useUserProfile } from "../contexts/UserProfileContext";
@@ -68,8 +58,6 @@ export function PolicyDetail() {
       novo_valor: "0"
     }
   });
-
-  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadData = () => {
     if (!id) return;
@@ -148,11 +136,14 @@ export function PolicyDetail() {
   const handleAssignResponsible = async (userId: string, userName: string) => {
     if (!id) return;
     try {
-      await request(`/apolices/${id}`, {
-        method: "PUT", // Usando PUT por padrão ou se houver rota PATCH use PATCH. O form manda PUT inteiro, então mando um payload parcial se aceitar ou apenas atualizo via UI.
-        body: JSON.stringify({ responsavel: userName, responsavel_id: userId }) // adapt to mock/real behavior
+      const responsavelId = parseInt(userId, 10);
+      if (isNaN(responsavelId)) throw new Error("ID do usuário inválido");
+
+      await request(`/apolices/${id}/responsavel`, {
+        method: "PATCH",
+        body: JSON.stringify({ responsavel_id: responsavelId })
       });
-      setPolicy(prev => prev ? { ...prev, responsavel: userName } : prev);
+      setPolicy(prev => prev ? { ...prev, responsavel: userName, responsavel_id: responsavelId } : prev);
       toast.success("Responsável atribuído!");
     } catch (e) {
       toast.error("Falha ao atribuir responsável");
@@ -171,22 +162,6 @@ export function PolicyDetail() {
       console.error("Erro ao salvar observações", err);
     } finally {
       setSavingObs(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!id) return;
-    setIsDeleting(true);
-    try {
-      await request(`/apolices/${id}`, {
-        method: "DELETE"
-      });
-      toast.success("Apólice excluída");
-      navigate("/seguros");
-    } catch (err) {
-      console.error(err);
-      toast.error("Falha ao excluir apólice");
-      setIsDeleting(false);
     }
   };
 
@@ -495,7 +470,7 @@ export function PolicyDetail() {
             )}
 
             <div className="mt-8 flex flex-col gap-2">
-              {canEdit && (
+              <RequireRole roles={['admin', 'gestor']}>
                 <>
                   <button onClick={openRenewDialog} className="w-full bg-[#c4151f] hover:bg-[#a01119] text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
                     Renovar Apólice
@@ -504,35 +479,14 @@ export function PolicyDetail() {
                     Editar Dados
                   </button>
                 </>
-              )}
+              </RequireRole>
               <button onClick={() => exportApoliceParaPDF(policy, coberturas)} className="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] font-medium text-sm py-2.5 rounded-lg transition-colors">
                 Exportar PDF
               </button>
 
-              {canEdit && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button className="w-full bg-transparent hover:bg-red-50 dark:hover:bg-red-900/10 text-[#c4151f] font-medium text-[13px] py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2">
-                      <Trash2 className="w-4 h-4" />
-                      Excluir Apólice
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Excluir Apólice?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta ação não pode ser desfeita. A apólice e todo o seu histórico serão removidos permanentemente.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600 hover:bg-red-700 text-white">
-                        {isDeleting ? "Excluindo..." : "Sim, excluir"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+              <RequireRole roles={['admin']}>
+                <DeleteApoliceButton id={id!} />
+              </RequireRole>
             </div>
 
           </div>

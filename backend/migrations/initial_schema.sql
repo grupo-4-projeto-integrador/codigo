@@ -1,3 +1,20 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    senha_hash VARCHAR(255),
+    role VARCHAR(20) NOT NULL DEFAULT 'visualizador'
+        CONSTRAINT usuarios_role_check CHECK (role IN ('admin', 'gestor', 'visualizador')),
+    avatar_url VARCHAR(255),
+    ativo BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE usuarios OWNER TO postgres;
+
 CREATE TABLE IF NOT EXISTS seguros (
     luc character varying NOT NULL,
     loja character varying,
@@ -8,6 +25,7 @@ CREATE TABLE IF NOT EXISTS seguros (
     status character varying,
     cobertura numeric DEFAULT 0,
     responsavel character varying DEFAULT '',
+    responsavel_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     observacoes text DEFAULT '',
     deleted_at timestamp DEFAULT NULL
 );

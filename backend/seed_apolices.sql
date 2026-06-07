@@ -19,6 +19,9 @@ CREATE TABLE IF NOT EXISTS historico_apolice (
 
 TRUNCATE TABLE coberturas, historico_apolice, documentos RESTART IDENTITY;
 
+-- Seed de usuários
+INSERT INTO usuarios (id, nome, email) VALUES (1, 'João Carlos', 'joao.carlos@exemplo.com') ON CONFLICT (id) DO NOTHING;
+
 -- Inserir alguns dados para as coberturas
 INSERT INTO coberturas (apolice_luc, nome, descricao, valor)
 SELECT luc, 'Incêndio, Raio e Explosão', 'Cobertura básica para danos físicos', cobertura * 1.0 FROM seguros;

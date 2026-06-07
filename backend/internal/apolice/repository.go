@@ -25,6 +25,13 @@ type Repository interface {
 	UpdateObservacoes(luc string, observacoes string) error
 	Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error
 	GetLojas() ([]LojaInfo, error)
+	GetUsuarios() ([]Usuario, error)
+	UpdateResponsavel(luc string, responsavelID int64, ator string) error
+}
+
+type Usuario struct {
+	ID   int64  `json:"id"`
+	Nome string `json:"nome"`
 }
 
 type AtividadeRecente struct {
@@ -45,7 +52,7 @@ func NewRepository(db *sql.DB) *PostgresRepository {
 }
 
 func (r *PostgresRepository) List() ([]Apolice, error) {
-	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, '') FROM %s WHERE deleted_at IS NULL ORDER BY luc`, tableName))
+	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id FROM %s WHERE deleted_at IS NULL ORDER BY luc`, tableName))
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +71,7 @@ func (r *PostgresRepository) List() ([]Apolice, error) {
 }
 
 func (r *PostgresRepository) Get(luc string) (Apolice, error) {
-	row := r.db.QueryRow(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, '') FROM %s WHERE luc = $1 AND deleted_at IS NULL`, tableName), luc)
+	row := r.db.QueryRow(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id FROM %s WHERE luc = $1 AND deleted_at IS NULL`, tableName), luc)
 	return scanApolice(row)
 }
 
@@ -76,9 +83,9 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 	defer tx.Rollback()
 
 	row := tx.QueryRow(
-		fmt.Sprintf(`INSERT INTO %s (luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, responsavel, observacoes)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, '')`, tableName),
+		fmt.Sprintf(`INSERT INTO %s (luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, responsavel, observacoes, responsavel_id)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id`, tableName),
 		model.Luc,
 		model.Loja,
 		model.Segmento,
@@ -89,6 +96,7 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 		model.Cobertura,
 		model.Responsavel,
 		model.Observacoes,
+		model.ResponsavelID,
 	)
 
 	created, err := scanApolice(row)
@@ -116,9 +124,9 @@ func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) 
 
 	row := tx.QueryRow(
 		fmt.Sprintf(`UPDATE %s
-		 SET luc = $1, loja = $2, segmento = $3, seguradora = $4, vigencia = $5, vencimento = $6, status = $7, cobertura = $8, responsavel = $9, observacoes = $10
-		 WHERE luc = $11
-		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, '')`, tableName),
+		 SET luc = $1, loja = $2, segmento = $3, seguradora = $4, vigencia = $5, vencimento = $6, status = $7, cobertura = $8, responsavel = $9, observacoes = $10, responsavel_id = $11
+		 WHERE luc = $12
+		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id`, tableName),
 		model.Luc,
 		model.Loja,
 		model.Segmento,
@@ -129,6 +137,7 @@ func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) 
 		model.Cobertura,
 		model.Responsavel,
 		model.Observacoes,
+		model.ResponsavelID,
 		luc,
 	)
 
@@ -342,6 +351,57 @@ func (r *PostgresRepository) insertHistoricoTx(tx *sql.Tx, luc string, descricao
 	return err
 }
 
+func (r *PostgresRepository) UpdateResponsavel(luc string, responsavelID int64, ator string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Update the responsavel_id. Also fetch the user name to update the string responsavel.
+	var nome string
+	err = tx.QueryRow(`SELECT nome FROM usuarios WHERE id = $1`, responsavelID).Scan(&nome)
+	if err != nil {
+		return fmt.Errorf("usuário não encontrado: %w", err)
+	}
+
+	res, err := tx.Exec(fmt.Sprintf(`UPDATE %s SET responsavel_id = $1, responsavel = $2 WHERE luc = $3`, tableName), responsavelID, nome, luc)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	if err := r.insertHistoricoTx(tx, luc, "Responsável atualizado", ator); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func (r *PostgresRepository) GetUsuarios() ([]Usuario, error) {
+	rows, err := r.db.Query(`SELECT id, nome FROM usuarios ORDER BY nome`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []Usuario
+	for rows.Next() {
+		var u Usuario
+		if err := rows.Scan(&u.ID, &u.Nome); err != nil {
+			return nil, err
+		}
+		items = append(items, u)
+	}
+	return items, nil
+}
+
 func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {
 	var item Apolice
 	var vigencia sql.NullTime
@@ -353,8 +413,9 @@ func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {
 	var cobertura sql.NullFloat64
 	var responsavel sql.NullString
 	var observacoes sql.NullString
+	var responsavelID sql.NullInt64
 
-	if err := scanner.Scan(&item.Luc, &loja, &segmento, &seguradora, &vigencia, &vencimento, &status, &cobertura, &responsavel, &observacoes); err != nil {
+	if err := scanner.Scan(&item.Luc, &loja, &segmento, &seguradora, &vigencia, &vencimento, &status, &cobertura, &responsavel, &observacoes, &responsavelID); err != nil {
 		return Apolice{}, err
 	}
 
@@ -367,6 +428,9 @@ func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {
 	item.Cobertura = cobertura.Float64
 	item.Responsavel = strings.TrimSpace(responsavel.String)
 	item.Observacoes = strings.TrimSpace(observacoes.String)
+	if responsavelID.Valid {
+		item.ResponsavelID = &responsavelID.Int64
+	}
 
 	return item, nil
 }

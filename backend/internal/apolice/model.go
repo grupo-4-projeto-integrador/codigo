@@ -13,6 +13,7 @@ type Apolice struct {
 	Cobertura     float64   `json:"cobertura"`
 	DiasRestantes int       `json:"dias_restantes"`
 	Responsavel   string    `json:"responsavel"`
+	ResponsavelID *int64    `json:"responsavel_id"`
 	Observacoes   string    `json:"observacoes"`
 }
 

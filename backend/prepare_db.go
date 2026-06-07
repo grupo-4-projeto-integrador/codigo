@@ -122,6 +122,32 @@ PG_SSLMODE=disable
 	_, _ = db.Exec("CREATE INDEX IF NOT EXISTS idx_historico_apolice_luc ON historico_apolice (apolice_luc);")
 	_, _ = db.Exec("CREATE INDEX IF NOT EXISTS idx_historico_apolice_data ON historico_apolice (data DESC);")
 
+	// Run multiuser roles migration
+	rolesSQL, err := os.ReadFile("migrations/002_multiuser_roles.sql")
+	if err == nil {
+		_, err = db.Exec(string(rolesSQL))
+		if err != nil {
+			log.Printf("⚠️  Aviso ao rodar roles: %v", err)
+		} else {
+			fmt.Println("✅ Roles e usuários criados com sucesso.")
+		}
+	} else {
+		log.Printf("⚠️  Não achou migrations/002_multiuser_roles.sql: %v", err)
+	}
+
+	// Run audit log migration
+	auditSQL, err := os.ReadFile("migrations/audit_log.sql")
+	if err == nil {
+		_, err = db.Exec(string(auditSQL))
+		if err != nil {
+			log.Printf("⚠️  Aviso ao rodar audit_log: %v", err)
+		} else {
+			fmt.Println("✅ Audit log criado com sucesso.")
+		}
+	} else {
+		log.Printf("⚠️  Não achou migrations/audit_log.sql: %v", err)
+	}
+
 	// Run seed_apolices.sql
 	seedSQL, err := os.ReadFile("seed_apolices.sql")
 	if err == nil {

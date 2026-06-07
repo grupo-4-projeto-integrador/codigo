@@ -23,11 +23,14 @@ import logo from "../../imports/image-4.png";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
 import { useEffect, useState, useRef } from "react";
 import { UserProfileProvider, type UserProfile } from "../contexts/UserProfileContext";
+import { useAuth } from "../contexts/AuthContext";
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import { motion, AnimatePresence } from "motion/react";
 import { CommandPalette } from "./CommandPalette";
 import { useFocusMode } from "../contexts/FocusModeContext";
+import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
+import { ShortcutsModal } from "./ShortcutsModal";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
@@ -56,8 +59,10 @@ const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px
 
 export function Layout() {
   const navigate = useNavigate();
+  const { isShortcutsModalOpen, setIsShortcutsModalOpen } = useKeyboardShortcuts();
   const location = useLocation();
   const outlet = useOutlet();
+  const { role, logout, login, usuario, can } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -67,46 +72,46 @@ export function Layout() {
   const notificationRef = useRef<HTMLDivElement>(null);
   const { isFocusMode, toggleFocusMode } = useFocusMode();
 
-  // User profile management - Simula autenticação
-  const [userProfile, setUserProfile] = useState<UserProfile>('relacionamento');
+  // User profile management mapped from real AuthContext role
+  const mappedProfileKey = role === 'admin' ? 'relacionamento' : role === 'gestor' ? 'marketing' : 'arquitetura';
+  const userProfile = mappedProfileKey as UserProfile;
 
-  // Only 'relacionamento' profile (João Carlos) has edit permission
-  const canEdit = userProfile === 'relacionamento';
+  // Can edit based on real auth role
+  const canEdit = can ? can('editar') : false;
 
-  // Profile configurations
-  const profileConfig = {
+  // Profile configurations mapped to db mock users
+  const profileConfig: Record<string, any> = {
     relacionamento: {
-      name: 'Relacionamentos',
+      name: 'Admin',
       userName: 'João Carlos',
+      email: 'joao@flamboyant.com',
+      senha: 'admin123',
       initials: 'JC',
       color: '#bc9b7c',
       textColor: '#6e150e',
       avatarUrl: joaoCarlosImg
     },
     marketing: {
-      name: 'Marketing',
-      userName: 'Ana Silva',
-      initials: 'AS',
+      name: 'Gestor',
+      userName: 'Maria Silva',
+      email: 'maria@flamboyant.com',
+      senha: 'gestor123',
+      initials: 'MS',
       color: '#E17141',
       textColor: '#ffffff'
     },
     arquitetura: {
-      name: 'Arquitetura',
-      userName: 'Carlos Mendes',
-      initials: 'CM',
+      name: 'Visualizador',
+      userName: 'Pedro Lima',
+      email: 'pedro@flamboyant.com',
+      senha: 'viewer123',
+      initials: 'PL',
       color: '#788033',
-      textColor: '#ffffff'
-    },
-    engenharia: {
-      name: 'Engenharia',
-      userName: 'Maria Santos',
-      initials: 'MS',
-      color: '#1c3d32',
       textColor: '#ffffff'
     }
   };
 
-  const currentProfile = profileConfig[userProfile];
+  const currentProfile = profileConfig[userProfile] || profileConfig['relacionamento'];
 
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode');
@@ -125,23 +130,14 @@ export function Layout() {
     const handleAbrirNotificacoes = () => setIsNotificationOpen(true);
     const handleMarcarLidas = () => handleMarkAllRead();
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
-        e.preventDefault();
-        handleToggleTheme();
-      }
-    };
-
     window.addEventListener('toggle-theme', handleToggleTheme);
     window.addEventListener('abrir-notificacoes', handleAbrirNotificacoes);
     window.addEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
-    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       window.removeEventListener('toggle-theme', handleToggleTheme);
       window.removeEventListener('abrir-notificacoes', handleAbrirNotificacoes);
       window.removeEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [darkMode]); // Needs darkMode so toggleDarkMode closure has the latest value
 
@@ -210,9 +206,26 @@ export function Layout() {
     }
   };
 
-  const handleProfileChange = (profile: UserProfile) => {
-    setUserProfile(profile);
+  useEffect(() => {
+    const handleToggleDarkMode = () => toggleDarkMode();
+    const handleTogglePresentationMode = () => {
+      const btn = document.getElementById('focus-mode-btn');
+      if (btn) btn.click();
+    };
+    window.addEventListener('toggle-dark-mode', handleToggleDarkMode);
+    window.addEventListener('toggle-presentation-mode', handleTogglePresentationMode);
+    return () => {
+      window.removeEventListener('toggle-dark-mode', handleToggleDarkMode);
+      window.removeEventListener('toggle-presentation-mode', handleTogglePresentationMode);
+    };
+  }, [darkMode]);
+
+  const handleProfileChange = async (profileKey: string) => {
     setIsProfileMenuOpen(false);
+    if (logout) {
+      logout();
+    }
+    navigate('/login');
   };
 
   const handleHeaderSearch = (query: string) => {
@@ -291,7 +304,7 @@ export function Layout() {
   };
   
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-[#F7F4EF] dark:bg-[#0F1117] relative">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-[#F7F4EF] dark:bg-[#0F1117] relative overflow-hidden">
 
       {/* Mobile Header com Logo e Navegação Horizontal */}
       <div className="md:hidden flex flex-col sticky top-0 z-30" style={{ backgroundColor: '#6e150e' }}>
@@ -456,7 +469,7 @@ export function Layout() {
 
       {/* Sidebar Desktop */}
       <aside
-        className={`text-white flex-col hidden md:flex transition-all duration-500 overflow-hidden h-screen sticky top-0 ${isFocusMode ? 'opacity-0 pointer-events-none' : ''}`}
+        className={`text-white flex-col hidden md:flex transition-[width,padding,opacity,margin] duration-300 overflow-hidden h-screen sticky top-0 ${isFocusMode ? 'opacity-0 pointer-events-none' : ''}`}
         style={{
           backgroundColor: '#6e150e',
           width: isFocusMode ? '0px' : isSidebarCollapsed ? '80px' : '256px'
@@ -562,7 +575,10 @@ export function Layout() {
 
         <div className="p-4 border-t" style={{ borderColor: '#a0191e50' }}>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
             className={`flex items-center ${isSidebarCollapsed ? 'justify-center' : ''} w-full px-4 py-3 text-sm font-medium text-white/80 hover:text-white rounded-lg transition-all duration-300 hover:bg-white/10 hover:translate-x-1 relative group`}
           >
             <LogOut className={`w-5 h-5 ${isSidebarCollapsed ? '' : 'mr-3'}`} />
@@ -579,7 +595,7 @@ export function Layout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header - Hidden on mobile */}
-        <header className={`hidden md:flex h-16 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] items-center justify-between px-6 z-10 transition-all duration-500 overflow-hidden ${isFocusMode ? '!h-0 !py-0 border-none' : ''}`}>
+        <header className={`hidden md:flex h-16 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] items-center justify-between px-6 z-50 transition-[height,padding,margin,border] duration-300 ${isFocusMode ? 'overflow-hidden !h-0 !py-0 border-none' : ''}`}>
           <div className="flex-1 max-w-xl">
             {/* Search Placeholder */}
             <div className="relative flex items-center">
@@ -766,14 +782,14 @@ export function Layout() {
             </button>
             <div className="relative flex items-center space-x-3 border-l border-gray-200 dark:border-[#222222] pl-4" ref={profileMenuRef}>
               <div className="flex flex-col text-right">
-                <span className="text-sm font-medium text-gray-900 dark:text-[#F1F5F9]">{currentProfile.userName}</span>
-                <span className="text-xs text-gray-500 dark:text-[#94A3B8]">{currentProfile.name}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-[#F1F5F9]">{usuario?.nome || currentProfile.userName}</span>
+                <span className="text-xs text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider">{role || currentProfile.name}</span>
               </div>
               <button
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                 className="transition-transform hover:scale-105"
               >
-                <UserAvatar profile={currentProfile} sizeClass="w-9 h-9 text-sm" sizeStyle={{ width: '36px', height: '36px' }} />
+                <UserAvatar profile={{...currentProfile, avatarUrl: (usuario && usuario.email === currentProfile.email) ? (usuario.avatar_url || currentProfile.avatarUrl) : currentProfile.avatarUrl}} sizeClass="w-9 h-9 text-sm" sizeStyle={{ width: '36px', height: '36px' }} />
               </button>
 
               {/* Profile Dropdown Menu */}
@@ -814,7 +830,7 @@ export function Layout() {
         </header>
 
         {/* Page Content */}
-        <main className={`flex-1 overflow-y-auto scroll-smooth bg-[#F7F4EF] dark:bg-[#0F1117] transition-all duration-500 ${isFocusMode ? 'p-0 h-screen overflow-hidden' : 'p-4 md:p-6'}`}>
+        <main className={`flex-1 overflow-y-auto scroll-smooth bg-[#F7F4EF] dark:bg-[#0F1117] transition-[padding,height] duration-300 ${isFocusMode ? 'p-0 h-screen overflow-hidden' : 'p-4 md:p-6'}`}>
           <div className="w-full">
             <UserProfileProvider value={{ userProfile, canEdit }}>
               <AnimatePresence mode="wait">
@@ -833,6 +849,7 @@ export function Layout() {
         </main>
       </div>
       <CommandPalette />
+      <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setIsShortcutsModalOpen(false)} />
     </div>
   );
 }

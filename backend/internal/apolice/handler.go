@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"io"
@@ -657,13 +658,13 @@ func (h *Handler) UpdateObservacoes(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
 	if r.Method != http.MethodPatch {
-		_ = response.Fail(w, http.StatusMethodNotAllowed, "MÃƒÂ©todo nÃƒÂ£o permitido", requestID, nil)
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
 		return
 	}
 
 	itemID := r.PathValue("id")
 	if itemID == "" {
-		_ = response.Fail(w, http.StatusBadRequest, "ID da apÃƒÂ³lice nÃƒÂ£o informado", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
 		return
 	}
 
@@ -671,7 +672,7 @@ func (h *Handler) UpdateObservacoes(w http.ResponseWriter, r *http.Request) {
 		Observacoes string `json:"observacoes"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		_ = response.Fail(w, http.StatusBadRequest, "JSON invÃƒÂ¡lido", requestID, nil)
+		_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
 		return
 	}
 
@@ -680,8 +681,39 @@ func (h *Handler) UpdateObservacoes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = response.Success(w, http.StatusOK, map[string]string{"message": "ObservaÃƒÂ§ÃƒÂµes atualizadas com sucesso"}, requestID)
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Observações atualizadas com sucesso"}, requestID)
 }
+
+func (h *Handler) UpdateApoliceResponsavel(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodPatch {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	itemID := r.PathValue("id")
+	if itemID == "" {
+		_ = response.Fail(w, http.StatusBadRequest, "ID da apólice não informado", requestID, nil)
+		return
+	}
+
+	var payload UpdateResponsavelPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+		return
+	}
+
+	// This is the specific log requested by the user
+	if err := h.service.repo.UpdateResponsavel(itemID, payload.ResponsavelID, "João Carlos"); err != nil {
+		log.Printf("Erro ao atribuir responsável: %v", err)
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Responsável atualizado com sucesso"}, requestID)
+}
+
 
 func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())

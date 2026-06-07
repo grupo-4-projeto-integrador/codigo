@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	HTTP     HTTPConfig
-	Postgres PostgresConfig
-	Frontend FrontendConfig
+	HTTP      HTTPConfig
+	Postgres  PostgresConfig
+	Frontend  FrontendConfig
+	JWTSecret string
 }
 
 type HTTPConfig struct {
@@ -49,6 +50,7 @@ func Load() (Config, error) {
 		Frontend: FrontendConfig{
 			Dir: getEnv("FRONTEND_DIR", filepath.Join("..", "frontend", "dist")),
 		},
+		JWTSecret: getEnv("JWT_SECRET", "flamboyant-seguros-secret-2024"),
 	}
 
 	if cfg.Postgres.Password == "" && os.Getenv("DATABASE_URL") == "" {

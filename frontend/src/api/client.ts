@@ -24,12 +24,19 @@ export class ApiError extends Error {
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem('flamboyant_token');
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(init.headers ?? {}),
+  };
+
+  if (token) {
+    (headers as any)['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
+    headers,
   });
 
   const payload = await parseJson<T>(response);

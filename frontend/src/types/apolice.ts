@@ -14,9 +14,10 @@ export type ApoliceDTO = {
   seguradora: string;
   vigencia: string;
   vencimento: string;
-  status: string;
-  status_da_apolice: string;
+  cobertura?: number;
+  dias_restantes?: number;
   responsavel?: string;
+  responsavel_id?: number;
   observacoes?: string;
 };
 
@@ -30,6 +31,7 @@ export type ApoliceRecord = ApoliceFormData & {
   premio?: string;
   observacoes?: string;
   responsavel?: string;
+  responsavel_id?: number;
 };
 
 export type Gravidade = 'alta' | 'media' | 'baixa';

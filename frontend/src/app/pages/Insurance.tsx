@@ -3,14 +3,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import React, { useState, useEffect, useRef, useId } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
+import { useAuth } from "../contexts/AuthContext";
 import { ComplianceMapV2, ComplianceSidePanel } from "../components/ComplianceMapV2";
 import { SegmentRiskChart } from "../components/SegmentRiskChart";
 import { ActionQueuePanel } from "../components/ActionQueuePanel";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, setMapFilters } from "../store";
 import { exportToPDF, exportToCSV } from "../utils/exportUtils";
+import { RequireRole } from "../components/RequireRole";
 import { formatLargeCurrency } from "../utils/currency";
 import { useCountUp } from "../hooks/useCountUp";
 import { request } from "../../api/client";
+import { Usuarios } from "./Usuarios";
 import { getHealthScore } from "../../api/apolice";
 import { motion, AnimatePresence } from "motion/react";
 import { SkeletonCard } from "../components/ui/SkeletonCard";
@@ -163,6 +166,7 @@ export function Insurance() {
   // User profile and permissions from context
   const { canEdit } = useUserProfile();
   const { isFocusMode, exitFocusMode } = useFocusMode();
+  const { can, role } = useAuth();
   const [hoveredEditButton, setHoveredEditButton] = useState<string | null>(null);
 
   // Ref for filter panel and table section
@@ -195,6 +199,8 @@ export function Insurance() {
 
     return () => observer.disconnect();
   }, []);
+
+
 
   useEffect(() => {
     // Sync search query with URL params
@@ -292,22 +298,31 @@ export function Insurance() {
 
       const activePolicyId = hoveredPolicyId || (selectedMapLuc ? allPolicies.find(p => p.id === selectedMapLuc || p.luc === selectedMapLuc)?.id : null);
 
-      if (e.key === '1') {
+      if (e.ctrlKey && e.key === '1') {
+        e.preventDefault();
         setActiveTab('visao-geral');
-      } else if (e.key === '2') {
-        setActiveTab('audit-log');
-      } else if (e.key.toLowerCase() === 'n') {
-        navigate('/seguros/apolice/nova');
-      } else if (e.key.toLowerCase() === 'v' && activePolicyId) {
-        try {
-          const stored = localStorage.getItem('recent_policies');
-          let recent = stored ? JSON.parse(stored) : [];
-          recent = [activePolicyId, ...recent.filter((id: string) => id !== activePolicyId)].slice(0, 5);
-          localStorage.setItem('recent_policies', JSON.stringify(recent));
-        } catch (e) { }
-        navigate(`/seguros/apolice/${encodeURIComponent(activePolicyId)}`);
-      } else if (e.key.toLowerCase() === 'c' && activePolicyId) {
-        navigate(`/seguros/apolice/${encodeURIComponent(activePolicyId)}/editar`);
+      } else if (e.ctrlKey && e.key === '2') {
+        e.preventDefault();
+        if (can && can('ver_audit')) {
+          setActiveTab('audit-log');
+        }
+      } else if (e.ctrlKey && e.key === '3') {
+        e.preventDefault();
+        if (role === 'admin') {
+          setActiveTab('usuarios');
+        }
+      } else if (!e.ctrlKey && !e.metaKey && !e.shiftKey && !e.altKey) {
+        if (e.key.toLowerCase() === 'r' && activePolicyId) {
+          try {
+            const stored = localStorage.getItem('recent_policies');
+            let recent = stored ? JSON.parse(stored) : [];
+            recent = [activePolicyId, ...recent.filter((id: string) => id !== activePolicyId)].slice(0, 5);
+            localStorage.setItem('recent_policies', JSON.stringify(recent));
+          } catch (e) { }
+          navigate(`/seguros/apolice/${encodeURIComponent(activePolicyId)}`);
+        } else if (e.key.toLowerCase() === 'e' && activePolicyId) {
+          navigate(`/seguros/apolice/${encodeURIComponent(activePolicyId)}/editar`);
+        }
       }
     };
 
@@ -631,6 +646,65 @@ export function Insurance() {
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
     return 0;
   });
+
+  // Listen for custom events from CommandPalette
+  useEffect(() => {
+    const handleExport = () => {
+      const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
+      const dateStr = new Date().toISOString().split('T')[0];
+      exportToPDF(sortedPolicies, `apolices-${statusName}-${dateStr}.pdf`);
+    };
+
+    const handleFocusSearch = () => {
+      const input = document.getElementById("insurance-search-input");
+      if (input) input.focus();
+    };
+
+    const handleOpenAuditLog = () => {
+      if (can && can('ver_audit')) setActiveTab('audit-log');
+    };
+
+    const handleOpenRenew = (e: any) => {
+      const luc = e.detail;
+      const policy = sortedPolicies.find(p => p.luc === luc);
+      if (policy && canEdit) {
+        setSelectedPolicy(policy);
+        setShowRenovarModal(true);
+      }
+    };
+
+    const handleCloseModalsEvent = () => {
+      setShowViewApoliceModal(false);
+      setShowEditApoliceModal(false);
+      setShowRenovarModal(false);
+      setShowUploadModal(false);
+      setShowDropdown(false);
+      setShowConformidadeModal(false);
+      setSelectedPolicy(null);
+      setUploadedFile(null);
+      setIsDragging(false);
+    };
+
+    const handleGoVisaoGeral = () => {
+      setActiveTab('visao-geral');
+    };
+
+    window.addEventListener("export-filter", handleExport);
+    window.addEventListener("focus-search", handleFocusSearch);
+    window.addEventListener("open-audit-log", handleOpenAuditLog);
+    window.addEventListener("open-renew-dialog", handleOpenRenew);
+    window.addEventListener("close-modals", handleCloseModalsEvent);
+    window.addEventListener("go-visao-geral", handleGoVisaoGeral);
+
+    return () => {
+      window.removeEventListener("export-filter", handleExport);
+      window.removeEventListener("focus-search", handleFocusSearch);
+      window.removeEventListener("open-audit-log", handleOpenAuditLog);
+      window.removeEventListener("open-renew-dialog", handleOpenRenew);
+      window.removeEventListener("close-modals", handleCloseModalsEvent);
+      window.removeEventListener("go-visao-geral", handleGoVisaoGeral);
+    };
+  }, [sortedPolicies, statusFilter, canEdit, can]);
 
   // Listen for custom events from CommandPalette
   useEffect(() => {
@@ -1156,6 +1230,7 @@ export function Insurance() {
               <div className="relative w-[180px] xl:w-[260px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 <input
+                  id="insurance-search-input"
                   type="text"
                   placeholder="Buscar por loja, LUC ou segmento..."
                   value={searchQuery}
@@ -1261,29 +1336,31 @@ export function Insurance() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <motion.button
-                onClick={handleNovaApolice}
-                className="relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold flex items-center justify-center shadow-sm ml-1 whitespace-nowrap group"
-                whileHover={{ scale: 1.02, backgroundColor: "#880d2f", boxShadow: "0 4px 14px rgba(159, 18, 57, 0.4)" }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              >
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <Plus className="w-4 h-4" /> Nova Apólice
-                </span>
+              <RequireRole roles={['admin', 'gestor']}>
+                <motion.button
+                  onClick={handleNovaApolice}
+                  className="relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold flex items-center justify-center shadow-sm ml-1 whitespace-nowrap group"
+                  whileHover={{ scale: 1.02, backgroundColor: "#880d2f", boxShadow: "0 4px 14px rgba(159, 18, 57, 0.4)" }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <Plus className="w-4 h-4" /> Nova Apólice
+                  </span>
 
-                <motion.div
-                  className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg] w-[150%] pointer-events-none"
-                  initial={{ x: "-150%" }}
-                  animate={{ x: "150%" }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 1.5,
-                    repeatDelay: 4,
-                    ease: "easeInOut",
-                  }}
-                />
-              </motion.button>
+                  <motion.div
+                    className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg] w-[150%] pointer-events-none"
+                    initial={{ x: "-150%" }}
+                    animate={{ x: "150%" }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1.5,
+                      repeatDelay: 4,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </motion.button>
+              </RequireRole>
             </div>
           )}
         </div>
@@ -1299,19 +1376,30 @@ export function Insurance() {
               <motion.div layoutId="activeTabSeguros" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c4151f] dark:bg-[#E04444]" />
             )}
           </button>
-          <button
-            onClick={() => setActiveTab('audit-log')}
-            className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'audit-log' ? 'text-[#c4151f] dark:text-[#E04444]' : 'text-gray-500 hover:text-gray-700 dark:text-[#94A3B8] dark:hover:text-gray-300'}`}
-          >
-            Audit Log
-            {activeTab === 'audit-log' && (
-              <motion.div layoutId="activeTabSeguros" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c4151f] dark:bg-[#E04444]" />
-            )}
-          </button>
+          <RequireRole roles={['admin']}>
+            <button
+              onClick={() => setActiveTab('audit-log')}
+              className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'audit-log' ? 'text-[#c4151f] dark:text-[#E04444]' : 'text-gray-500 hover:text-gray-700 dark:text-[#94A3B8] dark:hover:text-gray-300'}`}
+            >
+              Audit Log
+              {activeTab === 'audit-log' && (
+                <motion.div layoutId="activeTabSeguros" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c4151f] dark:bg-[#E04444]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab('usuarios')}
+              className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'usuarios' ? 'text-[#c4151f] dark:text-[#E04444]' : 'text-gray-500 hover:text-gray-700 dark:text-[#94A3B8] dark:hover:text-gray-300'}`}
+            >
+              Gestão de Usuários
+              {activeTab === 'usuarios' && (
+                <motion.div layoutId="activeTabSeguros" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#c4151f] dark:bg-[#E04444]" />
+              )}
+            </button>
+          </RequireRole>
         </div>
       </div>
 
-      {activeTab === 'visao-geral' ? (
+      {activeTab === 'visao-geral' && (
         <>
           <div className={`grid grid-cols-1 ${isFocusMode ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_350px]'} flex-1 gap-x-6 gap-y-3 md:gap-y-4 lg:gap-y-6 min-h-0 px-6 overflow-y-auto pb-4 items-stretch`}>
 
@@ -2674,10 +2762,20 @@ export function Insurance() {
             )}
           </AnimatePresence>
         </>
-      ) : (
+      )}
+
+      {activeTab === 'audit-log' && (
         <div className="flex-1 overflow-auto">
           <div className="p-6 pt-0 space-y-6 max-w-[1600px] mx-auto w-full">
             <AuditLog isTab />
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'usuarios' && (
+        <div className="flex-1 overflow-auto">
+          <div className="p-6 pt-0 space-y-6 max-w-[1600px] mx-auto w-full">
+            <Usuarios />
           </div>
         </div>
       )}
