@@ -116,3 +116,28 @@ export const subscribeMapFilters = (listener: () => void) => {
   mapFilterListeners.add(listener);
   return () => mapFilterListeners.delete(listener);
 };
+
+// ── Fullscreen Table ──────────────────────────────────────────────────────────
+export type FullscreenTableFilter = 'all' | 'conforme' | 'a-vencer' | 'vencida';
+
+let fullscreenTableOpen = false;
+let fullscreenTableFilter: FullscreenTableFilter = 'all';
+const fullscreenTableListeners = new Set<() => void>();
+
+export const getFullscreenTableOpen = () => fullscreenTableOpen;
+export const getFullscreenTableFilter = () => fullscreenTableFilter;
+
+export const setFullscreenTableOpen = (open: boolean) => {
+  fullscreenTableOpen = open;
+  fullscreenTableListeners.forEach((l) => l());
+};
+
+export const setFullscreenTableFilter = (filter: FullscreenTableFilter) => {
+  fullscreenTableFilter = filter;
+  fullscreenTableListeners.forEach((l) => l());
+};
+
+export const subscribeFullscreenTable = (listener: () => void) => {
+  fullscreenTableListeners.add(listener);
+  return () => fullscreenTableListeners.delete(listener);
+};

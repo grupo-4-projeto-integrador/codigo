@@ -53,7 +53,7 @@ func NewRepository(db *sql.DB) *PostgresRepository {
 }
 
 func (r *PostgresRepository) List() ([]Apolice, error) {
-	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id FROM %s WHERE deleted_at IS NULL ORDER BY luc`, tableName))
+	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id, COALESCE(cnpj, ''), COALESCE(numero_apolice, '') FROM %s WHERE deleted_at IS NULL ORDER BY luc`, tableName))
 	if err != nil {
 		return nil, err
 	}
@@ -73,9 +73,9 @@ func (r *PostgresRepository) List() ([]Apolice, error) {
 
 func (r *PostgresRepository) SearchApolices(query string) ([]Apolice, error) {
 	q := "%" + query + "%"
-	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id 
+	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id, COALESCE(cnpj, ''), COALESCE(numero_apolice, '') 
 		FROM %s 
-		WHERE deleted_at IS NULL AND (luc ILIKE $1 OR loja ILIKE $1 OR segmento ILIKE $1) 
+		WHERE deleted_at IS NULL AND (luc ILIKE $1 OR loja ILIKE $1 OR segmento ILIKE $1 OR cnpj ILIKE $1 OR numero_apolice ILIKE $1) 
 		ORDER BY luc LIMIT 10`, tableName), q)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (r *PostgresRepository) SearchApolices(query string) ([]Apolice, error) {
 }
 
 func (r *PostgresRepository) Get(luc string) (Apolice, error) {
-	row := r.db.QueryRow(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id FROM %s WHERE luc = $1 AND deleted_at IS NULL`, tableName), luc)
+	row := r.db.QueryRow(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id, COALESCE(cnpj, ''), COALESCE(numero_apolice, '') FROM %s WHERE luc = $1 AND deleted_at IS NULL`, tableName), luc)
 	return scanApolice(row)
 }
 
@@ -109,7 +109,7 @@ func (r *PostgresRepository) Create(model Apolice) (Apolice, error) {
 	row := tx.QueryRow(
 		fmt.Sprintf(`INSERT INTO %s (luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, responsavel, observacoes, responsavel_id)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id`, tableName),
+		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id, COALESCE(cnpj, ''), COALESCE(numero_apolice, '')`, tableName),
 		model.Luc,
 		model.Loja,
 		model.Segmento,
@@ -150,7 +150,7 @@ func (r *PostgresRepository) Update(luc string, model Apolice) (Apolice, error) 
 		fmt.Sprintf(`UPDATE %s
 		 SET luc = $1, loja = $2, segmento = $3, seguradora = $4, vigencia = $5, vencimento = $6, status = $7, cobertura = $8, responsavel = $9, observacoes = $10, responsavel_id = $11
 		 WHERE luc = $12
-		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id`, tableName),
+		 RETURNING luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id, COALESCE(cnpj, ''), COALESCE(numero_apolice, '')`, tableName),
 		model.Luc,
 		model.Loja,
 		model.Segmento,
@@ -438,8 +438,10 @@ func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {
 	var responsavel sql.NullString
 	var observacoes sql.NullString
 	var responsavelID sql.NullInt64
+	var cnpj sql.NullString
+	var numeroApolice sql.NullString
 
-	if err := scanner.Scan(&item.Luc, &loja, &segmento, &seguradora, &vigencia, &vencimento, &status, &cobertura, &responsavel, &observacoes, &responsavelID); err != nil {
+	if err := scanner.Scan(&item.Luc, &loja, &segmento, &seguradora, &vigencia, &vencimento, &status, &cobertura, &responsavel, &observacoes, &responsavelID, &cnpj, &numeroApolice); err != nil {
 		return Apolice{}, err
 	}
 
@@ -455,6 +457,8 @@ func scanApolice(scanner interface{ Scan(...any) error }) (Apolice, error) {
 	if responsavelID.Valid {
 		item.ResponsavelID = &responsavelID.Int64
 	}
+	item.CNPJ = strings.TrimSpace(cnpj.String)
+	item.NumeroApolice = strings.TrimSpace(numeroApolice.String)
 
 	return item, nil
 }

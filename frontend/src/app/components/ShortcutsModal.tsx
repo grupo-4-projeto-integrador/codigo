@@ -16,6 +16,8 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         { label: "Aba Visão Geral", keys: ["Ctrl", "1"] },
         { label: "Aba Audit Log", keys: ["Ctrl", "2"] },
         { label: "Aba Gestão de Usuários", keys: ["Ctrl", "3"] },
+        { label: "Paginação Tabela: Próxima Pág.", keys: ["L"] },
+        { label: "Paginação Tabela: Pág. Anterior", keys: ["J"] },
       ],
     },
     {
@@ -31,6 +33,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
     {
       category: "Interface",
       items: [
+        { label: "Abrir Tabela em Tela Cheia", keys: ["Alt", "T"] },
         { label: "Toggle Dark Mode", keys: ["Ctrl", "Shift", "D"] },
         { label: "Toggle Modo Apresentação", keys: ["Ctrl", "Shift", "P"] },
         { label: "Fechar modal/drawer/painel aberto", keys: ["Esc"] },

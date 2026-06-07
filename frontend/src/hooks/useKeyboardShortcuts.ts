@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { getSelectedApoliceLuc } from "../app/store";
+import { getSelectedApoliceLuc, setFullscreenTableOpen } from "../app/store";
 
 export function useKeyboardShortcuts() {
   const navigate = useNavigate();
@@ -64,6 +64,9 @@ export function useKeyboardShortcuts() {
         } else if (e.altKey && e.key.toLowerCase() === "n") {
           e.preventDefault();
           window.dispatchEvent(new CustomEvent("abrir-notificacoes"));
+        } else if (e.altKey && e.key.toLowerCase() === "t") {
+          e.preventDefault();
+          setFullscreenTableOpen(true);
         } else {
           switch (e.key) {
             case "r":

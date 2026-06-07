@@ -27,6 +27,8 @@ type Response struct {
 	Responsavel   string  `json:"responsavel"`
 	ResponsavelID *int64  `json:"responsavel_id,omitempty"`
 	Observacoes   string  `json:"observacoes"`
+	CNPJ          string  `json:"cnpj,omitempty"`
+	NumeroApolice string  `json:"numero_apolice,omitempty"`
 }
 
 func ToResponse(model Apolice) Response {
@@ -40,6 +42,8 @@ func ToResponse(model Apolice) Response {
 		DiasRestantes: model.DiasRestantes,
 		Responsavel:   model.Responsavel,
 		Observacoes:   model.Observacoes,
+		CNPJ:          model.CNPJ,
+		NumeroApolice: model.NumeroApolice,
 	}
 
 	if !model.Vigencia.IsZero() {

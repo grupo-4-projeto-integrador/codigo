@@ -31,6 +31,7 @@ import { CommandPalette } from "./CommandPalette";
 import { useFocusMode } from "../contexts/FocusModeContext";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { ShortcutsModal } from "./ShortcutsModal";
+import { FullscreenTable } from "./FullscreenTable";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
@@ -849,6 +850,7 @@ export function Layout() {
         </main>
       </div>
       <CommandPalette />
+      <FullscreenTable />
       <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setIsShortcutsModalOpen(false)} />
     </div>
   );

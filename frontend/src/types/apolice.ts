@@ -19,6 +19,8 @@ export type ApoliceDTO = {
   responsavel?: string;
   responsavel_id?: number;
   observacoes?: string;
+  cnpj?: string;
+  numero_apolice?: string;
 };
 
 export type ApoliceRecord = ApoliceFormData & {
@@ -32,6 +34,8 @@ export type ApoliceRecord = ApoliceFormData & {
   observacoes?: string;
   responsavel?: string;
   responsavel_id?: number;
+  cnpj?: string;
+  numero_apolice?: string;
 };
 
 export type Gravidade = 'alta' | 'media' | 'baixa';

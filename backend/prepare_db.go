@@ -162,6 +162,19 @@ PG_SSLMODE=disable
 		log.Printf("⚠️  Não achou seed_apolices.sql: %v", err)
 	}
 
+	// Run cnpj + numero_apolice migration
+	cnpjSQL, err := os.ReadFile("migrations/003_cnpj_numero_apolice.sql")
+	if err == nil {
+		_, err = db.Exec(string(cnpjSQL))
+		if err != nil {
+			log.Printf("⚠️  Aviso ao rodar migration de CNPJ: %v", err)
+		} else {
+			fmt.Println("✅ CNPJ e número de apólice gerados com sucesso.")
+		}
+	} else {
+		log.Printf("⚠️  Não achou migrations/003_cnpj_numero_apolice.sql: %v", err)
+	}
+
 	fmt.Println("\n🎉 Tudo pronto! O banco de dados está 100% configurado.")
 	fmt.Println("👉 Agora você pode iniciar o servidor rodando:")
 	fmt.Println("   go run ./cmd/api")

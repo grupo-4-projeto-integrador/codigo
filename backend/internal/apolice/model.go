@@ -15,6 +15,8 @@ type Apolice struct {
 	Responsavel   string    `json:"responsavel"`
 	ResponsavelID *int64    `json:"responsavel_id"`
 	Observacoes   string    `json:"observacoes"`
+	CNPJ          string    `json:"cnpj,omitempty"`
+	NumeroApolice string    `json:"numero_apolice,omitempty"`
 }
 
 type Cobertura struct {

@@ -23,6 +23,8 @@ function mapToRecord(dto: any): ApoliceRecord {
     cobertura: dto.cobertura,
     responsavel: dto.responsavel || "",
     observacoes: dto.observacoes || "",
+    cnpj: dto.cnpj || "",
+    numero_apolice: dto.numero_apolice || "",
   };
 }
 

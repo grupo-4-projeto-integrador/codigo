@@ -1085,37 +1085,20 @@ export function Insurance() {
   };
 
   const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case "Ativa":
-      case "Conforme":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap bg-[#E8F5E9] text-[#2E7D32] border border-[#2E7D32]/20">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            Conforme
-          </span>
-        );
-      case "A Vencer":
-      case "A vencer":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap bg-[#FFF3E0] text-[#E65100] border border-[#E65100]/20">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            A vencer
-          </span>
-        );
-      case "Vencida":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap bg-[#FFEBEE] text-[#C62828] border border-[#C62828]/20">
-            <Clock className="w-3.5 h-3.5" />
-            Vencida
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium whitespace-nowrap bg-gray-100 text-gray-700 border border-gray-200">
-            {status}
-          </span>
-        );
-    }
+    const s = (status || '').toLowerCase();
+    let mapped = s;
+    if (s === 'ativa') mapped = 'conforme';
+
+    let cls = 'px-3 py-1 rounded-full text-[11px] font-semibold capitalize whitespace-nowrap';
+    if (mapped === 'vencida') cls += ' bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    else if (mapped === 'a vencer') cls += ' bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+    else cls += ' bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    
+    return (
+      <span className={cls}>
+        {mapped || '-'}
+      </span>
+    );
   };
 
   const getPageNumbers = () => {
@@ -1947,8 +1930,16 @@ export function Insurance() {
                             <td className="px-4 py-3" style={{ minWidth: '110px' }}>
                               {renderStatusBadge(policy.status)}
                             </td>
-                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
-                            <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.dias_restantes}</td>
+                            <td className="px-4 py-3 text-[13px] font-medium text-gray-900 dark:font-normal dark:text-gray-100 table-number">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
+                            <td className="px-4 py-3 text-[13px] table-number">
+                              <span className={`font-semibold ${
+                                (policy.dias_restantes ?? 0) < 0 ? 'text-red-600 dark:text-red-400' :
+                                (policy.dias_restantes ?? 0) <= 30 ? 'text-orange-600 dark:text-orange-400' :
+                                'text-green-600 dark:text-green-400'
+                              }`}>
+                                {policy.dias_restantes !== undefined ? `${policy.dias_restantes}d` : '-'}
+                              </span>
+                            </td>
                           </tr>
                         ))
                       }

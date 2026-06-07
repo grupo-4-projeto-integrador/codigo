@@ -1,16 +1,35 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Command } from 'cmdk';
-import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit } from 'lucide-react';
+import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { searchApolices, deleteApolice } from '../../api/apolice';
+import { searchApolices, deleteApolice, listApolices } from '../../api/apolice';
+import {
+  setFullscreenTableOpen,
+  setFullscreenTableFilter,
+  getFullscreenTableFilter,
+  subscribeFullscreenTable,
+} from '../store';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [recentPolicies, setRecentPolicies] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [allPolicies, setAllPolicies] = useState<any[]>([]);
   const navigate = useNavigate();
+
+  // Pre-load policies for counts
+  useEffect(() => {
+    listApolices().then(setAllPolicies).catch(() => {});
+  }, []);
+
+  const counts = useMemo(() => ({
+    all: allPolicies.length,
+    vencida: allPolicies.filter(p => (p.status || '').toLowerCase() === 'vencida').length,
+    'a-vencer': allPolicies.filter(p => (p.status || '').toLowerCase() === 'a vencer').length,
+    conforme: allPolicies.filter(p => ['ativa','conforme','vigente'].includes((p.status || '').toLowerCase())).length,
+  }), [allPolicies]);
 
   const renovarMatch = inputValue.toLowerCase().match(/^ren(?:ovar)?\s+(?:ap[oó]lice\s+)?([a-z0-9-]+)$/i);
   const renovarLuc = renovarMatch ? renovarMatch[1].toUpperCase() : null;
@@ -154,6 +173,49 @@ export function CommandPalette() {
                 >
                   <Bell className="w-4 h-4 opacity-70" />
                   <span>Notificações</span>
+                </Command.Item>
+              </Command.Group>
+
+              <Command.Group heading="Tabela em Tela Cheia" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
+                <Command.Item
+                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('all'); setFullscreenTableOpen(true); })}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Table2 className="w-4 h-4 opacity-70" />
+                    <span>Tabela Completa · Todas as apólices</span>
+                  </div>
+                  <span className="text-[10px] text-gray-400 dark:text-[#64748B]">{counts.all} registros</span>
+                </Command.Item>
+                <Command.Item
+                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('vencida'); setFullscreenTableOpen(true); })}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-[#A32D2D] dark:text-[#E23B44] cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Table2 className="w-4 h-4 opacity-70" />
+                    <span>Tabela Completa · Vencidas</span>
+                  </div>
+                  <span className="text-[10px] text-red-400/70">{counts.vencida} vencidas</span>
+                </Command.Item>
+                <Command.Item
+                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('a-vencer'); setFullscreenTableOpen(true); })}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-orange-600 dark:text-orange-400 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Table2 className="w-4 h-4 opacity-70" />
+                    <span>Tabela Completa · A Vencer</span>
+                  </div>
+                  <span className="text-[10px] text-orange-400/70">{counts['a-vencer']} a vencer</span>
+                </Command.Item>
+                <Command.Item
+                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('conforme'); setFullscreenTableOpen(true); })}
+                  className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-green-600 dark:text-green-400 cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    <Table2 className="w-4 h-4 opacity-70" />
+                    <span>Tabela Completa · Conformes</span>
+                  </div>
+                  <span className="text-[10px] text-green-400/70">{counts.conforme} conformes</span>
                 </Command.Item>
               </Command.Group>
 
