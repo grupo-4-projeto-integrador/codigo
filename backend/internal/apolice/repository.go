@@ -18,6 +18,7 @@ type Repository interface {
 	GetCoberturas(luc string) ([]Cobertura, error)
 	GetHistorico(luc string) ([]HistoricoApolice, error)
 	GetHistoricoGlobal(limit int) ([]HistoricoApolice, error)
+	SearchApolices(query string) ([]Apolice, error)
 	GetDocumentoByID(id string) (Documento, error)
 	GetDocumentosByApolice(luc string) ([]Documento, error)
 	CreateDocumento(doc Documento) (Documento, error)
@@ -53,6 +54,29 @@ func NewRepository(db *sql.DB) *PostgresRepository {
 
 func (r *PostgresRepository) List() ([]Apolice, error) {
 	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id FROM %s WHERE deleted_at IS NULL ORDER BY luc`, tableName))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]Apolice, 0)
+	for rows.Next() {
+		item, err := scanApolice(rows)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	return items, nil
+}
+
+func (r *PostgresRepository) SearchApolices(query string) ([]Apolice, error) {
+	q := "%" + query + "%"
+	rows, err := r.db.Query(fmt.Sprintf(`SELECT luc, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, COALESCE(responsavel, ''), COALESCE(observacoes, ''), responsavel_id 
+		FROM %s 
+		WHERE deleted_at IS NULL AND (luc ILIKE $1 OR loja ILIKE $1 OR segmento ILIKE $1) 
+		ORDER BY luc LIMIT 10`, tableName), q)
 	if err != nil {
 		return nil, err
 	}

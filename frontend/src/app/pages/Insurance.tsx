@@ -423,20 +423,25 @@ export function Insurance() {
   const { line: expiringLine, area: expiringArea } = buildSparklinePath(expiringSparklineValues);
   const { line: vencidasLine, area: vencidasArea } = buildSparklinePath(vencidasHistory);
 
+  const fetchPolicies = async () => {
+    setIsLoading(true);
+    try {
+      const data = await request<any[]>('/apolices');
+      setAllPolicies(data || []);
+      setLastSyncTime(new Date());
+    } catch (err) {
+      console.error("Failed to fetch policies", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchPolicies = async () => {
-      setIsLoading(true);
-      try {
-        const data = await request<any[]>('/apolices');
-        setAllPolicies(data || []);
-        setLastSyncTime(new Date());
-      } catch (err) {
-        console.error("Failed to fetch policies", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchPolicies();
+    
+    const handleRefresh = () => fetchPolicies();
+    window.addEventListener('refresh-policies', handleRefresh);
+    return () => window.removeEventListener('refresh-policies', handleRefresh);
   }, []);
 
   useEffect(() => {
@@ -725,12 +730,36 @@ export function Insurance() {
       }, 100);
     };
 
+    const handleFiltrarAVencer = () => {
+      setStatusFilter('a vencer');
+      setCurrentPage(1);
+      setTimeout(() => { tableSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+    };
+
+    const handleFiltrarConformes = () => {
+      setStatusFilter('ativa');
+      setCurrentPage(1);
+      setTimeout(() => { tableSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+    };
+
+    const handleFiltrarTodas = () => {
+      setStatusFilter('todas');
+      setCurrentPage(1);
+      setTimeout(() => { tableSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+    };
+
     window.addEventListener('exportar-pdf', handleExportarPdf);
     window.addEventListener('filtrar-vencidas', handleFiltrarVencidas);
+    window.addEventListener('filtrar-a-vencer', handleFiltrarAVencer);
+    window.addEventListener('filtrar-conformes', handleFiltrarConformes);
+    window.addEventListener('filtrar-todas', handleFiltrarTodas);
 
     return () => {
       window.removeEventListener('exportar-pdf', handleExportarPdf);
       window.removeEventListener('filtrar-vencidas', handleFiltrarVencidas);
+      window.removeEventListener('filtrar-a-vencer', handleFiltrarAVencer);
+      window.removeEventListener('filtrar-conformes', handleFiltrarConformes);
+      window.removeEventListener('filtrar-todas', handleFiltrarTodas);
     };
   }, [sortedPolicies, statusFilter]);
 

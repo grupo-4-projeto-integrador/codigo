@@ -511,6 +511,23 @@ func (h *Handler) FilaDeAcao(w http.ResponseWriter, r *http.Request) {
 	_ = response.Success(w, http.StatusOK, responses, requestID)
 }
 
+func (h *Handler) SearchApolices(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+	q := r.URL.Query().Get("q")
+	
+	items, err := h.service.SearchApolices(q)
+	if err != nil {
+		h.writeError(w, requestID, err)
+		return
+	}
+
+	responses := make([]Response, 0, len(items))
+	for _, item := range items {
+		responses = append(responses, ToResponse(item))
+	}
+	_ = response.Success(w, http.StatusOK, responses, requestID)
+}
+
 func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 

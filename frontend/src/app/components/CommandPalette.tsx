@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Command } from 'cmdk';
-import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { listApolices } from '../../api/apolice';
+import { searchApolices, deleteApolice } from '../../api/apolice';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [recentPolicies, setRecentPolicies] = useState<string[]>([]);
-  const [apolices, setApolices] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const renovarMatch = inputValue.toLowerCase().match(/^ren(?:ovar)?\s+(?:ap[oó]lice\s+)?([a-z0-9-]+)$/i);
   const renovarLuc = renovarMatch ? renovarMatch[1].toUpperCase() : null;
+
+  const excluirMatch = inputValue.toLowerCase().match(/^exc(?:luir)?\s+(?:ap[oó]lice\s+)?([a-z0-9-]+)$/i);
+  const excluirLuc = excluirMatch ? excluirMatch[1].toUpperCase() : null;
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -31,16 +34,31 @@ export function CommandPalette() {
       try {
         const stored = localStorage.getItem('recent_policies');
         if (stored) {
-          setRecentPolicies(JSON.parse(stored).slice(0, 5));
+          setRecentPolicies(JSON.parse(stored).slice(0, 3));
         }
       } catch (e) {
         // ignore
       }
-      if (apolices.length === 0) {
-        listApolices().then(setApolices).catch(console.error);
-      }
+    } else {
+      setInputValue('');
+      setSearchResults([]);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!inputValue.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      searchApolices(inputValue.trim())
+        .then(setSearchResults)
+        .catch(console.error);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [inputValue]);
 
   const handleSelect = (action: () => void) => {
     action();
@@ -92,18 +110,41 @@ export function CommandPalette() {
 
               <Command.Group heading="Navegar" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2">
                 <Command.Item 
-                  onSelect={() => handleSelect(() => navigate('/'))}
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('go-visao-geral')), 100);
+                  })}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
                 >
                   <LayoutDashboard className="w-4 h-4 opacity-70" />
-                  <span>Dashboard</span>
+                  <span>Ir para Visão Geral</span>
+                </Command.Item>
+                <Command.Item 
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('open-audit-log')), 100);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <FileText className="w-4 h-4 opacity-70" />
+                  <span>Ir para Audit Log</span>
+                </Command.Item>
+                <Command.Item 
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('go-visao-geral')), 100);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <LayoutDashboard className="w-4 h-4 opacity-70" />
+                  <span>Ir para Tabela com todas as apólices</span>
                 </Command.Item>
                 <Command.Item 
                   onSelect={() => handleSelect(() => navigate('/seguros/apolice/nova'))}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
                 >
                   <ShieldPlus className="w-4 h-4 opacity-70" />
-                  <span>Nova Apólice</span>
+                  <span>Ir para Nova Apólice</span>
                 </Command.Item>
                 <Command.Item 
                   onSelect={() => handleSelect(() => {
@@ -113,6 +154,49 @@ export function CommandPalette() {
                 >
                   <Bell className="w-4 h-4 opacity-70" />
                   <span>Notificações</span>
+                </Command.Item>
+              </Command.Group>
+
+              <Command.Group heading="Filtros rápidos" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
+                <Command.Item 
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-vencidas')), 100);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-[#A32D2D] dark:text-[#E23B44] cursor-pointer"
+                >
+                  <Filter className="w-4 h-4 opacity-70" />
+                  <span>Ver apenas vencidas</span>
+                </Command.Item>
+                <Command.Item 
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-a-vencer')), 100);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-orange-600 dark:text-orange-400 cursor-pointer"
+                >
+                  <Filter className="w-4 h-4 opacity-70" />
+                  <span>Ver apenas a vencer</span>
+                </Command.Item>
+                <Command.Item 
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-conformes')), 100);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-green-600 dark:text-green-400 cursor-pointer"
+                >
+                  <Filter className="w-4 h-4 opacity-70" />
+                  <span>Ver apenas conformes</span>
+                </Command.Item>
+                <Command.Item 
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-todas')), 100);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <Filter className="w-4 h-4 opacity-70" />
+                  <span>Limpar todos os filtros</span>
                 </Command.Item>
               </Command.Group>
 
@@ -133,9 +217,9 @@ export function CommandPalette() {
                 </Command.Group>
               )}
 
-              {apolices.length > 0 && inputValue.length > 0 && (
+              {searchResults.length > 0 && inputValue.length > 0 && (
                 <Command.Group heading="Apólices (Pesquisa)" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
-                  {apolices.map((a) => (
+                  {searchResults.map((a) => (
                     <Command.Item 
                       key={a.luc}
                       value={`${a.luc} ${a.fantasia || ''} ${a.lojista || ''} ${a.segmento || ''}`}
@@ -149,11 +233,17 @@ export function CommandPalette() {
                           {(a.fantasia || a.lojista) && <span className="text-[10px] text-gray-400 dark:text-[#64748B] capitalize -mt-0.5">{a.fantasia || a.lojista}</span>}
                         </span>
                       </div>
-                      {a.segmento && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-[#151515] text-gray-500 dark:text-[#94A3B8] capitalize">
-                          {a.segmento}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {a.dias_restantes !== undefined && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${
+                            a.dias_restantes < 0 ? 'bg-[#A32D2D]/10 text-[#A32D2D] dark:bg-[#E23B44]/10 dark:text-[#E23B44]' :
+                            a.dias_restantes <= 30 ? 'bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400' :
+                            'bg-green-500/10 text-green-700 dark:bg-green-500/20 dark:text-green-400'
+                          }`}>
+                            {a.dias_restantes < 0 ? 'Vencida' : a.dias_restantes <= 30 ? 'A Vencer' : 'Vigente'}
+                          </span>
+                        )}
+                      </div>
                     </Command.Item>
                   ))}
                 </Command.Group>
@@ -164,7 +254,6 @@ export function CommandPalette() {
                   <Command.Item 
                     value={`renovar ${renovarLuc}`}
                     onSelect={() => handleSelect(() => {
-                      // Navigate to edit/renew view
                       navigate(`/seguros/apolice/${encodeURIComponent(renovarLuc)}/editar`);
                     })}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-white bg-[#9F1239] cursor-pointer"
@@ -175,7 +264,88 @@ export function CommandPalette() {
                 </Command.Group>
               )}
 
-              <Command.Group heading="Ações" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
+              {excluirLuc && (
+                <Command.Group heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
+                  <Command.Item 
+                    value={`excluir ${excluirLuc}`}
+                    onSelect={() => handleSelect(async () => {
+                      if (window.confirm(`Tem certeza que deseja excluir a apólice ${excluirLuc}?`)) {
+                        try {
+                          await deleteApolice(excluirLuc);
+                          alert(`Apólice ${excluirLuc} excluída com sucesso.`);
+                          if (window.location.pathname.includes(excluirLuc)) {
+                            navigate('/seguros');
+                            setTimeout(() => window.dispatchEvent(new CustomEvent('refresh-policies')), 100);
+                          } else {
+                            window.dispatchEvent(new CustomEvent('refresh-policies'));
+                            window.dispatchEvent(new CustomEvent('go-visao-geral'));
+                          }
+                        } catch (e) {
+                          alert(`Erro ao excluir: ${e}`);
+                        }
+                      }
+                    })}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-white bg-[#A32D2D] cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Excluir Apólice <strong>{excluirLuc}</strong></span>
+                  </Command.Item>
+                </Command.Group>
+              )}
+
+              {window.location.pathname.startsWith('/seguros/apolice/') && window.location.pathname.split('/').length >= 4 && window.location.pathname.split('/')[3] !== 'nova' && (
+                <Command.Group heading="Apólice atual" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
+                  <Command.Item 
+                    onSelect={() => handleSelect(() => navigate(`/seguros/apolice/${window.location.pathname.split('/')[3]}/editar`))}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                  >
+                    <RefreshCw className="w-4 h-4 opacity-70" />
+                    <span>Renovar {decodeURIComponent(window.location.pathname.split('/')[3])}</span>
+                  </Command.Item>
+                  <Command.Item 
+                    onSelect={() => handleSelect(() => navigate(`/seguros/apolice/${window.location.pathname.split('/')[3]}/editar`))}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                  >
+                    <Edit className="w-4 h-4 opacity-70" />
+                    <span>Editar {decodeURIComponent(window.location.pathname.split('/')[3])}</span>
+                  </Command.Item>
+                  <Command.Item 
+                    onSelect={() => handleSelect(() => navigate(`/seguros/apolice/${window.location.pathname.split('/')[3]}`))}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4 opacity-70" />
+                    <span>Ver apólice completa</span>
+                  </Command.Item>
+                  <Command.Item 
+                    onSelect={() => handleSelect(() => window.dispatchEvent(new CustomEvent('exportar-pdf')))}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 opacity-70" />
+                    <span>Exportar PDF desta apólice</span>
+                  </Command.Item>
+                  <Command.Item 
+                    onSelect={() => handleSelect(async () => {
+                      const luc = decodeURIComponent(window.location.pathname.split('/')[3]);
+                      if (window.confirm(`Tem certeza que deseja excluir a apólice ${luc}?`)) {
+                        try {
+                          await deleteApolice(luc);
+                          alert(`Apólice ${luc} excluída com sucesso.`);
+                          navigate('/seguros');
+                          setTimeout(() => window.dispatchEvent(new CustomEvent('refresh-policies')), 100);
+                        } catch (e) {
+                          alert(`Erro ao excluir: ${e}`);
+                        }
+                      }
+                    })}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-[#A32D2D] dark:text-[#E23B44] cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4 opacity-70" />
+                    <span>Excluir {decodeURIComponent(window.location.pathname.split('/')[3])}</span>
+                  </Command.Item>
+                </Command.Group>
+              )}
+
+              <Command.Group heading="Ações / Tema" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                 <Command.Item 
                   onSelect={() => handleSelect(() => {
                     const event = new CustomEvent('exportar-pdf');
@@ -185,6 +355,15 @@ export function CommandPalette() {
                 >
                   <Download className="w-4 h-4 opacity-70" />
                   <span>Exportar filtro atual (PDF)</span>
+                </Command.Item>
+                <Command.Item 
+                  onSelect={() => handleSelect(() => {
+                    window.dispatchEvent(new CustomEvent('toggle-presentation-mode'));
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <LayoutDashboard className="w-4 h-4 opacity-70" />
+                  <span>Entrar no Modo Apresentação</span>
                 </Command.Item>
                 <Command.Item 
                   onSelect={() => handleSelect(() => {
@@ -204,20 +383,6 @@ export function CommandPalette() {
                 >
                   <Moon className="w-4 h-4 opacity-70" />
                   <span>Alternar Tema (Dark/Light)</span>
-                </Command.Item>
-                <Command.Item 
-                  onSelect={() => handleSelect(() => {
-                    if (window.location.pathname !== '/seguros' && window.location.pathname !== '/') {
-                      navigate('/seguros');
-                      setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-vencidas')), 300);
-                    } else {
-                      window.dispatchEvent(new CustomEvent('filtrar-vencidas'));
-                    }
-                  })}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-[#A32D2D] dark:text-[#E23B44] cursor-pointer"
-                >
-                  <AlertTriangle className="w-4 h-4 opacity-70" />
-                  <span>Ver todas apólices vencidas</span>
                 </Command.Item>
               </Command.Group>
             </Command.List>

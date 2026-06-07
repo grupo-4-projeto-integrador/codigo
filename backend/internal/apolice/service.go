@@ -27,6 +27,21 @@ func (s *Service) List() ([]Apolice, error) {
 	return items, nil
 }
 
+func (s *Service) SearchApolices(query string) ([]Apolice, error) {
+	if query == "" {
+		return s.List()
+	}
+	items, err := s.repo.SearchApolices(query)
+	if err != nil {
+		return nil, err
+	}
+	for i := range items {
+		items[i].DiasRestantes = calculateDaysRemaining(items[i].Vencimento)
+		items[i].Status = calculatePolicyStatus(items[i].Vencimento)
+	}
+	return items, nil
+}
+
 func (s *Service) GetFilaDeAcao() ([]Apolice, error) {
 	items, err := s.List()
 	if err != nil {

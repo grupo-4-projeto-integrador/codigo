@@ -31,6 +31,11 @@ export async function listApolices(): Promise<ApoliceListResponse> {
   return data.map(mapToRecord);
 }
 
+export async function searchApolices(query: string): Promise<ApoliceListResponse> {
+  const data = await request<ApoliceDTO[]>(`/apolices/search?q=${encodeURIComponent(query)}`);
+  return data.map(mapToRecord);
+}
+
 export async function getFilaDeAcao(): Promise<ApoliceListResponse> {
   const data = await request<ApoliceDTO[]>('/fila-de-acao');
   return data.map(mapToRecord);

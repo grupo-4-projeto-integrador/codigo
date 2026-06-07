@@ -43,6 +43,7 @@ func RegisterRoutesWithAudit(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Ser
 	mux.Handle("/api/kpis/risk-by-segment", onlyAuth(http.HandlerFunc(handler.GetRiskBySegment)))
 	mux.Handle("/api/kpis/health-score", onlyAuth(http.HandlerFunc(handler.GetHealthScore)))
 	mux.Handle("GET /api/apolices/atividade-recente", onlyAuth(http.HandlerFunc(handler.GetAtividadesRecentes)))
+	mux.Handle("GET /api/apolices/search", onlyAuth(http.HandlerFunc(handler.SearchApolices)))
 	mux.Handle("/api/apolices/", onlyAuth(http.HandlerFunc(handler.Item("/api/apolices"))))
 	mux.Handle("/api/map-layout", onlyAuth(http.HandlerFunc(handler.GetMapLayout)))
 	mux.Handle("/api/lojas", onlyAuth(http.HandlerFunc(handler.GetLojas)))
