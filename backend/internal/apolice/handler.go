@@ -554,6 +554,7 @@ func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 
 		item, err := h.service.Create(payload)
 		if err != nil {
+			log.Printf("ERROR in CreateApolice: %v", err)
 			h.writeError(w, requestID, err)
 			return
 		}

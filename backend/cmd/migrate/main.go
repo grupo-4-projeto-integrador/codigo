@@ -63,16 +63,8 @@ func runSQLFile(db *sql.DB, path string) error {
 		return err
 	}
 
-	stmts := strings.Split(string(content), ";")
-	for _, s := range stmts {
-		stmt := strings.TrimSpace(s)
-		if stmt == "" || strings.HasPrefix(stmt, "--") {
-			continue
-		}
-		if _, err := db.Exec(stmt); err != nil {
-			fmt.Printf("Failing stmt: %q\n", stmt)
-			return err
-		}
+	if _, err := db.Exec(string(content)); err != nil {
+		return err
 	}
 
 	return nil

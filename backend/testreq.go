@@ -9,7 +9,7 @@ import (
 
 func main() {
 	payload := []byte(`{"luc":"SMOKE2","loja":"Smoke Test","segmento":"TEST","seguradora":"TestIns","vigencia":"2024-01-01","vencimento":"2026-12-31"}`)
-	res, err := http.Post("http://localhost:8086/api/apolices", "application/json", bytes.NewReader(payload))
+	res, err := http.Post("http://localhost:8087/api/apolices", "application/json", bytes.NewReader(payload))
 	if err != nil {
 		panic(err)
 	}
