@@ -23,12 +23,22 @@ func main() {
 	db := database.MustConnect()
 	defer db.Close()
 
-	migPath := filepath.Join("migrations", "initial_schema.sql")
-	fmt.Println("Aplicando migration:", migPath)
-	if err := runSQLFile(db, migPath); err != nil {
-		log.Fatalf("falha ao aplicar migration: %v", err)
+	migrations := []string{
+		"initial_schema.sql",
+		"audit_log.sql",
+		"add_responsavel.sql",
+		"002_multiuser_roles.sql",
+		"003_cnpj_numero_apolice.sql",
 	}
-	fmt.Println("Migration aplicada com sucesso")
+
+	for _, mig := range migrations {
+		migPath := filepath.Join("migrations", mig)
+		fmt.Println("Aplicando migration:", migPath)
+		if err := runSQLFile(db, migPath); err != nil {
+			log.Fatalf("falha ao aplicar migration %s: %v", migPath, err)
+		}
+		fmt.Println("Migration aplicada com sucesso:", migPath)
+	}
 
 	if *withSeed {
 		seedPath := filepath.Clean(*seedFile)
