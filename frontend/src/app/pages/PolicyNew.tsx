@@ -332,7 +332,7 @@ export function PolicyNew() {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">Documento da Apólice (PDF)</label>
                 <Input 
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.jpg,.jpeg,.png,.PDF,.JPG,.JPEG,.PNG"
                   className="dark:bg-[#0a0a0a] file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#c4151f]/10 file:text-[#c4151f] hover:file:bg-[#c4151f]/20 cursor-pointer"
                 />
               </div>

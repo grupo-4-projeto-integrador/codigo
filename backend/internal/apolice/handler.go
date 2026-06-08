@@ -847,6 +847,9 @@ func (h *Handler) DownloadDocumento(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", doc.Nome))
 	http.ServeFile(w, r, caminhoAbsoluto)
+
+	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, doc.Nome)
+	h.logAudit(r, audit.AcaoExportar, audit.EntidadeDocumento, id, nil, &arquivoJSON)
 }
 
 func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {
@@ -874,6 +877,22 @@ func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
+
+	contentType := header.Header.Get("Content-Type")
+	log.Printf("Upload recebido: %s, tipo: %s", header.Filename, contentType)
+
+	tiposPermitidos := []string{"application/pdf", "image/jpeg", "image/jpg", "image/png", "image/x-png"}
+	tipoValido := false
+	for _, t := range tiposPermitidos {
+		if contentType == t {
+			tipoValido = true
+			break
+		}
+	}
+	if !tipoValido {
+		response.Fail(w, http.StatusBadRequest, "Formato não suportado: "+contentType, middleware.RequestIDFromContext(r.Context()), nil)
+		return
+	}
 
 	// Ensure uploads dir exists
 	basePath := "uploads"
@@ -911,5 +930,48 @@ func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, header.Filename)
+	h.logAudit(r, audit.AcaoUpload, audit.EntidadeApolice, id, nil, &arquivoJSON)
+
 	response.Success(w, http.StatusCreated, createdDoc, middleware.RequestIDFromContext(r.Context()))
+}
+
+func (h *Handler) Exportar(w http.ResponseWriter, r *http.Request) {
+
+	filtroAtivo := r.URL.Query().Get("filtro")
+	formato := r.URL.Query().Get("formato")
+	if formato == "" {
+		formato = "csv"
+	}
+
+	// Como a exportação real está no frontend, o backend responde com sucesso para gerar o log
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message": "Exportação registrada"}`))
+
+	arquivoJSON := fmt.Sprintf(`{"filtro": %q, "formato": %q}`, filtroAtivo, formato)
+	h.logAudit(r, audit.AcaoExportar, audit.EntidadeApolice, "0", nil, &arquivoJSON)
+}
+
+func (h *Handler) DeleteDocumento(w http.ResponseWriter, r *http.Request) {
+	docId := r.PathValue("docId")
+	if docId == "" {
+		docId = r.PathValue("id")
+	}
+
+	doc, err := h.service.GetDocumentoByID(docId)
+	if err != nil {
+		response.Fail(w, http.StatusNotFound, "Documento não encontrado", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+
+	if err := h.service.DeleteDocumento(docId); err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao excluir documento", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+
+	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, doc.Nome)
+	h.logAudit(r, audit.AcaoExcluir, audit.EntidadeDocumento, doc.ApoliceLuc, nil, &arquivoJSON)
+
+	response.Success(w, http.StatusOK, map[string]string{"message": "Documento excluído com sucesso"}, middleware.RequestIDFromContext(r.Context()))
 }

@@ -18,6 +18,13 @@ func (s *Service) GetNotificacoes(usuarioID int) ([]Notificacao, error) {
 	if list == nil {
 		list = []Notificacao{} // return empty array instead of null
 	}
+
+	// 3. Atividade da equipe
+	equipe, errEquipe := s.repo.GetAtividadeEquipe(usuarioID)
+	if errEquipe == nil && len(equipe) > 0 {
+		list = append(list, equipe...)
+	}
+
 	return list, err
 }
 

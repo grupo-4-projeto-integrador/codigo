@@ -1,8 +1,20 @@
 import React, { useState, useRef, useCallback } from "react";
-import { FileText, Download, Loader2, AlertCircle } from "lucide-react";
+import { FileText, Download, Loader2, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { downloadArquivo } from "../../api/apolice";
 import { downloadArquivo as utilDownload } from "../utils/downloadUtils";
+import { request } from "../../api/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 
 interface Documento {
   id: number;
@@ -26,6 +38,7 @@ interface DocumentListWithUploadProps {
 
 export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, onExportApolice }: DocumentListWithUploadProps) {
   const [isDownloading, setIsDownloading] = useState<Record<number, boolean>>({});
+  const [isDeleting, setIsDeleting] = useState<Record<number, boolean>>({});
   const [uploadingDocs, setUploadingDocs] = useState<UploadingDoc[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,6 +57,20 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
       toast.error("Não foi possível baixar o arquivo");
     } finally {
       setIsDownloading(prev => ({ ...prev, [docId]: false }));
+    }
+  };
+
+  const handleDeleteDoc = async (docId: number) => {
+    try {
+      setIsDeleting(prev => ({ ...prev, [docId]: true }));
+      await request(`/documentos/${docId}`, { method: 'DELETE' });
+      toast.success("Documento removido");
+      onUploadSuccess(); // Re-fetch documents
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao remover documento");
+    } finally {
+      setIsDeleting(prev => ({ ...prev, [docId]: false }));
     }
   };
   
@@ -94,7 +121,7 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
     xhr.open("POST", `${apiUrl}/apolices/${policyId}/documentos`);
     
     // Get token if auth is needed
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('flamboyant_token');
     if (token) {
       xhr.setRequestHeader("Authorization", `Bearer ${token}`);
     }
@@ -103,13 +130,13 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
   };
 
   const validateAndUpload = (files: FileList | File[]) => {
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
     Array.from(files).forEach(file => {
-      if (allowedTypes.includes(file.type)) {
-        startUpload(file);
-      } else {
-        toast.error("Formato não suportado: " + file.name);
+      if (!tiposPermitidos.includes(file.type)) {
+        toast.error(`Formato não suportado: ${file.type}. Use PDF, JPG ou PNG.`);
+        return;
       }
+      startUpload(file);
     });
   };
 
@@ -206,18 +233,54 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
                   </p>
                 </div>
               </div>
-              <button 
-                type="button"
-                onClick={() => handleDownloadDoc(doc.id, displayName)}
-                disabled={isDownloading[doc.id]}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors disabled:opacity-50 flex-shrink-0"
-              >
-                {isDownloading[doc.id] ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4" />
+              <div className="flex gap-2">
+                <button 
+                  type="button"
+                  onClick={() => handleDownloadDoc(doc.id, displayName)}
+                  disabled={isDownloading[doc.id]}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50 flex-shrink-0"
+                  title="Baixar documento"
+                >
+                  {isDownloading[doc.id] ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                </button>
+                {doc.id !== -1 && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button 
+                        type="button"
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isDeleting[doc.id]}
+                        className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 flex-shrink-0"
+                        title="Remover documento"
+                      >
+                        {isDeleting[doc.id] ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Remover documento</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Deseja realmente remover o documento "{displayName}"? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={(e) => { e.stopPropagation(); handleDeleteDoc(doc.id); }} className="bg-red-600 hover:bg-red-700 text-white">
+                          Remover
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 )}
-              </button>
+              </div>
             </div>
           )})}
         </div>
@@ -245,7 +308,7 @@ export function DocumentListWithUpload({ policyId, documentos, onUploadSuccess, 
           ref={fileInputRef} 
           className="hidden" 
           onChange={onFileSelect}
-          accept=".pdf,.jpg,.jpeg,.png"
+          accept=".pdf,.jpg,.jpeg,.png,.PDF,.JPG,.JPEG,.PNG"
           multiple
         />
         <i className="ti ti-cloud-upload" style={{ fontSize: '24px', color: 'var(--color-text-secondary)' }}></i>

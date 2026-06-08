@@ -3,11 +3,13 @@ package auth
 import (
 	"database/sql"
 	"net/http"
+
+	"grupo4/seguros/internal/audit"
 )
 
 // RegisterRoutes registra as rotas públicas de autenticação.
-func RegisterRoutes(mux *http.ServeMux, db *sql.DB, secret string) {
-	h := NewHandler(db, secret)
+func RegisterRoutes(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Service, secret string) {
+	h := NewHandler(db, auditSvc, secret)
 
 	// POST /api/auth/login — público (sem AuthMiddleware)
 	mux.HandleFunc("POST /api/auth/login", h.Login)

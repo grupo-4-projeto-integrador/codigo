@@ -4,6 +4,7 @@ import { Command } from 'cmdk';
 import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { searchApolices, deleteApolice, listApolices } from '../../api/apolice';
+import { toast } from 'sonner';
 import {
   setFullscreenTableOpen,
   setFullscreenTableFilter,
@@ -17,6 +18,7 @@ export function CommandPalette() {
   const [recentPolicies, setRecentPolicies] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [allPolicies, setAllPolicies] = useState<any[]>([]);
+  const [deleteConfirmLuc, setDeleteConfirmLuc] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Pre-load policies for counts
@@ -61,6 +63,7 @@ export function CommandPalette() {
     } else {
       setInputValue('');
       setSearchResults([]);
+      setDeleteConfirmLuc(null);
     }
   }, [open]);
 
@@ -104,6 +107,49 @@ export function CommandPalette() {
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
             className="relative w-full max-w-[540px] bg-white dark:bg-[#0a0a0a] rounded-xl shadow-2xl border border-gray-100 dark:border-[#222222] overflow-hidden flex flex-col z-10"
           >
+            {deleteConfirmLuc ? (
+              <div className="p-6 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Excluir Apólice</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                  Tem certeza que deseja excluir a apólice <strong>{deleteConfirmLuc}</strong>? Esta ação não pode ser desfeita.
+                </p>
+                <div className="flex gap-3 w-full">
+                  <button 
+                    onClick={() => setDeleteConfirmLuc(null)}
+                    className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-[#22] dark:hover:bg-[#33] text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      const luc = deleteConfirmLuc;
+                      try {
+                        await deleteApolice(luc);
+                        toast.success(`Apólice ${luc} excluída com sucesso.`);
+                        if (window.location.pathname.includes(luc)) {
+                          navigate('/seguros');
+                          setTimeout(() => window.dispatchEvent(new CustomEvent('refresh-policies')), 100);
+                        } else {
+                          window.dispatchEvent(new CustomEvent('refresh-policies'));
+                          window.dispatchEvent(new CustomEvent('go-visao-geral'));
+                        }
+                      } catch (e) {
+                        toast.error(`Erro ao excluir a apólice ${luc}.`);
+                      } finally {
+                        setDeleteConfirmLuc(null);
+                        setOpen(false);
+                      }
+                    }}
+                    className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    Sim, excluir
+                  </button>
+                </div>
+              </div>
+            ) : (
             <Command 
               label="Global Command Menu" 
               shouldFilter={true}
@@ -330,23 +376,7 @@ export function CommandPalette() {
                 <Command.Group heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                   <Command.Item 
                     value={`excluir ${excluirLuc}`}
-                    onSelect={() => handleSelect(async () => {
-                      if (window.confirm(`Tem certeza que deseja excluir a apólice ${excluirLuc}?`)) {
-                        try {
-                          await deleteApolice(excluirLuc);
-                          alert(`Apólice ${excluirLuc} excluída com sucesso.`);
-                          if (window.location.pathname.includes(excluirLuc)) {
-                            navigate('/seguros');
-                            setTimeout(() => window.dispatchEvent(new CustomEvent('refresh-policies')), 100);
-                          } else {
-                            window.dispatchEvent(new CustomEvent('refresh-policies'));
-                            window.dispatchEvent(new CustomEvent('go-visao-geral'));
-                          }
-                        } catch (e) {
-                          alert(`Erro ao excluir: ${e}`);
-                        }
-                      }
-                    })}
+                    onSelect={() => setDeleteConfirmLuc(excluirLuc)}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-white bg-[#A32D2D] cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -386,19 +416,10 @@ export function CommandPalette() {
                     <span>Exportar PDF desta apólice</span>
                   </Command.Item>
                   <Command.Item 
-                    onSelect={() => handleSelect(async () => {
+                    onSelect={() => {
                       const luc = decodeURIComponent(window.location.pathname.split('/')[3]);
-                      if (window.confirm(`Tem certeza que deseja excluir a apólice ${luc}?`)) {
-                        try {
-                          await deleteApolice(luc);
-                          alert(`Apólice ${luc} excluída com sucesso.`);
-                          navigate('/seguros');
-                          setTimeout(() => window.dispatchEvent(new CustomEvent('refresh-policies')), 100);
-                        } catch (e) {
-                          alert(`Erro ao excluir: ${e}`);
-                        }
-                      }
-                    })}
+                      setDeleteConfirmLuc(luc);
+                    }}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-[#A32D2D] dark:text-[#E23B44] cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4 opacity-70" />
@@ -461,6 +482,7 @@ export function CommandPalette() {
               </div>
             </div>
             </Command>
+            )}
           </motion.div>
         </div>
       )}

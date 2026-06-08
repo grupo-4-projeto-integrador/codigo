@@ -214,6 +214,53 @@ export function ComplianceMapV2({
     }
   }, [selectedLuc, allLucs, ITEMS_PER_PAGE, currentPage, loading]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      if (e.key === 'Escape') {
+        if (selectedLuc) {
+          onSelectLuc(null);
+        }
+        return;
+      }
+
+      if (!['w', 'a', 's', 'd'].includes(key)) return;
+
+      const cols = hideHeader ? 16 : (isSidebarCollapsed ? 15 : 13);
+      
+      let currentIndex = -1;
+      if (selectedLuc) {
+        currentIndex = allLucs.indexOf(selectedLuc);
+      }
+
+      if (currentIndex === -1) {
+        if (allLucs.length > 0) {
+          const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+          onSelectLuc(allLucs[startIdx] || allLucs[0]);
+        }
+        return;
+      }
+
+      let newIndex = currentIndex;
+      if (key === 'w') newIndex -= cols;
+      if (key === 's') newIndex += cols;
+      if (key === 'a') newIndex -= 1;
+      if (key === 'd') newIndex += 1;
+
+      if (newIndex >= 0 && newIndex < allLucs.length) {
+        onSelectLuc(allLucs[newIndex]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedLuc, allLucs, onSelectLuc, hideHeader, isSidebarCollapsed, currentPage, ITEMS_PER_PAGE]);
+
   const totalPages = Math.ceil(allLucs.length / ITEMS_PER_PAGE);
   const paginatedLucs = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -336,6 +383,11 @@ export function ComplianceMapV2({
                 <Tooltip key={luc}>
                   <TooltipTrigger asChild>
                     <motion.button
+                      ref={(el) => {
+                        if (el && isSelected) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                      }}
                       onClick={() => onSelectLuc(isSelected ? null : luc)}
                       className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile ${isSelected ? 'sel' : ''}`}
                       aria-label={`LUC ${luc}`}
@@ -540,7 +592,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
           </motion.div>
         ) : (
           <motion.div
-            key={selectedLuc}
+            key="selected-card"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

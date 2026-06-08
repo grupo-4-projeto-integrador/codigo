@@ -15,4 +15,7 @@ type Notificacao struct {
 	Loja      string `json:"loja,omitempty"`
 	Cobertura string `json:"cobertura,omitempty"`
 	Dias      int    `json:"dias,omitempty"`
+
+	// Usado para atividades da equipe
+	Mensagem string `json:"mensagem,omitempty"`
 }

@@ -40,26 +40,25 @@ function formatTimestamp(ts: string) {
   }).format(d);
 }
 
-const ACAO_META: Record<string, { label: string; icon: React.ComponentType<any>; color: string; bg: string }> = {
-  criar:             { label: "Criar",           icon: FileText,   color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-  editar:            { label: "Editar",          icon: Edit3,      color: "#3b82f6", bg: "rgba(59,130,246,0.1)" },
-  renovar:           { label: "Renovar",         icon: RotateCcw,  color: "#168821", bg: "rgba(22,136,33,0.1)" },
-  excluir:           { label: "Excluir",         icon: Trash2,     color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
-  exportar:          { label: "Exportar",        icon: Download,   color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  login:             { label: "Login",           icon: LogIn,      color: "#06b6d4", bg: "rgba(6,182,212,0.1)" },
-  upload_documento:  { label: "Upload Doc",      icon: Upload,     color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+const ACAO_META: Record<string, { label: string; icon: React.ComponentType<any>; classes: string }> = {
+  criar:             { label: "Criar",           icon: FileText,   classes: "text-[#1c3d32] dark:text-[#2E7A5A] bg-[#1c3d32]/10 dark:bg-[#1c3d32]/30" },
+  editar:            { label: "Editar",          icon: Edit3,      classes: "text-[#8a6845] dark:text-[#D1B7A1] bg-[#8a6845]/15 dark:bg-[#8a6845]/20" },
+  renovar:           { label: "Renovar",         icon: RotateCcw,  classes: "text-[#5a6121] dark:text-[#A3AD44] bg-[#5a6121]/15 dark:bg-[#5a6121]/30" },
+  excluir:           { label: "Excluir",         icon: Trash2,     classes: "text-[#c4151f] dark:text-[#E23B44] bg-[#c4151f]/10 dark:bg-[#c4151f]/30" },
+  exportar:          { label: "Exportar",        icon: Download,   classes: "text-[#bc9b7c] dark:text-[#D1B7A1] bg-[#bc9b7c]/20 dark:bg-[#bc9b7c]/20" },
+  login:             { label: "Login",           icon: LogIn,      classes: "text-[#6e150e] dark:text-[#D45044] bg-[#6e150e]/10 dark:bg-[#6e150e]/30" },
+  upload_documento:  { label: "Upload Doc",      icon: Upload,     classes: "text-[#788033] dark:text-[#A3AD44] bg-[#788033]/10 dark:bg-[#788033]/30" },
 };
 
 const ACOES = ["", "criar", "editar", "renovar", "excluir", "exportar", "login", "upload_documento"];
 const ENTIDADES = ["", "apolice", "documento", "usuario", "sistema"];
 
 function AcaoBadge({ acao }: { acao: string }) {
-  const meta = ACAO_META[acao] ?? { label: acao, icon: AlertCircle, color: "#94a3b8", bg: "rgba(148,163,184,0.1)" };
+  const meta = ACAO_META[acao] ?? { label: acao, icon: AlertCircle, classes: "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800" };
   const Icon = meta.icon;
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
-      style={{ color: meta.color, backgroundColor: meta.bg }}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${meta.classes}`}
     >
       <Icon className="w-3 h-3" />
       {meta.label}

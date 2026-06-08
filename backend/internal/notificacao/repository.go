@@ -3,6 +3,7 @@ package notificacao
 import (
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type PostgresRepository struct {
@@ -115,4 +116,61 @@ func (r *PostgresRepository) ArquivarLidas(usuarioID int) error {
 func (r *PostgresRepository) ArquivarUnica(usuarioID int, id int) error {
 	_, err := r.db.Exec(`UPDATE notificacoes SET arquivada = TRUE WHERE usuario_id = $1 AND id = $2`, usuarioID, id)
 	return err
+}
+
+// GetAtividadeEquipe busca atividades das últimas 24h feitas por outros usuários.
+func (r *PostgresRepository) GetAtividadeEquipe(usuarioID int) ([]Notificacao, error) {
+	query := `
+		SELECT 
+			a.id, 
+			a.entidade_id AS apolice_luc, 
+			'equipe' AS tipo,
+			u.nome,
+			a.acao,
+			a.timestamp
+		FROM audit_logs a
+		JOIN usuarios u ON CAST(a.user_id AS INTEGER) = u.id
+		WHERE CAST(a.user_id AS INTEGER) != $1 
+		  AND a.acao IN ('criar', 'renovar', 'excluir')
+		  AND a.timestamp >= NOW() - INTERVAL '24 hours'
+		ORDER BY a.timestamp DESC
+		LIMIT 3
+	`
+	rows, err := r.db.Query(query, usuarioID)
+	if err != nil {
+		return nil, fmt.Errorf("query atividade equipe erro: %w", err)
+	}
+	defer rows.Close()
+
+	var list []Notificacao
+	for rows.Next() {
+		var n Notificacao
+		var nome, acao string
+		var ts time.Time
+		if err := rows.Scan(&n.ID, &n.ApoliceLUC, &n.Tipo, &nome, &acao, &ts); err != nil {
+			return nil, err
+		}
+		
+		diff := time.Since(ts)
+		var tempoStr string
+		if diff.Hours() >= 1 {
+			tempoStr = fmt.Sprintf("há %dh", int(diff.Hours()))
+		} else if diff.Minutes() >= 1 {
+			tempoStr = fmt.Sprintf("há %dm", int(diff.Minutes()))
+		} else {
+			tempoStr = "agora mesmo"
+		}
+		
+		acaoFormatada := acao
+		switch acao {
+		case "criar": acaoFormatada = "criou"
+		case "renovar": acaoFormatada = "renovou"
+		case "excluir": acaoFormatada = "excluiu"
+		}
+
+		n.Mensagem = fmt.Sprintf("%s %s %s · %s", nome, acaoFormatada, n.ApoliceLUC, tempoStr)
+		n.Lida = true
+		list = append(list, n)
+	}
+	return list, nil
 }

@@ -1,6 +1,6 @@
 import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert, FilePlus, FilePenLine, RefreshCw, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import React, { useState, useEffect, useRef, useId } from "react";
+import React, { useState, useEffect, useRef, useId, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -15,6 +15,7 @@ import { useCountUp } from "../hooks/useCountUp";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
+import { toast } from "sonner";
 import { Usuarios } from "./Usuarios";
 import { getHealthScore } from "../../api/apolice";
 import { motion, AnimatePresence } from "motion/react";
@@ -160,7 +161,8 @@ export function Insurance() {
   // Table sorting states
   const [kpiMetrics, setKpiMetrics] = useState<any | null>(null);
   const [healthScore, setHealthScore] = useState<{ score: number, delta: number } | null>(null);
-  const [recentActivities, setRecentActivities] = useState<AtividadeRecente[]>([]);
+  const [localActivities, setLocalActivities] = useState<AtividadeRecente[]>([]);
+  const [loadingLocal, setLoadingLocal] = useState(false);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [selectedLuc, setSelectedLuc] = useState(getSelectedApoliceLuc());
@@ -538,30 +540,11 @@ export function Insurance() {
     };
   }, []);
 
-  const fetchAtividades = async (luc: string | null) => {
+  const fetchAtividadesGlobais = async () => {
     setLoadingAtividades(true);
     try {
-      if (luc) {
-        const data = await request<any[]>(`/apolices/${luc}/historico`);
-        setAtividadesRecentes((data || []).map(h => {
-          const acaoLower = (h.acao || '').toLowerCase();
-          const mappedAcao = acaoLower.includes('criada') ? 'criada' :
-            acaoLower.includes('renovada') ? 'renovada' :
-              acaoLower.includes('excluída') ? 'excluida' :
-                acaoLower.includes('observações') ? 'observacoes' : 'editada';
-          return {
-            id: h.id.toString(),
-            luc: h.apolice_luc,
-            nome_loja: "",
-            acao: mappedAcao,
-            responsavel: h.autor || 'Sistema',
-            timestamp: h.data
-          };
-        }));
-      } else {
-        const data = await request<AtividadeRecente[]>('/apolices/atividade-recente?limit=5');
-        setAtividadesRecentes(data || []);
-      }
+      const data = await request<AtividadeRecente[]>('/apolices/atividade-recente?limit=5');
+      setAtividadesRecentes(data || []);
     } catch {
       setAtividadesRecentes([]);
     } finally {
@@ -569,10 +552,53 @@ export function Insurance() {
     }
   };
 
-  useEffect(() => {
-    fetchAtividades(selectedMapLuc);
-  }, [selectedMapLuc]);
+  const fetchLocalAtividades = async (luc: string) => {
+    setLoadingLocal(true);
+    try {
+      const policy = allPolicies.find(p => p.id === luc || p.luc === luc);
+      const actualLuc = policy ? (policy.luc || policy.id) : luc;
+      
+      const data = await request<any[]>(`/apolices/${actualLuc}/historico`);
+      setLocalActivities((data || []).map(h => {
+        const acaoLower = (h.descricao || '').toLowerCase();
+        const mappedAcao = acaoLower.includes('criada') ? 'criada' :
+          acaoLower.includes('renova') ? 'renovada' :
+            acaoLower.includes('exclu') ? 'excluida' :
+              acaoLower.includes('observaç') ? 'observacoes' : 'editada';
+        return {
+          id: h.id?.toString() || Math.random().toString(),
+          luc: h.apolice_luc,
+          nome_loja: policy ? policy.loja : actualLuc,
+          acao: mappedAcao,
+          responsavel: h.ator || 'Sistema',
+          timestamp: h.data
+        };
+      }));
+    } catch {
+      setLocalActivities([]);
+    } finally {
+      setLoadingLocal(false);
+    }
+  };
 
+  useEffect(() => {
+    fetchAtividadesGlobais();
+
+    const handleRefresh = () => {
+      fetchAtividadesGlobais();
+      if (selectedMapLuc) fetchLocalAtividades(selectedMapLuc);
+    };
+    window.addEventListener('refresh-policies', handleRefresh);
+    return () => window.removeEventListener('refresh-policies', handleRefresh);
+  }, []);
+
+  useEffect(() => {
+    if (selectedMapLuc && allPolicies.length > 0) {
+      fetchLocalAtividades(selectedMapLuc);
+    } else {
+      setLocalActivities([]);
+    }
+  }, [selectedMapLuc, allPolicies.length]);
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -864,11 +890,12 @@ export function Insurance() {
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        setUploadedFile(file);
-      } else {
-        alert('Por favor, envie apenas arquivos PDF');
+      const tiposPermitidos = ['application/pdf','image/jpeg','image/jpg','image/png'];
+      if (!tiposPermitidos.includes(file.type)) {
+        toast.error(`Formato não suportado: ${file.type}. Use PDF, JPG ou PNG.`);
+        return;
       }
+      setUploadedFile(file);
     }
   };
 
@@ -876,11 +903,12 @@ export function Insurance() {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
-        setUploadedFile(file);
-      } else {
-        alert('Por favor, envie apenas arquivos PDF');
+      const tiposPermitidos = ['application/pdf','image/jpeg','image/jpg','image/png'];
+      if (!tiposPermitidos.includes(file.type)) {
+        toast.error(`Formato não suportado: ${file.type}. Use PDF, JPG ou PNG.`);
+        return;
       }
+      setUploadedFile(file);
     }
   };
 
@@ -1493,50 +1521,14 @@ export function Insurance() {
                     </div>
 
                     <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                      <svg
-                        width="100%"
-                        height="44"
-                        viewBox="0 0 280 44"
-                        preserveAspectRatio="none"
-                        className="block overflow-hidden"
-                        aria-label="Evolução de conformidade nas últimas 8 semanas"
-                      >
-                        <defs>
-                          <linearGradient id={`kpi-history-gradient-${sparklineGradientId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#639922" stopOpacity="0.45" />
-                            <stop offset="75%" stopColor="#639922" stopOpacity="0.08" />
-                            <stop offset="100%" stopColor="#639922" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-
-                        {sparklineArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={sparklineArea} fill={`url(#kpi-history-gradient-${sparklineGradientId})`} />}
-
-                        {sparklineLine && (
-                          <>
-                            <motion.path
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 0.6, ease: "easeOut" }}
-                              d={sparklineLine}
-                              fill="none"
-                              stroke="#639922"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <circle cx="280" cy={(() => {
-                              const values = sparklineValues;
-                              const minY = 36;
-                              const maxY = 8;
-                              const minValue = Math.min(...values);
-                              const maxValue = Math.max(...values);
-                              const range = Math.max(maxValue - minValue, 1);
-                              const normalized = (values[values.length - 1] - minValue) / range;
-                              return minY - normalized * (minY - maxY);
-                            })()} r="2.5" fill="#639922" />
-                          </>
-                        )}
-                      </svg>
+                      <MemoSingleSparkline
+                        values={sparklineValues}
+                        area={sparklineArea}
+                        line={sparklineLine}
+                        gradientId={`kpi-history-gradient-${sparklineGradientId}`}
+                        color="#639922"
+                        ariaLabel="Evolução de conformidade nas últimas 8 semanas"
+                      />
                     </div>
                   </div>
 
@@ -1581,50 +1573,14 @@ export function Insurance() {
                     </div>
 
                     <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                      <svg
-                        width="100%"
-                        height="44"
-                        viewBox="0 0 280 44"
-                        preserveAspectRatio="none"
-                        className="block overflow-hidden"
-                        aria-label="Vencimentos por semana"
-                      >
-                        <defs>
-                          <linearGradient id={`expiring-history-gradient-${expiringSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#BA7517" stopOpacity="0.45" />
-                            <stop offset="75%" stopColor="#BA7517" stopOpacity="0.08" />
-                            <stop offset="100%" stopColor="#BA7517" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-
-                        {expiringArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={expiringArea} fill={`url(#expiring-history-gradient-${expiringSparklineId})`} />}
-
-                        {expiringLine && (
-                          <>
-                            <motion.path
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 0.6, ease: "easeOut" }}
-                              d={expiringLine}
-                              fill="none"
-                              stroke="#BA7517"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <circle cx="280" cy={(() => {
-                              const values = expiringSparklineValues;
-                              const minY = 36;
-                              const maxY = 8;
-                              const minValue = Math.min(...values);
-                              const maxValue = Math.max(...values);
-                              const range = Math.max(maxValue - minValue, 1);
-                              const normalized = (values[values.length - 1] - minValue) / range;
-                              return minY - normalized * (minY - maxY);
-                            })()} r="2.5" fill="#BA7517" />
-                          </>
-                        )}
-                      </svg>
+                      <MemoSingleSparkline
+                        values={expiringSparklineValues}
+                        area={expiringArea}
+                        line={expiringLine}
+                        gradientId={`expiring-history-gradient-${expiringSparklineId}`}
+                        color="#BA7517"
+                        ariaLabel="Vencimentos por semana"
+                      />
                     </div>
                   </div>
 
@@ -1669,55 +1625,14 @@ export function Insurance() {
                     </div>
 
                     <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                      <svg
-                        width="100%"
-                        height="44"
-                        viewBox="0 0 280 44"
-                        preserveAspectRatio="none"
-                        className="block overflow-hidden"
-                        aria-label="Acumulado de vencidas nas últimas 8 semanas"
-                      >
-                        <defs>
-                          <linearGradient id={`expired-history-gradient-${expiredSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.50" />
-                            <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.10" />
-                            <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-
-                        {vencidasArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={vencidasArea} fill={`url(#expired-history-gradient-${expiredSparklineId})`} />}
-
-                        {vencidasLine && (
-                          <>
-                            <motion.path
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 0.6, ease: "easeOut" }}
-                              d={vencidasLine}
-                              fill="none"
-                              stroke="#A32D2D"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <circle
-                              cx="280"
-                              cy={(() => {
-                                const values = vencidasHistory;
-                                const minY = 36;
-                                const maxY = 8;
-                                const minValue = Math.min(...values);
-                                const maxValue = Math.max(...values);
-                                const range = Math.max(maxValue - minValue, 1);
-                                const normalized = (values[values.length - 1] - minValue) / range;
-                                return minY - normalized * (minY - maxY);
-                              })()}
-                              r="2.5"
-                              fill="#A32D2D"
-                            />
-                          </>
-                        )}
-                      </svg>
+                      <MemoSingleSparkline
+                        values={vencidasHistory}
+                        area={vencidasArea}
+                        line={vencidasLine}
+                        gradientId={`expired-history-gradient-${expiredSparklineId}`}
+                        color="#A32D2D"
+                        ariaLabel="Acumulado de vencidas nas últimas 8 semanas"
+                      />
                     </div>
                   </div>
 
@@ -1772,77 +1687,20 @@ export function Insurance() {
                     </div>
 
                     <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
-                      <svg
-                        width="100%"
-                        height="44"
-                        viewBox="0 0 280 44"
-                        preserveAspectRatio="none"
-                        className="block overflow-hidden"
-                        aria-label="Cobertura disponível versus sinistros pagos nas últimas 8 semanas"
-                      >
-                        <defs>
-                          <linearGradient id={`coverage-available-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#639922" stopOpacity="0.40" />
-                            <stop offset="75%" stopColor="#639922" stopOpacity="0.06" />
-                            <stop offset="100%" stopColor="#639922" stopOpacity="0" />
-                          </linearGradient>
-                          <linearGradient id={`coverage-paid-gradient-${coverageSparklineId}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#A32D2D" stopOpacity="0.35" />
-                            <stop offset="75%" stopColor="#A32D2D" stopOpacity="0.06" />
-                            <stop offset="100%" stopColor="#A32D2D" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-
-                        {coverageDisponivelArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coverageDisponivelArea} fill={`url(#coverage-available-gradient-${coverageSparklineId})`} />}
-                        {coveragePagoArea && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={coveragePagoArea} fill={`url(#coverage-paid-gradient-${coverageSparklineId})`} />}
-
-                        {coverageDisponivelLine && (
-                          <>
-                            <motion.path
-                              initial={{ pathLength: 0 }}
-                              animate={{ pathLength: 1 }}
-                              transition={{ duration: 0.6, ease: "easeOut" }}
-                              d={coverageDisponivelLine}
-                              fill="none"
-                              stroke="#639922"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <circle cx="280" cy={(() => {
-                              const values = coverageDisponivelValues;
-                              const minY = 36;
-                              const maxY = 8;
-                              const normalized = values[values.length - 1] / coverageGlobalMax;
-                              return minY - normalized * (minY - maxY);
-                            })()} r="2.5" fill="#639922" />
-                          </>
-                        )}
-
-                        {coveragePagoLine && (
-                          <>
-                            <motion.path
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
-                              d={coveragePagoLine}
-                              fill="none"
-                              stroke="#A32D2D"
-                              strokeWidth="1.5"
-                              strokeDasharray="4 3"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <circle cx="280" cy={(() => {
-                              const values = coveragePagoValues;
-                              const minY = 36;
-                              const maxY = 8;
-                              const normalized = values[values.length - 1] / coverageGlobalMax;
-                              return minY - normalized * (minY - maxY);
-                            })()} r="2.5" fill="#A32D2D" />
-                          </>
-                        )}
-                      </svg>
+                      <MemoDoubleSparkline
+                        values1={coverageDisponivelValues}
+                        values2={coveragePagoValues}
+                        area1={coverageDisponivelArea}
+                        area2={coveragePagoArea}
+                        line1={coverageDisponivelLine}
+                        line2={coveragePagoLine}
+                        gradientId1={`coverage-available-gradient-${coverageSparklineId}`}
+                        gradientId2={`coverage-paid-gradient-${coverageSparklineId}`}
+                        color1="#639922"
+                        color2="#A32D2D"
+                        globalMax={coverageGlobalMax}
+                        ariaLabel="Cobertura disponível versus sinistros pagos nas últimas 8 semanas"
+                      />
                     </div>
                   </div>
                 </>
@@ -2036,11 +1894,13 @@ export function Insurance() {
                       </div>
                       <h3 className="text-[13px] font-bold text-gray-900 dark:text-white">Atividade Recente</h3>
                     </div>
-                    <span className="text-[10px] text-gray-400 dark:text-[#64748B] font-medium uppercase tracking-wide">Últimas ações</span>
+                    <span className="text-[10px] text-gray-400 dark:text-[#64748B] font-medium uppercase tracking-wide">
+                      {selectedMapLuc ? 'Desta apólice' : 'Últimas ações'}
+                    </span>
                   </div>
 
                   <div className="divide-y overflow-y-auto flex-1" style={{ borderColor: colors.cardBorder }}>
-                    {loadingAtividades ? (
+                    {(selectedMapLuc ? loadingLocal : loadingAtividades) ? (
                       <div className="flex flex-col gap-3 p-4">
                         {[1, 2, 3].map(i => (
                           <div key={i} className="flex items-start gap-3 animate-pulse">
@@ -2052,7 +1912,7 @@ export function Insurance() {
                           </div>
                         ))}
                       </div>
-                    ) : atividadesRecentes.length === 0 ? (
+                    ) : (selectedMapLuc ? localActivities : atividadesRecentes).length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 gap-3">
                         <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-[#0a0a0a] flex items-center justify-center">
                           <Clock className="w-5 h-5 text-gray-400" />
@@ -2060,7 +1920,7 @@ export function Insurance() {
                         <p className="text-[12px] text-gray-400 dark:text-[#64748B] text-center">Nenhuma atividade registrada ainda.<br />Crie ou edite uma apólice para começar.</p>
                       </div>
                     ) : (
-                      atividadesRecentes.map((atividade, i) => {
+                      (selectedMapLuc ? localActivities : atividadesRecentes).map((atividade, i) => {
                         const iconConfig: Record<string, { icon: React.ReactNode; bg: string; text: string }> = {
                           criada: { icon: <FilePlus className="w-3.5 h-3.5" />, bg: 'bg-[#1c3d32]/10 dark:bg-[#1c3d32]/30', text: 'text-[#1c3d32] dark:text-[#2E7A5A]' },
                           editada: { icon: <FilePenLine className="w-3.5 h-3.5" />, bg: 'bg-[#bc9b7c]/15 dark:bg-[#bc9b7c]/20', text: 'text-[#8a6845] dark:text-[#D1B7A1]' },
@@ -2545,7 +2405,7 @@ export function Insurance() {
                     <input
                       id="file-upload"
                       type="file"
-                      accept=".pdf,application/pdf"
+                      accept=".pdf,.jpg,.jpeg,.png,.PDF,.JPG,.JPEG,.PNG"
                       onChange={handleFileSelect}
                       className="hidden"
                     />
@@ -2817,3 +2677,82 @@ export function Insurance() {
     </div>
   );
 }
+
+const MemoSingleSparkline = memo(({ 
+  values, area, line, gradientId, color, ariaLabel 
+}: any) => {
+  return (
+    <svg width="100%" height="44" viewBox="0 0 280 44" preserveAspectRatio="none" className="block overflow-hidden" aria-label={ariaLabel}>
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.45" />
+          <stop offset="75%" stopColor={color} stopOpacity="0.08" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {area && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={area} fill={`url(#${gradientId})`} />}
+      {line && (
+        <>
+          <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6, ease: "easeOut" }} d={line} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="280" cy={(() => {
+            const minY = 36;
+            const maxY = 8;
+            const minValue = Math.min(...values);
+            const maxValue = Math.max(...values);
+            const range = Math.max(maxValue - minValue, 1);
+            const normalized = (values[values.length - 1] - minValue) / range;
+            return minY - normalized * (minY - maxY);
+          })()} r="2.5" fill={color} />
+        </>
+      )}
+    </svg>
+  );
+}, (prev, next) => JSON.stringify(prev.values) === JSON.stringify(next.values));
+
+const MemoDoubleSparkline = memo(({ 
+  values1, values2, area1, area2, line1, line2, gradientId1, gradientId2, color1, color2, globalMax, ariaLabel 
+}: any) => {
+  return (
+    <svg width="100%" height="44" viewBox="0 0 280 44" preserveAspectRatio="none" className="block overflow-hidden" aria-label={ariaLabel}>
+      <defs>
+        <linearGradient id={gradientId1} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color1} stopOpacity="0.40" />
+          <stop offset="75%" stopColor={color1} stopOpacity="0.06" />
+          <stop offset="100%" stopColor={color1} stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id={gradientId2} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color2} stopOpacity="0.35" />
+          <stop offset="75%" stopColor={color2} stopOpacity="0.06" />
+          <stop offset="100%" stopColor={color2} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {area1 && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={area1} fill={`url(#${gradientId1})`} />}
+      {area2 && <motion.path initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.2 }} d={area2} fill={`url(#${gradientId2})`} />}
+
+      {line1 && (
+        <>
+          <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6, ease: "easeOut" }} d={line1} fill="none" stroke={color1} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="280" cy={(() => {
+            const minY = 36;
+            const maxY = 8;
+            const normalized = values1[values1.length - 1] / globalMax;
+            return minY - normalized * (minY - maxY);
+          })()} r="2.5" fill={color1} />
+        </>
+      )}
+      {line2 && (
+        <>
+          <motion.path initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.6, ease: "easeOut" }} d={line2} fill="none" stroke={color2} strokeWidth="1.5" strokeDasharray="4 4" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="280" cy={(() => {
+            const minY = 36;
+            const maxY = 8;
+            const normalized = values2[values2.length - 1] / globalMax;
+            return minY - normalized * (minY - maxY);
+          })()} r="2.5" fill={color2} />
+        </>
+      )}
+    </svg>
+  );
+}, (prev, next) => JSON.stringify(prev.values1) === JSON.stringify(next.values1) && JSON.stringify(prev.values2) === JSON.stringify(next.values2));
+

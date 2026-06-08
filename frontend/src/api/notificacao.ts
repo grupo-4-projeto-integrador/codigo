@@ -8,6 +8,7 @@ export interface Notificacao {
   loja?: string;
   cobertura?: string;
   dias: number;
+  mensagem?: string;
 }
 
 export async function getNotificacoes(): Promise<Notificacao[]> {

@@ -208,11 +208,11 @@ export const CellTooltip = memo(function CellTooltip({ state }: CellTooltipProps
       ref={tooltipRef}
       style={{
         position: "fixed",
-        left: screenX + OFFSET_X,
-        top: screenY + OFFSET_Y,
+        left: 0,
+        top: 0,
         zIndex: 9999,
         pointerEvents: "none",
-        transform: "translate3d(0,0,0)",
+        transform: `translate3d(${screenX + OFFSET_X}px, ${screenY + OFFSET_Y}px, 0)`,
       }}
     >
       <motion.div

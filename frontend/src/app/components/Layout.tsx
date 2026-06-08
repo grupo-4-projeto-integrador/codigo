@@ -17,7 +17,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Presentation,
-  X as XIcon
+  X as XIcon,
+  Archive,
+  Activity
 } from "lucide-react";
 import logo from "../../imports/image-4.png";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
@@ -265,6 +267,7 @@ export function Layout() {
   const unreadCount = notifications.filter(n => !n.lida).length;
   const vencidas = notifications.filter(n => n.type === 'vencida').sort((a, b) => b.dias - a.dias);
   const aVencer = notifications.filter(n => n.type === 'a_vencer').sort((a, b) => a.dias - b.dias);
+  const equipe = notifications.filter(n => n.type === 'equipe');
 
   const [bellAnimate, setBellAnimate] = useState(false);
   const prevUnreadRef = useRef(unreadCount);
@@ -398,54 +401,92 @@ export function Layout() {
               </div>
 
               {/* Apólices Vencidas */}
-              <div className="border-b border-gray-200 dark:border-[#222222]">
-                <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0a0a]">
-                  <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices Vencidas (1)</h4>
-                </div>
-                <div
-                  className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
-                  onClick={() => {
-                    setIsNotificationOpen(false);
-                    navigate('/seguros');
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2.5 rounded-lg flex-shrink-0 bg-red-100 dark:bg-red-900/20">
-                      <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">Apólice Vencida</p>
-                      <p className="text-sm text-gray-600 dark:text-[#94A3B8] mt-1">SU-2024-4521 - Alagamento e Infiltração</p>
-                      <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1.5">Vencida há 49 dias</p>
-                    </div>
+              {vencidas.length > 0 && (
+                <div className="border-b border-gray-200 dark:border-[#222222]">
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0a0a]">
+                    <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices Vencidas ({vencidas.length})</h4>
                   </div>
+                  {vencidas.map(n => (
+                    <div
+                      key={`mob-${n.id}`}
+                      className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
+                      onClick={() => {
+                        setIsNotificationOpen(false);
+                        navigate(`/seguros?search=${n.luc}`);
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2.5 rounded-lg flex-shrink-0 bg-red-100 dark:bg-red-900/20">
+                          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.loja}</p>
+                          <p className="text-sm text-gray-600 dark:text-[#94A3B8] mt-1">{n.luc}</p>
+                          <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1.5">Vencida há {n.dias} dias</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
 
               {/* Apólices a Vencer */}
-              <div className="border-b border-gray-200 dark:border-[#222222]">
-                <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0a0a]">
-                  <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices a Vencer (1)</h4>
-                </div>
-                <div
-                  className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
-                  onClick={() => {
-                    setIsNotificationOpen(false);
-                    navigate('/seguros');
-                  }}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2.5 rounded-lg flex-shrink-0 bg-orange-100 dark:bg-orange-900/20">
-                      <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">Atenção: Vence em Breve</p>
-                      <p className="text-sm text-gray-600 dark:text-[#94A3B8] mt-1">TM-2024-9012 - Seguro Incêndio</p>
-                      <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1.5">Vence em 18 dias</p>
-                    </div>
+              {aVencer.length > 0 && (
+                <div className="border-b border-gray-200 dark:border-[#222222]">
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0a0a]">
+                    <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices a Vencer ({aVencer.length})</h4>
                   </div>
+                  {aVencer.map(n => (
+                    <div
+                      key={`mob-${n.id}`}
+                      className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
+                      onClick={() => {
+                        setIsNotificationOpen(false);
+                        navigate(`/seguros?search=${n.luc}`);
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2.5 rounded-lg flex-shrink-0 bg-orange-100 dark:bg-orange-900/20">
+                          <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.loja}</p>
+                          <p className="text-sm text-gray-600 dark:text-[#94A3B8] mt-1">{n.luc}</p>
+                          <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1.5">Vence em {n.dias} dias</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
+
+              {/* Atividade da Equipe */}
+              {equipe.length > 0 && (
+                <div className="border-b border-gray-200 dark:border-[#222222]">
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0a0a]">
+                    <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Atividade da Equipe</h4>
+                  </div>
+                  {equipe.map(n => (
+                    <div
+                      key={`mob-${n.id}`}
+                      className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
+                      onClick={() => {
+                        setIsNotificationOpen(false);
+                        navigate(`/seguros?search=${n.luc}`);
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="p-2.5 rounded-lg flex-shrink-0 bg-blue-100 dark:bg-blue-900/20">
+                          <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.mensagem}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="p-4 bg-gray-50 dark:bg-[#0a0a0a] text-center">
                 <button
@@ -751,6 +792,49 @@ export function Layout() {
                                 <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
                                   {n.cobertura} • Vence em {n.dias} dias
                                 </p>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                        </AnimatePresence>
+                      </div>
+                    )}
+
+                    {/* Atividade da Equipe */}
+                    {equipe.length > 0 && (
+                      <div className="border-b border-gray-100 dark:border-[#222222]">
+                        <div className="px-3 py-1.5 bg-gray-50/50 dark:bg-[#0a0a0a]/50">
+                          <h4 className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Atividade da Equipe</h4>
+                        </div>
+                        <AnimatePresence>
+                        {equipe.map(n => {
+                          const isUnread = !n.lida;
+                          const dotClass = n.lida ? 'border border-gray-300 dark:border-gray-600 bg-transparent' : 'bg-blue-500';
+                          const bgClass = isUnread ? 'bg-[rgba(59,130,246,0.03)] dark:bg-[rgba(59,130,246,0.05)]' : 'opacity-80';
+                          
+                          return (
+                            <motion.div 
+                              key={`eq-${n.id}`} 
+                              layout
+                              initial={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              transition={{ duration: 0.2 }}
+                              onClick={() => {
+                                setIsNotificationOpen(false);
+                                navigate(`/seguros?search=${n.luc}`);
+                              }}
+                              className={`group flex items-start gap-2 p-2.5 border-b border-gray-50 dark:border-[#222222]/50 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] cursor-pointer transition-colors ${bgClass}`}
+                            >
+                              <div className={`w-[6px] h-[6px] rounded-full mt-1.5 flex-shrink-0 ${dotClass}`} />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-baseline">
+                                  <p className="text-[12px] font-medium text-gray-900 dark:text-gray-100 truncate pr-2">
+                                    {n.mensagem}
+                                  </p>
+                                  <button onClick={(e) => handleArchiveSingle(e, n.id)} className="text-[10px] text-gray-400 hover:text-blue-500 hidden group-hover:block" title="Arquivar">
+                                    <Archive className="w-3 h-3" />
+                                  </button>
+                                </div>
                               </div>
                             </motion.div>
                           );

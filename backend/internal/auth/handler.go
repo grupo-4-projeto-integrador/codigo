@@ -5,22 +5,25 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"grupo4/seguros/internal/audit"
 	"grupo4/seguros/internal/middleware"
 	"grupo4/seguros/pkg/response"
 )
 
 // Handler contém as dependências do módulo auth.
 type Handler struct {
-	db     *sql.DB
-	secret string
+	db       *sql.DB
+	auditSvc *audit.Service
+	secret   string
 }
 
 // NewHandler cria um handler de autenticação.
-func NewHandler(db *sql.DB, secret string) *Handler {
-	return &Handler{db: db, secret: secret}
+func NewHandler(db *sql.DB, auditSvc *audit.Service, secret string) *Handler {
+	return &Handler{db: db, auditSvc: auditSvc, secret: secret}
 }
 
 // Login — POST /api/auth/login
@@ -83,6 +86,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Login: erro ao gerar token: %v", err)
 		_ = response.Fail(w, http.StatusInternalServerError, "Erro ao gerar token", requestID, nil)
 		return
+	}
+
+	if h.auditSvc != nil {
+		h.auditSvc.LogFromRequest(r, "login", "sessao", strconv.Itoa(u.ID), nil, nil)
 	}
 
 	_ = response.Success(w, http.StatusOK, LoginResponse{
