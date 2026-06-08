@@ -1,15 +1,48 @@
-name: CI
+name: Backend CI
 
 on:
   push:
     branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend.yml'
   pull_request:
     branches: [ main, master ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci-backend.yml'
 
 jobs:
-  build-and-test:
+  lint:
+    name: Lint Go
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: backend/go.sum
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: backend
+          args: --timeout=5m
 
+  sast:
+    name: Security Scan (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: ./backend/...
+
+  test:
+    name: Test and Smoke
+    runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:15
@@ -24,32 +57,18 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
+      
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
+          cache-dependency-path: backend/go.sum
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Run Backend Tests
+      - name: Run Unit Tests
         working-directory: ./backend
-        env:
-          PG_HOST: localhost
-          PG_PORT: 5432
-          PG_USER: postgres
-          PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'sua_senha' }}
-          PG_DBNAME: seguros_db
-          PG_SSLMODE: disable
-        run: |
-          go test ./...
+        run: go test -race ./...
 
       - name: Run Migrations and Seed
         working-directory: ./backend
@@ -60,8 +79,7 @@ jobs:
           PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'sua_senha' }}
           PG_DBNAME: seguros_db
           PG_SSLMODE: disable
-        run: |
-          go run ./cmd/migrate -seed
+        run: go run ./cmd/migrate -seed
 
       - name: Run Smoke Integration Tests
         working-directory: ./backend
@@ -76,14 +94,3 @@ jobs:
           go run ./cmd/api &
           sleep 5
           go test -tags smoke ./smoke_test.go -v
-
-      - name: Install Frontend
-        working-directory: ./frontend
-        run: |
-          corepack enable
-          corepack pnpm install
-
-      - name: Build Frontend
-        working-directory: ./frontend
-        run: |
-          corepack pnpm build

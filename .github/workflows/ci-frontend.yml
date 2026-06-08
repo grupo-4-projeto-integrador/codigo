@@ -1,0 +1,71 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci-frontend.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/ci-frontend.yml'
+
+jobs:
+  lint-and-sast:
+    name: Lint & SAST
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+          
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: pnpm install
+
+      - name: Run Linter
+        working-directory: ./frontend
+        run: |
+          if pnpm run | grep -q lint; then
+            pnpm run lint
+          else
+            echo "No lint script found, skipping."
+          fi
+
+      - name: Run SAST (pnpm audit)
+        working-directory: ./frontend
+        run: pnpm audit --audit-level high || true
+
+  build:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: pnpm install
+
+      - name: Build
+        working-directory: ./frontend
+        run: pnpm build
