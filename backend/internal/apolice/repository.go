@@ -501,8 +501,6 @@ func (r *PostgresRepository) GetDocumentoByID(id string) (Documento, error) {
 	return doc, nil
 }
 
-
-
 func (r *PostgresRepository) GetDocumentosByApolice(luc string) ([]Documento, error) {
 	rows, err := r.db.Query(`SELECT id, apolice_luc, nome, arquivo_path, data_adicao, deleted_at FROM documentos WHERE apolice_luc = $1`, luc)
 	if err != nil {
@@ -536,5 +534,3 @@ func (r *PostgresRepository) CreateDocumento(doc Documento) (Documento, error) {
 	}
 	return doc, nil
 }
-
-

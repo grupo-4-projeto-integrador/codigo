@@ -77,8 +77,8 @@ type UpdateResponsavelPayload struct {
 }
 
 type DocumentoDTO struct {
-	ID          int    `json:"id"`
-	ApoliceLuc  string `json:"apolice_luc"`
-	Nome        string `json:"nome"`
-	DataAdicao  string `json:"data_adicao"`
+	ID         int    `json:"id"`
+	ApoliceLuc string `json:"apolice_luc"`
+	Nome       string `json:"nome"`
+	DataAdicao string `json:"data_adicao"`
 }

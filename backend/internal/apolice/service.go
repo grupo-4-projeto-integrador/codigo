@@ -218,8 +218,6 @@ func (s *Service) GetDocumentoByID(id string) (Documento, error) {
 	return s.repo.GetDocumentoByID(id)
 }
 
-
-
 func (s *Service) GetDocumentosByApolice(luc string) ([]Documento, error) {
 	return s.repo.GetDocumentosByApolice(luc)
 }
@@ -227,5 +225,3 @@ func (s *Service) GetDocumentosByApolice(luc string) ([]Documento, error) {
 func (s *Service) CreateDocumento(doc Documento) (Documento, error) {
 	return s.repo.CreateDocumento(doc)
 }
-
-

@@ -90,6 +90,7 @@ jobs:
           PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'sua_senha' }}
           PG_DBNAME: seguros_db
           PG_SSLMODE: disable
+          JWT_SECRET: ""
         run: |
           go run ./cmd/api &
           sleep 5

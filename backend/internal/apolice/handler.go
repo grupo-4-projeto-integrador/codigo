@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"math"
 	"net/http"
-	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -405,7 +405,7 @@ func calculateHealthScore(items []Apolice, at time.Time) int {
 
 	total := len(items)
 	rawScore := (float64(conformes) * 1.0) + (float64(aVencer) * 0.4) - (float64(vencidas) * 1.5)
-	
+
 	percentage := (rawScore / float64(total)) * 100
 	return int(math.Round(math.Max(0, math.Min(100, percentage))))
 }
@@ -514,7 +514,7 @@ func (h *Handler) FilaDeAcao(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) SearchApolices(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 	q := r.URL.Query().Get("q")
-	
+
 	items, err := h.service.SearchApolices(q)
 	if err != nil {
 		h.writeError(w, requestID, err)
@@ -731,7 +731,6 @@ func (h *Handler) UpdateApoliceResponsavel(w http.ResponseWriter, r *http.Reques
 	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Responsável atualizado com sucesso"}, requestID)
 }
 
-
 func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
@@ -830,26 +829,24 @@ func (h *Handler) DownloadDocumento(w http.ResponseWriter, r *http.Request) {
 		response.Fail(w, http.StatusNotFound, "Documento nÃœo encontrado", middleware.RequestIDFromContext(r.Context()), nil)
 		return
 	}
-	
+
 	basePath, err := filepath.Abs("uploads")
 	if err != nil {
 		response.Fail(w, http.StatusInternalServerError, "Erro interno", middleware.RequestIDFromContext(r.Context()), nil)
 		return
 	}
-	
+
 	caminhoAbsoluto := filepath.Join(basePath, doc.ArquivoPath)
-	
+
 	// Prevent path traversal
 	if !strings.HasPrefix(caminhoAbsoluto, basePath) {
 		response.Fail(w, http.StatusForbidden, "Acesso negado", middleware.RequestIDFromContext(r.Context()), nil)
 		return
 	}
-	
+
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", doc.Nome))
 	http.ServeFile(w, r, caminhoAbsoluto)
 }
-
-
 
 func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -863,7 +860,7 @@ func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	
+
 	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
 		response.Fail(w, http.StatusBadRequest, "Falha ao processar form data", middleware.RequestIDFromContext(r.Context()), err)
