@@ -99,11 +99,11 @@ func (m *MockRepository) GetUsuarios() ([]Usuario, error) {
 	return nil, m.Err
 }
 
-func (m *MockRepository) SearchApolices(query string) ([]Apolice, error) {
+func (m *MockRepository) SearchApolices(_ string) ([]Apolice, error) {
 	return nil, m.Err
 }
 
-func (m *MockRepository) UpdateResponsavel(luc string, responsavelID int64, ator string) error {
+func (m *MockRepository) UpdateResponsavel(_ string, _ int64, _ string) error {
 	return m.Err
 }
 
