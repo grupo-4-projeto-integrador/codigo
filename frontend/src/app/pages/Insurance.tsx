@@ -324,6 +324,12 @@ export function Insurance() {
           navigate(`/seguros/apolice/${encodeURIComponent(activePolicyId)}`);
         } else if (e.key.toLowerCase() === 'e' && activePolicyId) {
           navigate(`/seguros/apolice/${encodeURIComponent(activePolicyId)}/editar`);
+        } else if (e.key.toLowerCase() === 'l') {
+          e.preventDefault();
+          setCurrentPage(p => Math.min(totalFilteredPages, p + 1));
+        } else if (e.key.toLowerCase() === 'j') {
+          e.preventDefault();
+          setCurrentPage(p => Math.max(1, p - 1));
         }
       }
     };
@@ -1247,8 +1253,7 @@ export function Insurance() {
                   placeholder="Buscar por loja, LUC ou segmento..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-                  style={{ color: colors.brandMaroon }}
+                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] text-[#9F1239] dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
                 />
               </div>
 

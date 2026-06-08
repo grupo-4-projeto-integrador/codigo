@@ -128,16 +128,19 @@ export function Layout() {
 
   useEffect(() => {
     const handleToggleTheme = () => toggleDarkMode();
-    const handleAbrirNotificacoes = () => setIsNotificationOpen(true);
+    const handleAbrirNotificacoes = () => setIsNotificationOpen(prev => !prev);
+    const handleToggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
     const handleMarcarLidas = () => handleMarkAllRead();
 
     window.addEventListener('toggle-theme', handleToggleTheme);
     window.addEventListener('abrir-notificacoes', handleAbrirNotificacoes);
+    window.addEventListener('toggle-sidebar', handleToggleSidebar);
     window.addEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
 
     return () => {
       window.removeEventListener('toggle-theme', handleToggleTheme);
       window.removeEventListener('abrir-notificacoes', handleAbrirNotificacoes);
+      window.removeEventListener('toggle-sidebar', handleToggleSidebar);
       window.removeEventListener('marcar-notificacoes-lidas', handleMarcarLidas);
     };
   }, [darkMode]); // Needs darkMode so toggleDarkMode closure has the latest value

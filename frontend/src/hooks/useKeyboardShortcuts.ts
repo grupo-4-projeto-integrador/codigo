@@ -54,9 +54,12 @@ export function useKeyboardShortcuts() {
           window.dispatchEvent(new CustomEvent("open-command-palette"));
         }
       } else if (!isInput) {
-        if (e.altKey && e.key.toLowerCase() === "c") {
+        if (e.altKey && e.key.toLowerCase() === "s") {
           e.preventDefault();
           setIsShortcutsModalOpen(true);
+        } else if (e.altKey && e.key.toLowerCase() === "c") {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent("toggle-sidebar"));
         } else if (e.altKey && e.key.toLowerCase() === "h") {
           e.preventDefault();
           navigate("/seguros");

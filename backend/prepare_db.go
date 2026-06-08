@@ -175,6 +175,23 @@ PG_SSLMODE=disable
 		log.Printf("⚠️  Não achou migrations/003_cnpj_numero_apolice.sql: %v", err)
 	}
 
+	// Create notificacoes table (migration)
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS notificacoes (
+		id SERIAL PRIMARY KEY,
+		usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+		apolice_luc VARCHAR(50) NOT NULL,
+		tipo VARCHAR(50) NOT NULL,
+		lida BOOLEAN DEFAULT FALSE,
+		arquivada BOOLEAN DEFAULT FALSE,
+		created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
+	);`)
+	if err != nil {
+		log.Printf("⚠️  Aviso ao criar notificacoes: %v", err)
+	} else {
+		fmt.Println("✅ Tabela notificacoes configurada com sucesso.")
+	}
+	_, _ = db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_notificacoes_active ON notificacoes(usuario_id, apolice_luc, tipo) WHERE arquivada = FALSE;")
+
 	fmt.Println("\n🎉 Tudo pronto! O banco de dados está 100% configurado.")
 	fmt.Println("👉 Agora você pode iniciar o servidor rodando:")
 	fmt.Println("   go run ./cmd/api")

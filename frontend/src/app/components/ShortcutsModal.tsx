@@ -38,7 +38,8 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         { label: "Toggle Modo Apresentação", keys: ["Ctrl", "Shift", "P"] },
         { label: "Fechar modal/drawer/painel aberto", keys: ["Esc"] },
         { label: "Abrir painel de notificações", keys: ["Alt", "N"] },
-        { label: "Abrir lista de atalhos", keys: ["Alt", "C"] },
+        { label: "Ocultar/Expandir menu lateral", keys: ["Alt", "C"] },
+        { label: "Abrir lista de atalhos", keys: ["Alt", "S"] },
       ],
     },
   ];

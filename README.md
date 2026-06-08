@@ -1,6 +1,6 @@
 # Flamboyant Shopping - Sistema de Gestão de Seguros (PoC)
 
-Bem-vindo ao repositório do **Sistema de Gestão de Seguros** do Flamboyant Shopping. Este projeto é uma Prova de Conceito (PoC) desenvolvida para centralizar, monitorar e gerenciar todas as apólices de seguros dos lojistas de forma eficiente, visual e segura.
+Bem-vindo ao repositório do **Sistema de Gestão de Seguros** do Flamboyant Shopping. Este projeto é um projeto acadêmico desenvolvido para centralizar, monitorar e gerenciar todas as apólices de seguros dos lojistas de forma eficiente, visual e segura.
 
 ## 🎯 Objetivo do Projeto
 
@@ -11,6 +11,7 @@ O objetivo principal deste sistema é automatizar e simplificar a gestão de con
 * **Dashboard Interativo**: Visão geral com KPIs em tempo real (Health Score de conformidade, total segurado, taxas de renovação).
 * **Mapa de Conformidade**: Visualização em grid de todos os LUCs (Lojas) com cores indicativas do status da apólice (Vigente, Vencida, A Vencer).
 * **Gestão de Apólices (CRUD)**: Criação, edição, visualização e deleção de apólices, com suporte a upload de documentos comprobatórios.
+* **Sistema de Notificações Inteligente**: Avisos automatizados e com memória persistente sobre apólices vencidas ou prestes a vencer.
 * **Controle de Acesso (RBAC)**: 
   * **Admin**: Acesso total, incluindo Gestão de Usuários e visualização do Audit Log.
   * **Gestor**: Pode criar, editar e renovar apólices.

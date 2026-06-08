@@ -19,7 +19,11 @@ export function FocusModeProvider({ children }: { children: ReactNode }) {
   const exitFocusMode = () => setIsFocusMode(false);
 
   useEffect(() => {
-    // Escutando apenas o custom event despachado pelo layout ou hook
+    const handleCloseModals = () => {
+      if (isFocusMode) setIsFocusMode(false);
+    };
+    window.addEventListener("close-modals", handleCloseModals);
+    return () => window.removeEventListener("close-modals", handleCloseModals);
   }, [isFocusMode]);
 
   // Add/remove class on body for CSS targeting
