@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
+import { getDocumentos, getCoberturas } from "../../api/apolice";
+import { downloadArquivo } from "../utils/downloadUtils";
+import { exportApoliceParaPDF } from "../utils/exportUtils";
+import { toast } from "sonner";
+import { formatCNPJ } from "../utils/formatCNPJ";
 import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
-import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getMapFilters, subscribeMapFilters } from "../store";
@@ -191,15 +196,6 @@ export function ComplianceMapV2({
 
   useEffect(() => {
     if (selectedLuc && !loading && apolices.length > 0) {
-      const isFilteredOut = !allLucs.includes(selectedLuc);
-      if (isFilteredOut) {
-        const allSortedLucs = getSortedUniqueLucs(apolices, getMapFilters());
-        const lucIndex = allSortedLucs.indexOf(selectedLuc);
-        if (lucIndex !== -1) {
-          const targetPage = Math.floor(lucIndex / ITEMS_PER_PAGE) + 1;
-          setCurrentPage(targetPage);
-        }
-      } else {
         const lucIndex = allLucs.indexOf(selectedLuc);
         if (lucIndex !== -1) {
           const targetPage = Math.floor(lucIndex / ITEMS_PER_PAGE) + 1;
@@ -207,9 +203,8 @@ export function ComplianceMapV2({
             setCurrentPage(targetPage);
           }
         }
-      }
     }
-  }, [selectedLuc, allLucs, ITEMS_PER_PAGE, currentPage, loading, apolices]);
+  }, [selectedLuc, allLucs, ITEMS_PER_PAGE, currentPage, loading]);
 
   const totalPages = Math.ceil(allLucs.length / ITEMS_PER_PAGE);
   const paginatedLucs = useMemo(() => {
@@ -240,7 +235,7 @@ export function ComplianceMapV2({
 
   return (
     <section
-      className={hideHeader ? "w-full relative h-full flex flex-col" : "w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#0a0a0a] dark:border-[#222222] relative"}
+      className={hideHeader ? "w-full relative h-full flex flex-col" : "w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#151515] dark:border-[#222222] relative"}
     >
       {/* Header */}
       {!hideHeader && (
@@ -287,13 +282,13 @@ export function ComplianceMapV2({
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
           <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar">
             <TooltipProvider delayDuration={100}>
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="popLayout">
                 <motion.div 
                   key={currentPage}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
                   className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${tileWidth})`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}
                 >
               {paginatedLucs.map((luc: string, index: number) => {
@@ -446,12 +441,44 @@ export interface ComplianceSidePanelProps {
   onClose: () => void;
   onViewApolice?: (luc: string) => void;
   onEditApolice?: (luc: string) => void;
+  onRenovarApolice?: (luc: string) => void;
 }
 
-export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEditApolice }: ComplianceSidePanelProps) {
+export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEditApolice, onRenovarApolice }: ComplianceSidePanelProps) {
   const navigate = useNavigate();
   const [apolices, setApolices] = useState<ApoliceRecord[]>([]);
-  const [recentActivities, setRecentActivities] = useState<ActivityRecentItem[]>([]);
+  const [documentos, setDocumentos] = useState<any[]>([]);
+
+  const [isDownloadingApolice, setIsDownloadingApolice] = useState(false);
+
+  const handleDownloadApolice = async () => {
+    if (!selectedPolicy) return;
+    setIsDownloadingApolice(true);
+    try {
+      const lucStr = selectedPolicy.luc || selectedPolicy.id || '';
+      const docs = documentos || [];
+      let targetDoc = docs.find(d => {
+        const n = (d.nome || d.nome_arquivo || '').toLowerCase();
+        return n === 'apolice_completa.pdf' ||
+               n.includes(`apolice_${lucStr.toLowerCase()}`) ||
+               n.includes(`apólice_${lucStr.toLowerCase()}`) ||
+               n.includes('apolice') ||
+               n.includes('apólice');
+      });
+
+      if (targetDoc) {
+        await downloadArquivo(targetDoc.id, targetDoc.nome || targetDoc.nome_arquivo || `apolice_${lucStr}.pdf`);
+      } else {
+        const coberturas = await getCoberturas(selectedPolicy.id);
+        exportApoliceParaPDF(selectedPolicy, coberturas);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao baixar apólice");
+    } finally {
+      setIsDownloadingApolice(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -460,6 +487,18 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
     }).catch(console.error);
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    if (selectedLuc) {
+      getDocumentos(selectedLuc).then(docs => {
+        if (active) setDocumentos(docs || []);
+      }).catch(console.error);
+    } else {
+      setDocumentos([]);
+    }
+    return () => { active = false; };
+  }, [selectedLuc]);
 
   const policyByLuc = new Map(apolices.map((policy) => [policy.luc, policy]));
   const selectedPolicy = selectedLuc ? policyByLuc.get(selectedLuc) : undefined;
@@ -501,54 +540,53 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
             className="flex flex-col h-full w-full bg-white dark:bg-[#151515]"
           >
       {/* Panel Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-white dark:bg-[#151515] dark:border-[#222222]">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#0a0a0a] dark:border-[#222222]">
-            <MapPin className="w-4 h-4 text-gray-500 dark:text-[#94A3B8]" />
+      <div className="pt-3 px-[14px] pb-[10px] border-b border-gray-100 bg-white dark:bg-[#151515] dark:border-[#222222]">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100 dark:bg-[#0a0a0a] dark:border-[#222222] shadow-sm shrink-0">
+            <MapPin className="w-3.5 h-3.5 text-gray-500 dark:text-[#94A3B8]" />
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-none mb-1">{selectedLuc}</h2>
-            <p className="text-[11px] font-medium text-gray-500 dark:text-[#94A3B8] truncate max-w-[220px]">
-              {selectedPolicy?.fantasia || "Não informada"}
-            </p>
-          </div>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-none">{selectedLuc}</h2>
         </div>
+        <p className="text-[11px] font-medium text-gray-500 dark:text-[#94A3B8] truncate max-w-[220px] ml-9 mt-0.5">
+          {selectedPolicy?.fantasia || "Não informada"}
+        </p>
       </div>
 
       {/* Panel Content */}
-      <div style={{ padding: '8px 12px' }} className="space-y-2">
+      <div className="flex-1 flex flex-col min-h-0 px-4 py-3">
 
         {/* Status and Actions Row */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-100 bg-gray-50 dark:bg-[#151515] dark:border-[#222222]">
-            <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: selectedDetails.bg }}></div>
-            <span className="font-semibold text-sm" style={{ color: selectedDetails.bg !== COLORS.semApolice.bg && selectedDetails.bg !== COLORS.aVencer.bg ? selectedDetails.bg : undefined }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
+            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: selectedDetails.bg }}></div>
+            <span className="font-semibold text-[13px]" style={{ color: selectedDetails.bg !== COLORS.semApolice.bg && selectedDetails.bg !== COLORS.aVencer.bg ? selectedDetails.bg : undefined }}>
               {selectedDetails.label}
             </span>
           </div>
 
           {selectedPolicy ? (
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <div className="flex gap-2">
               <button
                 onClick={() => onEditApolice?.(selectedPolicy.id)}
-                className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-md transition-colors dark:bg-[#151515] dark:border-[#222222] dark:text-white dark:hover:bg-[#0a0a0a]"
-                style={{ fontSize: '12px', padding: '4px 10px', fontWeight: 600 }}
+                className="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-md transition-colors shadow-sm dark:bg-[#151515] dark:border-[#222222] dark:text-white dark:hover:bg-[#0a0a0a]"
+                style={{ fontSize: '13px', padding: '6px 12px', fontWeight: 600 }}
               >
                 Editar
               </button>
               <button
                 onClick={() => onViewApolice?.(selectedPolicy.id)}
-                className="bg-[#8B1A1A] hover:bg-[#a43030] text-white rounded-md transition-colors shadow-sm"
-                style={{ fontSize: '12px', padding: '4px 10px', fontWeight: 600 }}
+                className="bg-[#8B1A1A] hover:bg-[#a43030] text-white rounded-md transition-colors shadow-sm flex items-center gap-1.5"
+                style={{ fontSize: '13px', padding: '6px 12px', fontWeight: 600 }}
               >
-                Ver
+                <FileText className="w-4 h-4" />
+                Ver detalhes
               </button>
             </div>
           ) : (
             <button
               onClick={() => onEditApolice?.(selectedLuc)}
               className="bg-[#168821] hover:bg-[#126b1a] text-white rounded-md transition-colors shadow-sm"
-              style={{ fontSize: '12px', padding: '4px 10px', fontWeight: 600 }}
+              style={{ fontSize: '13px', padding: '6px 12px', fontWeight: 600 }}
             >
               Cadastrar
             </button>
@@ -556,72 +594,127 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
         </div>
 
         {selectedPolicy ? (
-          <>
+          <div className="flex flex-col flex-1 min-h-0 justify-between gap-3">
             {/* Policy Details Grid */}
-            <div>
-              <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Dados da Apólice</h3>
-              <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-[1px] p-[1px] rounded-xl overflow-hidden bg-gray-100 dark:bg-white/5">
 
-
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
-                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
-                    <Shield className="w-2.5 h-2.5" />
-                    <span className="text-[10px] font-medium uppercase tracking-wide">Seguradora</span>
-                  </div>
-                  <p className="font-semibold text-gray-900 text-[12px] truncate dark:text-white">{selectedPolicy.seguradora || "Não informada"}</p>
+              <div className="px-[14px] py-[8px] bg-white dark:bg-[#151515] flex flex-col justify-center">
+                <div className="flex items-center gap-1 mb-1 text-gray-400 dark:text-[#64748B]">
+                  <Shield className="w-3 h-3" />
+                  <span className="text-[8px] font-medium uppercase tracking-wider leading-none">Seguradora</span>
                 </div>
+                <p className="font-medium text-gray-900 text-[12px] truncate dark:text-white leading-tight">{selectedPolicy.seguradora || "Não informada"}</p>
+              </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
-                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
-                    <FileText className="w-2.5 h-2.5" />
-                    <span className="text-[10px] font-medium uppercase tracking-wide">Segmento</span>
-                  </div>
-                  <p className="font-semibold text-gray-900 text-[12px] truncate dark:text-white">{selectedPolicy.segmento || selectedPolicy.tipo || "—"}</p>
+              <div className="px-[14px] py-[8px] bg-white dark:bg-[#151515] flex flex-col justify-center">
+                <div className="flex items-center gap-1 mb-1 text-gray-400 dark:text-[#64748B]">
+                  <FileText className="w-3 h-3" />
+                  <span className="text-[8px] font-medium uppercase tracking-wider leading-none">Segmento</span>
                 </div>
+                <p className="font-medium text-gray-900 text-[12px] truncate dark:text-white leading-tight">{selectedPolicy.segmento || selectedPolicy.tipo || "—"}</p>
+              </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
-                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
-                    <Calendar className="w-2.5 h-2.5" />
-                    <span className="text-[10px] font-medium uppercase tracking-wide">Vigência</span>
-                  </div>
-                  <p className="font-semibold text-gray-900 text-[12px] dark:text-white">{selectedPolicy.vigencia || "—"}</p>
+              <div className="px-[14px] py-[8px] bg-white dark:bg-[#151515] flex flex-col justify-center">
+                <div className="flex items-center gap-1 mb-1 text-gray-400 dark:text-[#64748B]">
+                  <Calendar className="w-3 h-3" />
+                  <span className="text-[8px] font-medium uppercase tracking-wider leading-none">Vigência</span>
                 </div>
+                <p className="font-medium text-gray-900 text-[12px] dark:text-white leading-tight">{selectedPolicy.vigencia || "—"}</p>
+              </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
-                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
-                    <Clock className="w-2.5 h-2.5" />
-                    <span className="text-[10px] font-medium uppercase tracking-wide">Vencimento</span>
-                  </div>
-                  <p className="font-semibold text-gray-900 text-[12px] dark:text-white">{selectedPolicy.vencimento || "—"}</p>
+              <div className="px-[14px] py-[8px] bg-white dark:bg-[#151515] flex flex-col justify-center">
+                <div className="flex items-center gap-1 mb-1 text-gray-400 dark:text-[#64748B]">
+                  <Clock className="w-3 h-3" />
+                  <span className="text-[8px] font-medium uppercase tracking-wider leading-none">Vencimento</span>
                 </div>
+                <p className="font-medium text-gray-900 text-[12px] dark:text-white leading-tight">{selectedPolicy.vencimento || "—"}</p>
+              </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
-                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
-                    <Shield className="w-2.5 h-2.5" />
-                    <span className="text-[10px] font-medium uppercase tracking-wide">Cobertura</span>
-                  </div>
-                  <p className="font-semibold text-gray-900 text-[12px] dark:text-white truncate">
-                    {selectedPolicy.cobertura ? `R$ ${selectedPolicy.cobertura}` : "R$ 0,00"}
-                  </p>
+              <div className="px-[14px] py-[8px] bg-white dark:bg-[#151515] flex flex-col justify-center">
+                <div className="flex items-center gap-1 mb-1 text-gray-400 dark:text-[#64748B]">
+                  <Shield className="w-3 h-3" />
+                  <span className="text-[8px] font-medium uppercase tracking-wider leading-none">Cobertura</span>
                 </div>
+                <p className="font-medium text-gray-900 text-[12px] dark:text-white truncate leading-tight">
+                  {selectedPolicy.cobertura ? `R$ ${selectedPolicy.cobertura}` : "R$ 0,00"}
+                </p>
+              </div>
 
-                <div className="p-2.5 rounded-xl border border-gray-100 bg-white shadow-sm dark:bg-[#151515] dark:border-[#222222]">
-                  <div className="flex items-center gap-1.5 mb-0.5 text-gray-500 dark:text-[#94A3B8]">
-                    <AlertTriangle className="w-2.5 h-2.5" />
-                    <span className="text-[10px] font-medium uppercase tracking-wide">Status</span>
-                  </div>
-                  {selectedPolicy.dias_restantes !== undefined && selectedPolicy.dias_restantes !== null ? (
-                    <span className={`font-bold text-[12px] truncate ${selectedPolicy.dias_restantes < 0 ? "text-[#a0191e]" : selectedPolicy.dias_restantes <= 15 ? "text-[#f59e0b]" : "text-[#168821]"}`}>
-                      {selectedPolicy.dias_restantes < 0 ? `${Math.abs(selectedPolicy.dias_restantes)} dias de atraso` : `${selectedPolicy.dias_restantes} dias rest.`}
-                    </span>
-                  ) : (
-                    <span className="font-bold text-[12px] text-gray-400">—</span>
-                  )}
+              <div className="px-[14px] py-[8px] bg-white dark:bg-[#151515] flex flex-col justify-center relative overflow-hidden">
+                <div className="flex items-center gap-1 mb-1 text-gray-400 dark:text-[#64748B]">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span className="text-[8px] font-medium uppercase tracking-wider leading-none">Status</span>
                 </div>
+                {selectedPolicy.dias_restantes !== undefined && selectedPolicy.dias_restantes !== null ? (
+                  <span className={`font-semibold text-[12px] truncate leading-tight ${selectedPolicy.dias_restantes < 0 ? "text-[#a0191e]" : selectedPolicy.dias_restantes <= 15 ? "text-[#f59e0b]" : "text-[#168821]"}`}>
+                    {selectedPolicy.dias_restantes < 0 ? `${Math.abs(selectedPolicy.dias_restantes)} dias de atraso` : `${selectedPolicy.dias_restantes} dias rest.`}
+                  </span>
+                ) : (
+                  <span className="font-medium text-[12px] text-gray-400 leading-tight">—</span>
+                )}
               </div>
             </div>
 
-          </>
+            {(() => {
+              const vigenciaDate = parseTooltipDate(selectedPolicy.vigencia);
+              const vencimentoDate = parseTooltipDate(selectedPolicy.vencimento);
+              let percentPassed = 0;
+              
+              if (vigenciaDate && vencimentoDate) {
+                const totalDays = getDaysDifference(vigenciaDate, vencimentoDate);
+                const passedDays = getDaysDifference(vigenciaDate, new Date());
+                percentPassed = totalDays > 0 ? Math.max(0, Math.min(100, (passedDays / totalDays) * 100)) : 0;
+              }
+
+              return (
+                <div className="h-[48px] mt-2 border-t border-gray-100 dark:border-[#222222] flex flex-col justify-center gap-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Linha do Tempo</h3>
+                    <span className="text-[11px] font-bold text-[#168821]">
+                      {selectedPolicy.dias_restantes !== undefined && selectedPolicy.dias_restantes !== null ? (selectedPolicy.dias_restantes < 0 ? 'Vencida' : `Vencimento em ${selectedPolicy.dias_restantes} dias`) : ''}
+                    </span>
+                  </div>
+                  
+                  <div className="relative h-1 bg-gray-100 dark:bg-[#222222] rounded-full">
+                    <div className="absolute top-0 left-0 h-full bg-[#168821] rounded-full" style={{ width: `${percentPassed}%` }}></div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Ações Rápidas */}
+            <div className="mt-2 pt-3 flex items-center border-t border-gray-100 dark:border-[#222222]">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-[100px] shrink-0">Ações Rápidas</span>
+              <div className="flex items-center justify-between flex-1 pl-2">
+                <button 
+                  onClick={() => onRenovarApolice?.(selectedPolicy.id)}
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:text-[#168821] transition-colors"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Renovar
+                </button>
+                <button 
+                  onClick={handleDownloadApolice}
+                  disabled={isDownloadingApolice}
+                  className={`flex items-center gap-1.5 text-[11px] font-medium transition-colors ${isDownloadingApolice ? 'opacity-50 cursor-not-allowed' : 'text-gray-600 dark:text-gray-300 hover:text-[#168821]'}`}
+                >
+                  {isDownloadingApolice ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5" />
+                  )}
+                  Baixar
+                </button>
+                <button 
+                  onClick={() => navigate(`/seguros/apolice/${selectedPolicy.id}#historico`)}
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-300 hover:text-[#168821] transition-colors"
+                >
+                  <History className="w-3.5 h-3.5" />
+                  Histórico
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center">
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4 dark:bg-[#222222]">

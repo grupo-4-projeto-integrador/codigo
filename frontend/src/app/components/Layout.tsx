@@ -25,7 +25,7 @@ import { useEffect, useState, useRef } from "react";
 import { UserProfileProvider, type UserProfile } from "../contexts/UserProfileContext";
 import { useAuth } from "../contexts/AuthContext";
 import { request } from "../../api/client";
-import { listApolices } from "../../api/apolice";
+import { getNotificacoes, marcarTodasLidas, arquivarLidas, arquivarUnica, type Notificacao } from "../../api/notificacao";
 import { motion, AnimatePresence } from "motion/react";
 import { CommandPalette } from "./CommandPalette";
 import { useFocusMode } from "../contexts/FocusModeContext";
@@ -236,35 +236,23 @@ export function Layout() {
     }
   };
 
-  // Notificações reais baseadas nas apólices
-  const [notifications, setNotifications] = useState<any[]>([]);
+  // Notificações reais vindas do backend
+  const [notifications, setNotifications] = useState<Notificacao[]>([]);
+
+  const fetchNotificacoes = () => {
+    getNotificacoes().then(data => {
+      setNotifications(data || []);
+    }).catch(e => {
+      console.error("Erro ao carregar notificações", e);
+      setNotifications([]);
+    });
+  };
 
   useEffect(() => {
-    listApolices().then(data => {
-      const vencidas = data
-        .filter(d => (d.dias_restantes ?? 0) < 0)
-        .map(d => ({
-          id: `notif-v-${d.luc}`,
-          type: 'vencida',
-          loja: d.fantasia || d.lojista || 'Loja',
-          luc: d.luc,
-          cobertura: d.segmento || d.tipo || 'Geral',
-          dias: Math.abs(d.dias_restantes!),
-          lida: false
-        }));
-      const aVencer = data
-        .filter(d => (d.dias_restantes ?? 0) >= 0 && (d.dias_restantes ?? 0) <= 30)
-        .map(d => ({
-          id: `notif-a-${d.luc}`,
-          type: 'a_vencer',
-          loja: d.fantasia || d.lojista || 'Loja',
-          luc: d.luc,
-          cobertura: d.segmento || d.tipo || 'Geral',
-          dias: d.dias_restantes!,
-          lida: false
-        }));
-      setNotifications([...vencidas, ...aVencer]);
-    }).catch(e => console.error("Erro ao carregar notificações", e));
+    // Busca inicial e depois a cada 1 minuto para mantê-las atualizadas
+    fetchNotificacoes();
+    const interval = setInterval(fetchNotificacoes, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   const unreadCount = notifications.filter(n => !n.lida).length;
@@ -284,24 +272,24 @@ export function Layout() {
 
   const handleMarkAllRead = async () => {
     try {
-      await request('/notificacoes/marcar-lidas', { method: 'PATCH' });
+      await marcarTodasLidas();
+      setNotifications(prev => prev.map(n => ({ ...n, lida: true })));
     } catch (e) { console.error(e); }
-    setNotifications(prev => prev.map(n => ({ ...n, lida: true })));
   };
 
   const handleArchiveRead = async () => {
     try {
-      await request('/notificacoes/arquivadas', { method: 'DELETE' });
+      await arquivarLidas();
+      setNotifications(prev => prev.filter(n => !n.lida));
     } catch (e) { console.error(e); }
-    setNotifications(prev => prev.filter(n => !n.lida));
   };
 
-  const handleArchiveSingle = async (e: React.MouseEvent, id: string) => {
+  const handleArchiveSingle = async (e: React.MouseEvent, id: number | string) => {
     e.stopPropagation();
     try {
-      await request(`/notificacoes/${id}`, { method: 'DELETE' });
+      await arquivarUnica(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (e) { console.error(e); }
-    setNotifications(prev => prev.filter(n => n.id !== id));
   };
   
   return (

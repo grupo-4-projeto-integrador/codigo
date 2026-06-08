@@ -25,6 +25,7 @@ function mapToRecord(dto: any): ApoliceRecord {
     observacoes: dto.observacoes || "",
     cnpj: dto.cnpj || "",
     numero_apolice: dto.numero_apolice || "",
+    documentos: dto.documentos || [],
   };
 }
 

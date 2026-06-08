@@ -127,11 +127,42 @@ export function KpiChartModal({ isOpen, onClose, metrica, historyValues, svgPath
                     <text x="100%" y={yMedia - 4} textAnchor="end" fontSize="9px" fill="rgba(255,255,255,0.3)">média</text>
                   </>
                 )}
-                <path d={areaPath} fill={`url(#modal-gradient-${metrica})`} />
-                <path d={linePath} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                <motion.path 
+                  d={areaPath} 
+                  fill={`url(#modal-gradient-${metrica})`} 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: presentationMode ? 2 : 0.5, delay: presentationMode ? 0.8 : 0.2, ease: "easeOut" }}
+                />
+                <motion.path 
+                  d={linePath} 
+                  fill="none" 
+                  stroke={color} 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: presentationMode ? 2.5 : 0.6, ease: [0.25, 1, 0.5, 1] }}
+                />
                 {/* Dots for all values */}
                 {values.map((v, i) => (
-                  <circle key={i} cx={getCx(i)} cy={getCy(v)} r="3.5" fill={color} className="transition-all hover:r-5 cursor-pointer" />
+                  <motion.circle 
+                    key={i} 
+                    cx={getCx(i)} 
+                    cy={getCy(v)} 
+                    r="3.5" 
+                    fill={color} 
+                    className="cursor-pointer"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ 
+                      duration: presentationMode ? 0.8 : 0.3, 
+                      delay: presentationMode ? (i * (2.5 / values.length)) : i * 0.05,
+                      ease: "easeOut"
+                    }}
+                    whileHover={{ scale: 1.5 }}
+                  />
                 ))}
               </svg>
             </div>
@@ -152,10 +183,16 @@ export function KpiChartModal({ isOpen, onClose, metrica, historyValues, svgPath
                     <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mb-1 font-medium">
                       {formatValue(metrica, val)}
                     </span>
-                    <div 
-                      className="w-full max-w-[20px] rounded-t-sm transition-all duration-300" 
+                    <motion.div 
+                      className="w-full max-w-[20px] rounded-t-sm" 
+                      initial={{ height: "0%" }}
+                      animate={{ height: `${barHeight}%` }}
+                      transition={{ 
+                        duration: presentationMode ? 1.5 : 0.5, 
+                        delay: presentationMode ? 0.2 + (idx * 0.1) : idx * 0.05,
+                        ease: [0.22, 1, 0.36, 1]
+                      }}
                       style={{ 
-                        height: `${barHeight}%`, 
                         backgroundColor: color, 
                         opacity: presentationMode ? (idx === values.length - 1 ? 1 : 0.45) : (idx === values.length - 1 ? 1 : 0.4),
                         borderTop: presentationMode && isPico ? '2px solid rgba(255,255,255,0.4)' : undefined

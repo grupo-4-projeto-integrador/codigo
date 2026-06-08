@@ -288,10 +288,11 @@ func (r *PostgresRepository) GetAtividadesRecentes(limit int) ([]AtividadeRecent
 				ELSE 'editada'
 			END AS acao,
 			h.ator,
-			h.data
+			h.data AT TIME ZONE 'America/Sao_Paulo'
 		FROM historico_apolice h
 		LEFT JOIN seguros s ON s.luc = h.apolice_luc
-		ORDER BY s.updated_at DESC NULLS LAST, s.created_at DESC
+		WHERE h.ator != 'Sistema'
+		ORDER BY h.id DESC
 		LIMIT $1`
 	rows, err := r.db.Query(query, limit)
 	if err != nil {

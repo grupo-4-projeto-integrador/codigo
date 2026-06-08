@@ -12,6 +12,8 @@ import { exportToPDF, exportToCSV } from "../utils/exportUtils";
 import { RequireRole } from "../components/RequireRole";
 import { formatLargeCurrency } from "../utils/currency";
 import { useCountUp } from "../hooks/useCountUp";
+import { formatDistanceToNow, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
 import { Usuarios } from "./Usuarios";
 import { getHealthScore } from "../../api/apolice";
@@ -879,9 +881,7 @@ export function Insurance() {
   };
 
   const handleRenovarApolice = (policyId: string) => {
-    const policy = allPolicies.find(p => p.id === policyId);
-    setSelectedPolicy(policy);
-    setShowRenovarModal(true);
+    navigate(`/seguros/apolice/${policyId}#renovar`);
   };
 
   const handleConfirmarRenovacao = async () => {
@@ -1873,13 +1873,16 @@ export function Insurance() {
             </div>
 
             {/* ComplianceSidePanel aligned with Map & Risk Chart */}
-            <div className={`w-full transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'block'}`}>
-              <ComplianceSidePanel
-                selectedLuc={selectedMapLuc}
-                onClose={() => setSelectedMapLuc(null)}
-                onViewApolice={handleVerApolice}
-                onEditApolice={handleEditarApolice}
-              />
+            <div className={`w-full transition-all duration-500 ${isFocusMode ? 'hidden' : 'block'}`} style={{ position: 'relative', minHeight: 0 }}>
+              <div style={{ position: 'absolute', inset: 0 }}>
+                <ComplianceSidePanel
+                  selectedLuc={selectedMapLuc}
+                  onClose={() => setSelectedMapLuc(null)}
+                  onViewApolice={handleVerApolice}
+                  onEditApolice={handleEditarApolice}
+                  onRenovarApolice={handleRenovarApolice}
+                />
+              </div>
             </div>
 
             {/* Data Table — Hidden in Focus Mode */}
@@ -2057,13 +2060,18 @@ export function Insurance() {
                         };
                         const cfg = iconConfig[atividade.acao] ?? iconConfig['editada'];
                         const acaoLabel: Record<string, string> = {
-                          criada: 'Criou apólice', editada: 'Editou apólice',
-                          renovada: 'Renovou apólice', excluida: 'Excluiu apólice',
-                          observacoes: 'Atualizou observações'
+                          criada: 'criou', editada: 'editou',
+                          renovada: 'renovou', excluida: 'excluiu',
+                          observacoes: 'atualizou as observações d'
                         };
-                        const ts = new Date(atividade.timestamp);
-                        const timeStr = ts.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                        const dateStr = ts.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                        
+                        const timeAgo = atividade.timestamp 
+                          ? formatDistanceToNow(parseISO(String(atividade.timestamp)), { locale: ptBR, addSuffix: true }) 
+                          : 'data não disponível';
+                        
+                        const actionWord = acaoLabel[atividade.acao] ?? 'editou';
+                        const isObs = atividade.acao === 'observacoes';
+
                         return (
                           <div
                             key={atividade.id}
@@ -2071,18 +2079,15 @@ export function Insurance() {
                             onClick={() => handleVerApolice(atividade.luc)}
                             style={{ animation: 'slideInTop 0.3s ease forwards', animationDelay: `${i * 60}ms` }}
                           >
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg} ${cfg.text}`}>
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${cfg.bg} ${cfg.text} mt-0.5`}>
                               {cfg.icon}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1">
-                                <span className="text-[12px] font-semibold text-gray-900 dark:text-white truncate">
-                                  {atividade.nome_loja || atividade.luc}
+                            <div className="flex-1 min-w-0 pr-2">
+                              <p className="text-[12px] text-gray-600 dark:text-[#CBD5E1] leading-relaxed">
+                                <span className="font-semibold text-gray-900 dark:text-white">{atividade.responsavel || 'Usuário'}</span> {actionWord} {isObs ? 'a' : 'a apólice da'} <span className="font-medium text-gray-900 dark:text-white">{atividade.nome_loja || atividade.luc}</span>
+                                <span className="text-gray-400 dark:text-[#64748B] whitespace-nowrap inline-block ml-1">
+                                  · {timeAgo}
                                 </span>
-                                <span className="text-[10px] text-gray-400 dark:text-[#64748B] shrink-0">{dateStr} {timeStr}</span>
-                              </div>
-                              <p className="text-[11px] text-gray-500 dark:text-[#94A3B8] mt-0.5">
-                                {acaoLabel[atividade.acao] ?? atividade.acao} · {atividade.responsavel}
                               </p>
                             </div>
                           </div>

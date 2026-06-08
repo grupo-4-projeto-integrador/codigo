@@ -1,7 +1,14 @@
 export async function downloadArquivo(documentoId: number, nomeArquivo: string): Promise<void> {
   try {
+    const token = localStorage.getItem('flamboyant_token');
+    const headers: HeadersInit = {};
+    if (token) {
+      (headers as any)['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`/api/documentos/${documentoId}/download`, {
       method: "GET",
+      headers,
     });
 
     if (!response.ok) {

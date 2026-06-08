@@ -59,6 +59,37 @@ export function PolicyDetail() {
   const [showRenewDialog, setShowRenewDialog] = useState(false);
   const [isRenewing, setIsRenewing] = useState(false);
 
+  useEffect(() => {
+    if (!loading && window.location.hash === '#historico') {
+      const el = document.getElementById('historico');
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.transition = 'none';
+          el.style.boxShadow = '0 0 0 2px #c4151f';
+          el.style.backgroundColor = 'rgba(196, 21, 31, 0.05)';
+          
+          setTimeout(() => {
+            el.style.transition = 'all 2s ease-out';
+            el.style.boxShadow = 'none';
+            el.style.backgroundColor = '';
+          }, 2000);
+        }, 500);
+      }
+    }
+  }, [loading]);
+
+  useEffect(() => {
+    if (policy && !loading && window.location.hash === '#renovar') {
+      // Small timeout to ensure everything is rendered
+      setTimeout(() => {
+        openRenewDialog();
+        // Remove hash to prevent reopening
+        window.history.replaceState(null, '', window.location.pathname);
+      }, 300);
+    }
+  }, [policy, loading]);
+
   const { control: renewControl, handleSubmit: handleRenewSubmit, reset: resetRenew } = useForm({
     defaultValues: {
       nova_vigencia: undefined as Date | undefined,
@@ -385,7 +416,7 @@ export function PolicyDetail() {
           </div>
 
           {/* Histórico da Apólice */}
-          <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6">
+          <div id="historico" className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-6 transition-colors duration-1000">
             <h3 className="text-[10px] font-bold text-gray-400 dark:text-[#64748B] uppercase tracking-wider mb-4">Histórico da Apólice</h3>
             <div className="relative pl-6 before:content-[''] before:absolute before:left-[6px] before:top-[10px] before:bottom-[10px] before:border-l-[1.5px] before:border-dashed before:border-gray-300 dark:before:border-gray-600">
               {historico.length > 0 ? historico.map((h, i) => (

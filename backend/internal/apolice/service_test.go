@@ -88,6 +88,25 @@ func (m *MockRepository) Renovar(luc string, novoVencimento time.Time, novoValor
 	return m.Err
 }
 
+func (m *MockRepository) CreateDocumento(doc Documento) (Documento, error) {
+	if m.Err != nil {
+		return Documento{}, m.Err
+	}
+	return doc, nil
+}
+
+func (m *MockRepository) GetUsuarios() ([]Usuario, error) {
+	return nil, m.Err
+}
+
+func (m *MockRepository) SearchApolices(query string) ([]Apolice, error) {
+	return nil, m.Err
+}
+
+func (m *MockRepository) UpdateResponsavel(luc string, responsavelID int64, ator string) error {
+	return m.Err
+}
+
 func TestService_Create(t *testing.T) {
 	repo := &MockRepository{}
 	svc := NewService(repo)
