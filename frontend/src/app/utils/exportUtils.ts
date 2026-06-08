@@ -30,7 +30,18 @@ export function exportToCSV(data: ApoliceRecord[], filename: string) {
 export function exportToXLSX(data: ApoliceRecord[], filename: string) {
   if (!data || data.length === 0) return;
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
+  const formattedData = data.map(item => ({
+    "LUC": item.luc || item.id || "-",
+    "Loja": item.fantasia || item.lojista || item.loja || "-",
+    "CNPJ": formatCNPJ(item.cnpj),
+    "Seguradora": item.seguradora || "-",
+    "Vigência": formatDate(item.vigencia),
+    "Vencimento": formatDate(item.vencimento),
+    "Status": item.status || "-",
+    "Cobertura": item.cobertura ? Number(item.cobertura) : 0
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(formattedData);
   const workbook = XLSX.utils.book_new();
   
   XLSX.utils.book_append_sheet(workbook, worksheet, "Apolices");
@@ -51,10 +62,11 @@ export function exportToPDF(data: ApoliceRecord[], filename: string) {
   doc.setFontSize(10);
   doc.text(`Exportado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 22);
 
-  const head = [["LUC", "Loja", "Seguradora", "Vigência", "Vencimento", "Status", "Cobertura"]];
+  const head = [["LUC", "Loja", "CNPJ", "Seguradora", "Vigência", "Vencimento", "Status", "Cobertura"]];
   const body = data.map(item => [
     item.luc || item.id || "-",
     item.fantasia || item.lojista || item.loja || "-",
+    formatCNPJ(item.cnpj),
     item.seguradora || "-",
     formatDate(item.vigencia),
     formatDate(item.vencimento),
