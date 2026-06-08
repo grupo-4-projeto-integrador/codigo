@@ -141,3 +141,19 @@ export const subscribeFullscreenTable = (listener: () => void) => {
   fullscreenTableListeners.add(listener);
   return () => fullscreenTableListeners.delete(listener);
 };
+
+// ── Sidebar ──────────────────────────────────────────────────────────
+let sidebarCollapsed = false;
+const sidebarListeners = new Set<() => void>();
+
+export const getSidebarCollapsed = () => sidebarCollapsed;
+
+export const setSidebarCollapsed = (collapsed: boolean) => {
+  sidebarCollapsed = collapsed;
+  sidebarListeners.forEach((l) => l());
+};
+
+export const subscribeSidebarCollapsed = (listener: () => void) => {
+  sidebarListeners.add(listener);
+  return () => sidebarListeners.delete(listener);
+};

@@ -31,6 +31,7 @@ import { CommandPalette } from "./CommandPalette";
 import { useFocusMode } from "../contexts/FocusModeContext";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { ShortcutsModal } from "./ShortcutsModal";
+import { setSidebarCollapsed } from '../store';
 import { FullscreenTable } from "./FullscreenTable";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
@@ -145,6 +146,9 @@ export function Layout() {
     };
   }, [darkMode]); // Needs darkMode so toggleDarkMode closure has the latest value
 
+  useEffect(() => {
+    setSidebarCollapsed(isSidebarCollapsed);
+  }, [isSidebarCollapsed]);
 
   useEffect(() => {
     // Sync header search with URL params when on seguros page
@@ -772,22 +776,23 @@ export function Layout() {
             >
               {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
-            <div className="relative flex items-center space-x-3 border-l border-gray-200 dark:border-[#222222] pl-4" ref={profileMenuRef}>
+            <div className="flex items-center space-x-3 border-l border-gray-200 dark:border-[#222222] pl-4" ref={profileMenuRef}>
               <div className="flex flex-col text-right">
                 <span className="text-sm font-medium text-gray-900 dark:text-[#F1F5F9]">{usuario?.nome || currentProfile.userName}</span>
                 <span className="text-xs text-gray-500 dark:text-[#94A3B8] uppercase tracking-wider">{role || currentProfile.name}</span>
               </div>
-              <button
-                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="transition-transform hover:scale-105"
-              >
-                <UserAvatar profile={{...currentProfile, avatarUrl: (usuario && usuario.email === currentProfile.email) ? (usuario.avatar_url || currentProfile.avatarUrl) : currentProfile.avatarUrl}} sizeClass="w-9 h-9 text-sm" sizeStyle={{ width: '36px', height: '36px' }} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="transition-transform hover:scale-105 block"
+                >
+                  <UserAvatar profile={{...currentProfile, avatarUrl: (usuario && usuario.email === currentProfile.email) ? (usuario.avatar_url || currentProfile.avatarUrl) : currentProfile.avatarUrl}} sizeClass="w-9 h-9 text-sm" sizeStyle={{ width: '36px', height: '36px' }} />
+                </button>
 
-              {/* Profile Dropdown Menu */}
-              {isProfileMenuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg shadow-lg overflow-hidden z-50">
-                  <div className="py-2">
+                {/* Profile Dropdown Menu */}
+                {isProfileMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg shadow-lg overflow-hidden z-50">
+                    <div className="py-2">
                     {(Object.keys(profileConfig) as UserProfile[])?.map((profileKey) => {
                       const profile = profileConfig[profileKey];
                       const isActive = profileKey === userProfile;
@@ -817,6 +822,7 @@ export function Layout() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </header>

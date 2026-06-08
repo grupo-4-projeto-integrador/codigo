@@ -598,6 +598,11 @@ export function Insurance() {
     setStatusFilter("todas");
   };
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, tipoFilter, seguradoraFilter, vigenciaFilter, vencimentoFilter]);
+
   // Handle search query change
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);

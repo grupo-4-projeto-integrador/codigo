@@ -12,7 +12,7 @@ import type { ApoliceRecord } from "../../types/apolice";
 import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
-import { getMapFilters, subscribeMapFilters } from "../store";
+import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, getMapFilters, subscribeMapFilters, getSidebarCollapsed, subscribeSidebarCollapsed } from '../store';
 import { useNavigate } from "react-router";
 
 type MapLayoutItem = {
@@ -121,9 +121,10 @@ export function ComplianceMapV2({
   const [currentPage, setCurrentPage] = useState(1);
   const [mapFilters, setMapFiltersState] = useState(getMapFilters);
   const [timeOffsetIdx, setTimeOffsetIdx] = useState(0);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getSidebarCollapsed());
 
-  // 6 lines * 13 columns = 78 items per page
-  const ITEMS_PER_PAGE = itemsPerPage || (hideHeader ? 176 : 78);
+  // 6 lines * 13 columns = 78 items per page (or 15 columns = 90 items if sidebar collapsed)
+  const ITEMS_PER_PAGE = itemsPerPage || (hideHeader ? 176 : (isSidebarCollapsed ? 90 : 78));
 
   useEffect(() => {
     let active = true;
@@ -155,6 +156,13 @@ export function ComplianceMapV2({
   useEffect(() => {
     return subscribeMapFilters(() => {
       setMapFiltersState(getMapFilters());
+    });
+  }, []);
+
+  // Subscribe to sidebar state
+  useEffect(() => {
+    return subscribeSidebarCollapsed(() => {
+      setIsSidebarCollapsed(getSidebarCollapsed());
     });
   }, []);
 
