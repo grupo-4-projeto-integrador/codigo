@@ -42,6 +42,15 @@ func AuthMiddleware(secret string) func(http.Handler) http.Handler {
 			}
 
 			tokenStr := strings.TrimPrefix(header, "Bearer ")
+
+			// BYPASS PARA DESENVOLVIMENTO
+			if tokenStr == "dev_bypass_token" {
+				ctx := context.WithValue(r.Context(), ContextKeyUserID, 1)
+				ctx = context.WithValue(ctx, ContextKeyRole, "admin")
+				ctx = context.WithValue(ctx, ContextKeyEmail, "dev@flamboyant.com")
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
+			}
 			token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 					return nil, jwt.ErrSignatureInvalid

@@ -19,6 +19,7 @@ export interface AuthContextType {
   role: Role | null;
   token: string | null;
   login: (email: string, senha: string) => Promise<void>;
+  loginAsDev: () => void;
   logout: () => void;
   isAdmin: boolean;
   isGestor: boolean;
@@ -63,6 +64,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (token) {
       localStorage.setItem('flamboyant_token', token);
+      if (token === "dev_bypass_token") {
+        setUsuario({
+          id: 1,
+          nome: "Desenvolvedor (Bypass)",
+          email: "dev@flamboyant.com",
+          role: "admin",
+          ativo: true
+        });
+        setLoading(false);
+        return;
+      }
       request<UsuarioDTO>('/auth/me')
         .then(user => {
           setUsuario(user);
@@ -93,6 +105,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const loginAsDev = () => {
+    const devUser: UsuarioDTO = {
+      id: 1,
+      nome: "Desenvolvedor (Bypass)",
+      email: "dev@flamboyant.com",
+      role: "admin",
+      ativo: true
+    };
+    setToken("dev_bypass_token");
+    setUsuario(devUser);
+    toast.success("Login de Desenvolvedor ativado!");
+  };
+
   const logout = () => {
     setToken(null);
     setUsuario(null);
@@ -104,6 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     role,
     token,
     login,
+    loginAsDev,
     logout,
     isAdmin,
     isGestor,

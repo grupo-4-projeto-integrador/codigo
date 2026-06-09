@@ -49,26 +49,25 @@ O projeto foi construído utilizando uma arquitetura moderna e escalável:
 * **PostgreSQL** instalado e rodando localmente (porta 5432).
 
 ### 1. Configurando o Banco de Dados
-O backend possui um utilitário escrito em Go que cria o banco, roda as migrações e insere dados de teste automaticamente.
+O backend possui um utilitário que roda as migrações e insere dados de teste automaticamente. Certifique-se de que o seu `.env` esteja configurado com as credenciais corretas do banco antes de executar:
 ```bash
 cd backend
-go run prepare_db.go
+go run ./cmd/migrate
 ```
-*O script perguntará a senha do seu usuário `postgres` e configurará o banco de dados e o arquivo `.env` para você.*
 
 ### 2. Rodando o Backend (API)
 Ainda na pasta `backend`:
 ```bash
 go run ./cmd/api
 ```
-*O servidor iniciará na porta `:8080`.*
+*O servidor iniciará na porta `:8082`.*
 
 ### 3. Rodando o Frontend
 Em um novo terminal, vá para a pasta `frontend`:
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+corepack pnpm install
+corepack pnpm dev
 ```
 *Acesse `http://localhost:5173` no seu navegador.*
 
