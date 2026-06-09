@@ -235,7 +235,7 @@ func (r *PostgresRepository) GetCoberturas(luc string) ([]Cobertura, error) {
 }
 
 func (r *PostgresRepository) GetHistorico(luc string) ([]HistoricoApolice, error) {
-	rows, err := r.db.Query(`SELECT id, apolice_luc, data, descricao, ator FROM historico_apolice WHERE apolice_luc = $1 ORDER BY id DESC`, luc)
+	rows, err := r.db.Query(`SELECT id, apolice_luc, data AT TIME ZONE 'America/Sao_Paulo' AS data, descricao, ator FROM historico_apolice WHERE apolice_luc = $1 ORDER BY id DESC`, luc)
 	if err != nil {
 		return nil, err
 	}
@@ -257,7 +257,7 @@ func (r *PostgresRepository) GetHistoricoGlobal(limit int) ([]HistoricoApolice, 
 		limit = 10
 	}
 
-	rows, err := r.db.Query(`SELECT id, apolice_luc, data, descricao, ator FROM historico_apolice ORDER BY id DESC LIMIT $1`, limit)
+	rows, err := r.db.Query(`SELECT id, apolice_luc, data AT TIME ZONE 'America/Sao_Paulo' AS data, descricao, ator FROM historico_apolice ORDER BY id DESC LIMIT $1`, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -497,7 +497,7 @@ func (r *PostgresRepository) GetLojas() ([]LojaInfo, error) {
 func (r *PostgresRepository) GetDocumentoByID(id string) (Documento, error) {
 	var doc Documento
 	var deletedAt sql.NullTime
-	err := r.db.QueryRow(`SELECT id, apolice_luc, nome, arquivo_path, data_adicao, deleted_at FROM documentos WHERE id = $1 AND deleted_at IS NULL`, id).Scan(&doc.ID, &doc.ApoliceLuc, &doc.Nome, &doc.ArquivoPath, &doc.DataAdicao, &deletedAt)
+	err := r.db.QueryRow(`SELECT id, apolice_luc, nome, arquivo_path, data_adicao AT TIME ZONE 'America/Sao_Paulo' AS data_adicao, deleted_at FROM documentos WHERE id = $1 AND deleted_at IS NULL`, id).Scan(&doc.ID, &doc.ApoliceLuc, &doc.Nome, &doc.ArquivoPath, &doc.DataAdicao, &deletedAt)
 	if err != nil {
 		return doc, err
 	}
@@ -508,7 +508,7 @@ func (r *PostgresRepository) GetDocumentoByID(id string) (Documento, error) {
 }
 
 func (r *PostgresRepository) GetDocumentosByApolice(luc string) ([]Documento, error) {
-	rows, err := r.db.Query(`SELECT id, apolice_luc, nome, arquivo_path, data_adicao, deleted_at FROM documentos WHERE apolice_luc = $1 AND deleted_at IS NULL`, luc)
+	rows, err := r.db.Query(`SELECT id, apolice_luc, nome, arquivo_path, data_adicao AT TIME ZONE 'America/Sao_Paulo' AS data_adicao, deleted_at FROM documentos WHERE apolice_luc = $1 AND deleted_at IS NULL`, luc)
 	if err != nil {
 		return nil, err
 	}
