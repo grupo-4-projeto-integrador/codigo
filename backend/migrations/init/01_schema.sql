@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-ALTER TABLE usuarios OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS seguros (
     luc character varying NOT NULL,
@@ -24,13 +24,18 @@ CREATE TABLE IF NOT EXISTS seguros (
     vencimento date,
     status character varying,
     cobertura numeric DEFAULT 0,
+    "dias rest." INTEGER DEFAULT NULL,
     responsavel character varying DEFAULT '',
     responsavel_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     observacoes text DEFAULT '',
-    deleted_at timestamp DEFAULT NULL
+    deleted_at timestamp DEFAULT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    cnpj VARCHAR(20) DEFAULT '',
+    numero_apolice VARCHAR(50) DEFAULT ''
 );
 
-ALTER TABLE seguros OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS documentos (
     id SERIAL PRIMARY KEY,
@@ -41,7 +46,7 @@ CREATE TABLE IF NOT EXISTS documentos (
     deleted_at TIMESTAMP DEFAULT NULL
 );
 
-ALTER TABLE documentos OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS historico_apolice (
     id SERIAL PRIMARY KEY,
@@ -51,7 +56,7 @@ CREATE TABLE IF NOT EXISTS historico_apolice (
     ator VARCHAR(255) NOT NULL DEFAULT 'Sistema'
 );
 
-ALTER TABLE historico_apolice OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS coberturas (
     id SERIAL PRIMARY KEY,
@@ -61,7 +66,7 @@ CREATE TABLE IF NOT EXISTS coberturas (
     valor NUMERIC NOT NULL
 );
 
-ALTER TABLE coberturas OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGSERIAL PRIMARY KEY,
@@ -76,4 +81,4 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE audit_logs OWNER TO postgres;
+

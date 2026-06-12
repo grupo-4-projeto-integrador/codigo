@@ -69,9 +69,9 @@ func Load() (Config, error) {
 
 func (c Config) Addr() string {
 	if c.HTTP.Port == "" {
-		return "localhost:8082"
+		return ":8082"
 	}
-	return "localhost:" + c.HTTP.Port
+	return ":" + c.HTTP.Port
 }
 
 func getEnv(key, fallback string) string {
