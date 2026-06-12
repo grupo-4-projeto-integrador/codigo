@@ -16,14 +16,15 @@ import (
 
 // Handler contém as dependências do módulo auth.
 type Handler struct {
-	db       *sql.DB
-	auditSvc *audit.Service
-	secret   string
+	db              *sql.DB
+	auditSvc        *audit.Service
+	secret          string
+	expirationHours int
 }
 
 // NewHandler cria um handler de autenticação.
-func NewHandler(db *sql.DB, auditSvc *audit.Service, secret string) *Handler {
-	return &Handler{db: db, auditSvc: auditSvc, secret: secret}
+func NewHandler(db *sql.DB, auditSvc *audit.Service, secret string, expirationHours int) *Handler {
+	return &Handler{db: db, auditSvc: auditSvc, secret: secret, expirationHours: expirationHours}
 }
 
 // Login — POST /api/auth/login
@@ -73,12 +74,12 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		u.AvatarURL = avatarURL.String
 	}
 
-	// Gerar JWT com expiração de 8 horas
+	// Gerar JWT com expiração configurada
 	claims := jwt.MapClaims{
 		"user_id": u.ID,
 		"email":   u.Email,
 		"role":    u.Role,
-		"exp":     time.Now().Add(8 * time.Hour).Unix(),
+		"exp":     time.Now().Add(time.Duration(h.expirationHours) * time.Hour).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString([]byte(h.secret))

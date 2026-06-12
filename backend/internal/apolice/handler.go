@@ -827,7 +827,7 @@ func (h *Handler) DownloadDocumento(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	doc, err := h.service.GetDocumentoByID(id)
 	if err != nil {
-		response.Fail(w, http.StatusNotFound, "Documento nÃœo encontrado", middleware.RequestIDFromContext(r.Context()), nil)
+		response.Fail(w, http.StatusNotFound, "Documento não encontrado", middleware.RequestIDFromContext(r.Context()), nil)
 		return
 	}
 
@@ -837,16 +837,17 @@ func (h *Handler) DownloadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	caminhoAbsoluto := filepath.Join(basePath, doc.ArquivoPath)
+	// Sanitizar ArquivoPath do banco de dados (por precaução)
+	safePath := filepath.Join(basePath, filepath.Base(filepath.Clean(doc.ArquivoPath)))
 
-	// Prevent path traversal
-	if !strings.HasPrefix(caminhoAbsoluto, basePath) {
+	// Prevent path traversal check
+	if filepath.Dir(safePath) != basePath {
 		response.Fail(w, http.StatusForbidden, "Acesso negado", middleware.RequestIDFromContext(r.Context()), nil)
 		return
 	}
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", doc.Nome))
-	http.ServeFile(w, r, caminhoAbsoluto)
+	http.ServeFile(w, r, safePath)
 
 	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, doc.Nome)
 	h.logAudit(r, audit.AcaoExportar, audit.EntidadeDocumento, id, nil, &arquivoJSON)
@@ -865,9 +866,12 @@ func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
-	err := r.ParseMultipartForm(10 << 20) // 10 MB
+	// Strict request body size limit (10MB)
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
+
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
-		response.Fail(w, http.StatusBadRequest, "Falha ao processar form data", middleware.RequestIDFromContext(r.Context()), err)
+		response.Fail(w, http.StatusBadRequest, "Falha ao processar form data (tamanho excedido?)", middleware.RequestIDFromContext(r.Context()), err)
 		return
 	}
 
@@ -878,10 +882,21 @@ func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	contentType := header.Header.Get("Content-Type")
-	log.Printf("Upload recebido: %s, tipo: %s", header.Filename, contentType)
+	// Validate MIME type safely from file contents
+	buff := make([]byte, 512)
+	if _, err := file.Read(buff); err != nil && err != io.EOF {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao ler o arquivo", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao processar arquivo", middleware.RequestIDFromContext(r.Context()), err)
+		return
+	}
 
-	tiposPermitidos := []string{"application/pdf", "image/jpeg", "image/jpg", "image/png", "image/x-png"}
+	contentType := http.DetectContentType(buff)
+	log.Printf("Upload recebido: %s, tipo detectado: %s", header.Filename, contentType)
+
+	tiposPermitidos := []string{"application/pdf", "image/jpeg", "image/png"}
 	tipoValido := false
 	for _, t := range tiposPermitidos {
 		if contentType == t {
@@ -901,8 +916,14 @@ func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create random filename to avoid collisions
-	ext := filepath.Ext(header.Filename)
+	// Validate extension to avoid executing malicious scripts
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	if ext != ".pdf" && ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
+		response.Fail(w, http.StatusBadRequest, "Extensão de arquivo não permitida", middleware.RequestIDFromContext(r.Context()), nil)
+		return
+	}
+
+	// Create random filename to avoid collisions and path traversal
 	filename := fmt.Sprintf("%d%s", time.Now().UnixNano(), ext)
 	filePath := filepath.Join(basePath, filename)
 
@@ -918,9 +939,12 @@ func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Sanitize filename for DB
+	sanitizedNome := filepath.Base(filepath.Clean(header.Filename))
+
 	doc := Documento{
 		ApoliceLuc:  id,
-		Nome:        header.Filename,
+		Nome:        sanitizedNome,
 		ArquivoPath: filename,
 	}
 
@@ -930,7 +954,7 @@ func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, header.Filename)
+	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, sanitizedNome)
 	h.logAudit(r, audit.AcaoUpload, audit.EntidadeApolice, id, nil, &arquivoJSON)
 
 	response.Success(w, http.StatusCreated, createdDoc, middleware.RequestIDFromContext(r.Context()))

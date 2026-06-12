@@ -64,7 +64,7 @@ func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 	}
 
 	// Auth — rotas públicas de login
-	auth.RegisterRoutes(mux, db, auditSvc, cfg.JWTSecret)
+	auth.RegisterRoutes(mux, db, auditSvc, cfg.JWTSecret, cfg.JWTExpirationHours)
 
 	notificacao.RegisterRoutes(mux, db, cfg.JWTSecret)
 

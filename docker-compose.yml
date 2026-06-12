@@ -1,46 +1,59 @@
 services:
-  db:
-    image: postgres:15
-    container_name: seguros_postgres
-    restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
+    container_name: flamboyant_db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: sua_senha
-      POSTGRES_DB: seguros_db
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: flamboyant_seguros
+      POSTGRES_USER: flamboyant
+      POSTGRES_PASSWORD: flamboyant123
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U flamboyant -d flamboyant_seguros"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 10s
 
   backend:
-    build: 
+    build:
       context: ./backend
-    container_name: seguros_backend
-    restart: unless-stopped
-    command: sh -c "./migrate && ./api-server"
+      dockerfile: Dockerfile
+    container_name: flamboyant_api
     environment:
-      DATABASE_URL: "postgres://postgres:sua_senha@db:5432/seguros_db?sslmode=disable"
-      PORT: "8082"
+      DATABASE_URL: postgres://flamboyant:flamboyant123@postgres:5432/flamboyant_seguros?sslmode=disable
+      JWT_SECRET: flamboyant_secret_dev_32_chars_long
+      JWT_EXPIRATION_HOURS: 8
+      PORT: 8080
     ports:
-      - "8082:8082"
+      - "8080:8080"
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend
 
   frontend:
     build:
       context: ./frontend
-    container_name: seguros_frontend
-    restart: unless-stopped
+      dockerfile: Dockerfile
+      target: dev
+    container_name: flamboyant_web
     ports:
-      - "80:80"
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8080
+    volumes:
+      - ./frontend/src:/app/src:cached
+      - ./frontend/public:/app/public:cached
     depends_on:
       - backend
 
 volumes:
   postgres_data:
+    name: flamboyant_postgres_data

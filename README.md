@@ -12,7 +12,7 @@ O objetivo principal deste sistema é automatizar e simplificar a gestão de con
 * **Mapa de Conformidade**: Visualização em grid de todos os LUCs (Lojas) com cores indicativas do status da apólice (Vigente, Vencida, A Vencer).
 * **Gestão de Apólices (CRUD)**: Criação, edição, visualização e deleção de apólices, com suporte a upload de documentos comprobatórios.
 * **Sistema de Notificações Inteligente**: Avisos automatizados e com memória persistente sobre apólices vencidas ou prestes a vencer.
-* **Controle de Acesso (RBAC)**: 
+* **Controle de Acesso (RBAC)**:
   * **Admin**: Acesso total, incluindo Gestão de Usuários e visualização do Audit Log.
   * **Gestor**: Pode criar, editar e renovar apólices.
   * **Visualizador**: Acesso apenas para leitura dos dados e relatórios.
@@ -28,6 +28,7 @@ O objetivo principal deste sistema é automatizar e simplificar a gestão de con
 O projeto foi construído utilizando uma arquitetura moderna e escalável:
 
 ### Frontend
+
 * **React 18** (com Vite)
 * **TypeScript**
 * **Tailwind CSS** + **Shadcn UI** para estilização e componentes acessíveis.
@@ -36,6 +37,7 @@ O projeto foi construído utilizando uma arquitetura moderna e escalável:
 * **React Router v7** para roteamento.
 
 ### Backend
+
 * **Go (Golang)**: Alta performance, concorrência e baixo uso de memória.
 * **PostgreSQL**: Banco de dados relacional robusto.
 * **JWT (JSON Web Tokens)**: Para autenticação segura e stateless.
@@ -43,32 +45,64 @@ O projeto foi construído utilizando uma arquitetura moderna e escalável:
 
 ## ⚙️ Como Executar o Projeto Localmente
 
-### Pré-requisitos
+### Início Rápido (Docker)
+
+A maneira mais fácil de rodar o projeto é utilizando o Docker Compose. Isso subirá o banco de dados (já com dados reais), o backend e o frontend com hot-reload.
+
+**Windows:**
+```powershell
+.\dev.ps1 up
+```
+
+**Mac/Linux:**
+```bash
+chmod +x dev.sh && ./dev.sh up
+```
+
+**Reset completo (apaga dados e recria do zero):**
+```powershell
+.\dev.ps1 reset   # ou ./dev.sh reset
+```
+
+---
+
+### Execução Manual Sem Docker
+
+#### Pré-requisitos
+
 * **Node.js** (v18+) e **pnpm** (ou npm/yarn)
 * **Go** (v1.21+)
 * **PostgreSQL** instalado e rodando localmente (porta 5432).
 
 ### 1. Configurando o Banco de Dados
+
 O backend possui um utilitário que roda as migrações e insere dados de teste automaticamente. Certifique-se de que o seu `.env` esteja configurado com as credenciais corretas do banco antes de executar:
+
 ```bash
 cd backend
 go run ./cmd/migrate
 ```
 
 ### 2. Rodando o Backend (API)
+
 Ainda na pasta `backend`:
+
 ```bash
 go run ./cmd/api
 ```
+
 *O servidor iniciará na porta `:8082`.*
 
 ### 3. Rodando o Frontend
+
 Em um novo terminal, vá para a pasta `frontend`:
+
 ```bash
 cd frontend
 corepack pnpm install
 corepack pnpm dev
 ```
+
 *Acesse `http://localhost:5173` no seu navegador.*
 
 ## 🔐 Usuários de Teste

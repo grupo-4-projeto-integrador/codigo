@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -13,6 +14,7 @@ type Config struct {
 	Postgres  PostgresConfig
 	Frontend  FrontendConfig
 	JWTSecret string
+	JWTExpirationHours int
 }
 
 type HTTPConfig struct {
@@ -50,7 +52,12 @@ func Load() (Config, error) {
 		Frontend: FrontendConfig{
 			Dir: getEnv("FRONTEND_DIR", filepath.Join("..", "frontend", "dist")),
 		},
-		JWTSecret: getEnv("JWT_SECRET", "flamboyant-seguros-secret-2024"),
+		JWTSecret: getEnv("JWT_SECRET", ""),
+		JWTExpirationHours: getEnvAsInt("JWT_EXPIRATION_HOURS", 8),
+	}
+
+	if len(cfg.JWTSecret) < 32 {
+		return Config{}, fmt.Errorf("JWT_SECRET is missing or too weak; must be at least 32 characters long. Set it in the environment variables or .env file")
 	}
 
 	if cfg.Postgres.Password == "" && os.Getenv("DATABASE_URL") == "" {
@@ -70,6 +77,15 @@ func (c Config) Addr() string {
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
+	}
+	return fallback
+}
+
+func getEnvAsInt(key string, fallback int) int {
+	if value, exists := os.LookupEnv(key); exists {
+		if parsedValue, err := strconv.Atoi(value); err == nil {
+			return parsedValue
+		}
 	}
 	return fallback
 }

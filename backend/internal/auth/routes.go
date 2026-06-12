@@ -8,8 +8,8 @@ import (
 )
 
 // RegisterRoutes registra as rotas públicas de autenticação.
-func RegisterRoutes(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Service, secret string) {
-	h := NewHandler(db, auditSvc, secret)
+func RegisterRoutes(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Service, secret string, expirationHours int) {
+	h := NewHandler(db, auditSvc, secret, expirationHours)
 
 	// POST /api/auth/login — público (sem AuthMiddleware)
 	mux.HandleFunc("POST /api/auth/login", h.Login)
