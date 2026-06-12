@@ -18,6 +18,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
         { label: "Aba Gestão de Usuários", keys: ["Ctrl", "3"] },
         { label: "Paginação Tabela: Próxima Pág.", keys: ["L"] },
         { label: "Paginação Tabela: Pág. Anterior", keys: ["J"] },
+        { label: "Navegação do Mapa Interativo", keys: ["W", "A", "S", "D"] },
       ],
     },
     {

@@ -27,10 +27,7 @@ export function useKeyboardShortcuts() {
               e.preventDefault();
               window.dispatchEvent(new CustomEvent("toggle-dark-mode"));
               break;
-            case "p":
-              e.preventDefault();
-              window.dispatchEvent(new CustomEvent("toggle-presentation-mode"));
-              break;
+
             case "n":
               e.preventDefault();
               navigate("/seguros/apolice/nova");

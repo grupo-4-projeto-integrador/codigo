@@ -1190,31 +1190,6 @@ export function Insurance() {
     </tr>
   );
 
-  if (isFocusMode) {
-    return (
-      <PresentationMode
-        onClose={exitFocusMode}
-        complianceRate={complianceRate}
-        totalPolicies={totalPolicies}
-        expiringPolicies={expiringPolicies}
-        percAVencer={percAVencer}
-        expiredPolicies={expiredPolicies}
-        percVencidas={percVencidas}
-        totalCobertura={totalCobertura}
-        weeklyVariation={weeklyVariation}
-        healthScore={healthScore}
-        lastSyncTime={lastSyncTime}
-        selectedMapLuc={selectedMapLuc}
-        onSelectLuc={setSelectedMapLuc}
-        sparklines={{
-          compliance: { line: sparklineLine, area: sparklineArea, values: sparklineValues },
-          expiring: { line: expiringLine, area: expiringArea, values: expiringSparklineValues },
-          expired: { line: vencidasLine, area: vencidasArea, values: vencidasHistory }
-        }}
-      />
-    );
-  }
-
   return (
     <div
       className="flex flex-col h-full overflow-hidden transition-all duration-500"

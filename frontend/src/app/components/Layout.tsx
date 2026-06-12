@@ -35,6 +35,7 @@ import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { ShortcutsModal } from "./ShortcutsModal";
 import { setSidebarCollapsed } from '../store';
 import { FullscreenTable } from "./FullscreenTable";
+import { PresentationMode } from "./PresentationMode";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
@@ -933,6 +934,7 @@ export function Layout() {
       <CommandPalette />
       <FullscreenTable />
       <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setIsShortcutsModalOpen(false)} />
+      {isFocusMode && <PresentationMode onClose={toggleFocusMode} />}
     </div>
   );
 }

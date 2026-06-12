@@ -7,29 +7,10 @@ import { SegmentRiskChart } from "./SegmentRiskChart";
 import { ActionQueuePanel } from "./ActionQueuePanel";
 import { KpiChartModal, KpiMetricType } from "./KpiChartModal";
 
+import { usePresentationData } from "../../hooks/usePresentationData";
+
 interface PresentationModeProps {
   onClose: () => void;
-  // KPI Data
-  complianceRate: number;
-  totalPolicies: number;
-  expiringPolicies: number;
-  percAVencer: number;
-  expiredPolicies: number;
-  percVencidas: number;
-  totalCobertura: number;
-  weeklyVariation: number;
-  // Sparkline data (paths and values to find the Y coordinate for the dot)
-  sparklines: {
-    compliance: { line: string; area: string; values: number[] };
-    expiring: { line: string; area: string; values: number[] };
-    expired: { line: string; area: string; values: number[] };
-  };
-  // Map Data
-  selectedMapLuc: string | null;
-  onSelectLuc: (luc: string | null) => void;
-  // Meta
-  healthScore: { score: number; delta: number } | null;
-  lastSyncTime: Date | null;
 }
 
 const formatCurrency = (value: number) => {
@@ -37,21 +18,14 @@ const formatCurrency = (value: number) => {
 };
 
 export function PresentationMode({
-  onClose,
-  complianceRate,
-  totalPolicies,
-  expiringPolicies,
-  percAVencer,
-  expiredPolicies,
-  percVencidas,
-  totalCobertura,
-  weeklyVariation,
-  sparklines,
-  selectedMapLuc,
-  onSelectLuc,
-  healthScore,
-  lastSyncTime
+  onClose
 }: PresentationModeProps) {
+  const {
+    complianceRate, totalPolicies, expiringPolicies, percAVencer,
+    expiredPolicies, percVencidas, totalCobertura, weeklyVariation,
+    healthScore, lastSyncTime, selectedMapLuc, setSelectedMapLuc,
+    sparklines
+  } = usePresentationData();
   const [modalAberto, setModalAberto] = React.useState<KpiMetricType | null>(null);
 
   const renderSparkline = (color: string, pathData: { line: string; area: string; values: number[] }, gradientId: string) => {
@@ -137,7 +111,6 @@ export function PresentationMode({
         style={{ backdropFilter: 'blur(8px)' }}
       >
         <span className="text-[12px] font-semibold tracking-wide">Modo Apresentação</span>
-        <kbd className="text-[10px] opacity-60 bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">Ctrl+Shift+P</kbd>
         <span className="opacity-30 mx-1">·</span>
         <kbd className="text-[10px] opacity-60 bg-black/10 dark:bg-white/10 px-1.5 py-0.5 rounded">Esc</kbd>
         <button
@@ -255,7 +228,7 @@ export function PresentationMode({
           <div className="flex-1 overflow-hidden min-h-0 pr-2 flex flex-col">
             <ComplianceMapV2 
               selectedLuc={selectedMapLuc} 
-              onSelectLuc={onSelectLuc}
+              onSelectLuc={setSelectedMapLuc}
               tileWidth="58px"
               tileHeight="44px"
               gap="3px"
@@ -279,7 +252,7 @@ export function PresentationMode({
               <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 shrink-0">Ação Urgente</div>
             </div>
             <div className="flex-1 overflow-hidden px-5 pb-5">
-              <ActionQueuePanel onSelectLuc={onSelectLuc} isPresentationMode={true} />
+              <ActionQueuePanel onSelectLuc={setSelectedMapLuc} isPresentationMode={true} />
             </div>
           </div>
         </div>

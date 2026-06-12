@@ -124,7 +124,8 @@ export function ComplianceMapV2({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getSidebarCollapsed());
 
   // 6 lines * 13 columns = 78 items per page (or 15 columns = 90 items if sidebar collapsed)
-  const ITEMS_PER_PAGE = itemsPerPage || (hideHeader ? 176 : (isSidebarCollapsed ? 90 : 78));
+  const cols = hideHeader ? 16 : (isSidebarCollapsed ? 15 : 13);
+  const ITEMS_PER_PAGE = itemsPerPage || (cols * 6);
 
   useEffect(() => {
     let active = true;
@@ -231,8 +232,8 @@ export function ComplianceMapV2({
 
       if (!['w', 'a', 's', 'd'].includes(key)) return;
 
-      const cols = hideHeader ? 16 : (isSidebarCollapsed ? 15 : 13);
-      
+      if (!['w', 'a', 's', 'd'].includes(key)) return;
+
       let currentIndex = -1;
       if (selectedLuc) {
         currentIndex = allLucs.indexOf(selectedLuc);
@@ -344,7 +345,7 @@ export function ComplianceMapV2({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                  className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fill, ${tileWidth})`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}
+                  className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}
                 >
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
@@ -392,7 +393,7 @@ export function ComplianceMapV2({
                       className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile ${isSelected ? 'sel' : ''}`}
                       aria-label={`LUC ${luc}`}
                       style={{
-                          width: tileWidth,
+                          width: '100%',
                           height: tileHeight,
                           borderRadius: '10px',
                           flexShrink: 0,
