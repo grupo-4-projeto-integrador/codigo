@@ -30,12 +30,9 @@ import { request } from "../../api/client";
 import { getNotificacoes, marcarTodasLidas, arquivarLidas, arquivarUnica, type Notificacao } from "../../api/notificacao";
 import { motion, AnimatePresence } from "motion/react";
 import { CommandPalette } from "./CommandPalette";
-import { useFocusMode } from "../contexts/FocusModeContext";
-import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
-import { ShortcutsModal } from "./ShortcutsModal";
 import { setSidebarCollapsed } from '../store';
 import { FullscreenTable } from "./FullscreenTable";
-import { PresentationMode } from "./PresentationMode";
+import { GraphView } from "./GraphView";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
@@ -64,7 +61,6 @@ const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px
 
 export function Layout() {
   const navigate = useNavigate();
-  const { isShortcutsModalOpen, setIsShortcutsModalOpen } = useKeyboardShortcuts();
   const location = useLocation();
   const outlet = useOutlet();
   const { role, logout, login, usuario, can } = useAuth();
@@ -75,7 +71,6 @@ export function Layout() {
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
-  const { isFocusMode, toggleFocusMode } = useFocusMode();
 
   // User profile management mapped from real AuthContext role
   const mappedProfileKey = role === 'admin' ? 'relacionamento' : role === 'gestor' ? 'marketing' : 'arquitetura';
@@ -194,13 +189,12 @@ export function Layout() {
     };
 
     if (isNotificationOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isNotificationOpen]);
+  }, []);
 
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -219,15 +213,9 @@ export function Layout() {
 
   useEffect(() => {
     const handleToggleDarkMode = () => toggleDarkMode();
-    const handleTogglePresentationMode = () => {
-      const btn = document.getElementById('focus-mode-btn');
-      if (btn) btn.click();
-    };
     window.addEventListener('toggle-dark-mode', handleToggleDarkMode);
-    window.addEventListener('toggle-presentation-mode', handleTogglePresentationMode);
     return () => {
       window.removeEventListener('toggle-dark-mode', handleToggleDarkMode);
-      window.removeEventListener('toggle-presentation-mode', handleTogglePresentationMode);
     };
   }, [darkMode]);
 
@@ -418,7 +406,7 @@ export function Layout() {
                     >
                       <div className="flex items-start gap-3">
                         <div className="p-2.5 rounded-lg flex-shrink-0 bg-red-100 dark:bg-red-900/20">
-                          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                          <svg className="w-5 h-5 text-red-600 dark:text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.loja}</p>
@@ -448,7 +436,7 @@ export function Layout() {
                     >
                       <div className="flex items-start gap-3">
                         <div className="p-2.5 rounded-lg flex-shrink-0 bg-orange-100 dark:bg-orange-900/20">
-                          <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                          <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.loja}</p>
@@ -507,10 +495,10 @@ export function Layout() {
 
       {/* Sidebar Desktop */}
       <aside
-        className={`text-white flex-col hidden md:flex transition-[width,padding,opacity,margin] duration-300 overflow-hidden h-screen sticky top-0 ${isFocusMode ? 'opacity-0 pointer-events-none' : ''}`}
+        className={`text-white flex-col hidden md:flex transition-[width,padding,opacity,margin] duration-300 overflow-hidden h-screen sticky top-0`}
         style={{
           backgroundColor: '#6e150e',
-          width: isFocusMode ? '0px' : isSidebarCollapsed ? '80px' : '256px'
+          width: isSidebarCollapsed ? '80px' : '256px'
         }}
       >
         <div className={`flex ${isSidebarCollapsed ? 'flex-col items-center gap-3' : 'items-center justify-between'} pt-5 px-4 pb-4 mb-2 border-b`} style={{ borderColor: '#a0191e50' }}>
@@ -633,7 +621,7 @@ export function Layout() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Header - Hidden on mobile */}
-        <header className={`hidden md:flex h-16 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] items-center justify-between px-6 z-50 transition-[height,padding,margin,border] duration-300 ${isFocusMode ? 'overflow-hidden !h-0 !py-0 border-none' : ''}`}>
+        <header className="hidden md:flex h-16 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] items-center justify-between px-6 z-50 transition-[height,padding,margin,border] duration-300">
           <div className="flex-1 max-w-xl">
             {/* Search Placeholder */}
             <div className="relative flex items-center">
@@ -644,21 +632,6 @@ export function Layout() {
           </div>
 
           <div className="flex items-center ml-6 space-x-4">
-
-            {/* Focus Mode Button */}
-            <button
-              id="focus-mode-btn"
-              onClick={toggleFocusMode}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 ${
-                isFocusMode
-                  ? 'bg-[#6e150e] text-white shadow-lg'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-[#222222]'
-              }`}
-              title="Ativar/desativar Modo Apresentação (F)"
-            >
-              <Presentation className="w-4 h-4" />
-              <span className="hidden xl:inline">Apresentação</span>
-            </button>
 
             <div ref={notificationRef} className="relative">
               <button
@@ -913,7 +886,7 @@ export function Layout() {
         </header>
 
         {/* Page Content */}
-        <main className={`flex-1 overflow-y-auto scroll-smooth bg-[#F7F4EF] dark:bg-[#0F1117] transition-[padding,height] duration-300 ${isFocusMode ? 'p-0 h-screen overflow-hidden' : 'p-4 md:p-6'}`}>
+        <main className="flex-1 overflow-y-auto scroll-smooth bg-[#F7F4EF] dark:bg-[#0F1117] transition-[padding,height] duration-300 p-4 md:p-6">
           <div className="w-full">
             <UserProfileProvider value={{ userProfile, canEdit }}>
               <AnimatePresence mode="wait">
@@ -931,10 +904,6 @@ export function Layout() {
           </div>
         </main>
       </div>
-      <CommandPalette />
-      <FullscreenTable />
-      <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setIsShortcutsModalOpen(false)} />
-      {isFocusMode && <PresentationMode onClose={toggleFocusMode} />}
     </div>
   );
 }

@@ -12,6 +12,8 @@ import { PolicyDetail } from "./pages/PolicyDetail";
 import { PolicyEdit } from "./pages/PolicyEdit";
 import { PolicyNew } from "./pages/PolicyNew";
 import { PrivateRoute } from "./components/PrivateRoute";
+import { PresentationMode } from "./components/PresentationMode";
+import { GraphView } from "./components/GraphView";
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +40,8 @@ export const router = createBrowserRouter([
       { path: "relatorios", Component: Reports },
         ],
       },
+      { path: "apresentacao", Component: PresentationMode },
+      { path: "graph", Component: GraphView },
     ],
   },
 ]);

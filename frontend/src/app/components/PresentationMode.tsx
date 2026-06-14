@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Shield, Activity, X, LineChart } from 'lucide-react';
 import logo from "../../imports/image-4.png";
-import { ComplianceMapV2 } from "./ComplianceMapV2";
+import { PresentationGrid } from "./PresentationGrid";
 import { SegmentRiskChart } from "./SegmentRiskChart";
 import { ActionQueuePanel } from "./ActionQueuePanel";
 import { KpiChartModal, KpiMetricType } from "./KpiChartModal";
@@ -226,14 +226,10 @@ export function PresentationMode({
             Mapa de Conformidade - {totalPolicies} lojas
           </div>
           <div className="flex-1 overflow-hidden min-h-0 pr-2 flex flex-col">
-            <ComplianceMapV2 
+            <PresentationGrid 
               selectedLuc={selectedMapLuc} 
               onSelectLuc={setSelectedMapLuc}
-              tileWidth="58px"
-              tileHeight="44px"
-              gap="3px"
               hideHeader={true}
-              itemsPerPage={184}
             />
           </div>
         </div>

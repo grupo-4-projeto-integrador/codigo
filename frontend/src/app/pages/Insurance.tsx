@@ -1,4 +1,4 @@
-import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert, FilePlus, FilePenLine, RefreshCw, Trash2 } from "lucide-react";
+import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert, FilePlus, FilePenLine, RefreshCw, Trash2, Camera, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
 import React, { useState, useEffect, useRef, useId, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -23,7 +23,7 @@ import { SkeletonCard } from "../components/ui/SkeletonCard";
 import { SkeletonTable } from "../components/ui/SkeletonTable";
 import { SkeletonMap } from "../components/ui/SkeletonMap";
 import { AuditLog } from "./AuditLog";
-import { useFocusMode } from "../contexts/FocusModeContext";
+
 import { PresentationMode } from "../components/PresentationMode";
 import { Tooltip as ShadcnTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "../components/ui/dropdown-menu";
@@ -131,6 +131,7 @@ export function Insurance() {
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [hoveredPolicyId, setHoveredPolicyId] = useState<string | null>(null);
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'visao-geral' | 'audit-log'>('visao-geral');
@@ -169,7 +170,7 @@ export function Insurance() {
 
   // User profile and permissions from context
   const { canEdit } = useUserProfile();
-  const { isFocusMode, exitFocusMode } = useFocusMode();
+  const isFocusMode = false;
   const { can, role } = useAuth();
   const [hoveredEditButton, setHoveredEditButton] = useState<string | null>(null);
 
@@ -1192,6 +1193,7 @@ export function Insurance() {
 
   return (
     <div
+      ref={dashboardRef}
       className="flex flex-col h-full overflow-hidden transition-all duration-500"
       style={{
         backgroundColor: colors.pageBg,
@@ -1360,6 +1362,15 @@ export function Insurance() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("trigger-snapshot"))}
+                className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1"
+                title="Capturar snapshot em PNG"
+              >
+                <Camera className="w-4 h-4" />
+                <span className="text-[13px] font-medium hidden xl:inline">Snapshot</span>
+              </button>
 
               <RequireRole roles={['admin', 'gestor']}>
                 <motion.button

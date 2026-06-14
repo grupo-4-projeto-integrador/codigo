@@ -142,6 +142,7 @@ export const subscribeFullscreenTable = (listener: () => void) => {
   return () => fullscreenTableListeners.delete(listener);
 };
 
+
 // ── Sidebar ──────────────────────────────────────────────────────────
 let sidebarCollapsed = false;
 const sidebarListeners = new Set<() => void>();

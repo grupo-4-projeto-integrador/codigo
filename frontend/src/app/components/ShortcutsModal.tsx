@@ -26,6 +26,7 @@ export function ShortcutsModal({ isOpen, onClose }: ShortcutsModalProps) {
       items: [
         { label: "Abrir Command Palette", keys: ["Ctrl", "K"] },
         { label: "Exportar filtro atual", keys: ["Ctrl", "Shift", "E"] },
+        { label: "Capturar Snapshot", keys: ["Alt", "P"] },
         { label: "Focar na barra de busca", keys: ["Ctrl", "Shift", "F"] },
         { label: "Ver detalhes da apólice", keys: ["R"] },
         { label: "Editar apólice selecionada", keys: ["E"] },

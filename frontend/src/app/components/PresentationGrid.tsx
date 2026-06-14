@@ -95,69 +95,29 @@ function getDaysDifference(from: Date, to: Date) {
   return Math.floor((toStart.getTime() - fromStart.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export interface ComplianceMapV2Props {
+export interface PresentationGridProps {
   selectedLuc: string | null;
   onSelectLuc: (luc: string | null) => void;
-  tileWidth?: string;
-  tileHeight?: string;
-  gap?: string;
   hideHeader?: boolean;
-  itemsPerPage?: number;
 }
 
-export function ComplianceMapV2({ 
+export function PresentationGrid({ 
   selectedLuc, 
   onSelectLuc,
-  tileWidth = '43px',
-  tileHeight = '38px',
-  gap = '5px',
   hideHeader = false,
-  itemsPerPage
-}: ComplianceMapV2Props) {
+}: PresentationGridProps) {
   const navigate = useNavigate();
   const [apolices, setApolices] = useState<ApoliceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [mapFilters, setMapFiltersState] = useState(getMapFilters);
-  const [timeOffsetIdx, setTimeOffsetIdx] = useState(0);
+  const [isSortedByScore, setIsSortedByScore] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getSidebarCollapsed());
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [gridConfig, setGridConfig] = useState({ 
-    cols: hideHeader ? 16 : (isSidebarCollapsed ? 15 : 13), 
-    rows: 7, 
-    itemsPerPage: 0 
-  });
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const updateGrid = () => {
-      const W = container.clientWidth;
-      const H = container.clientHeight;
-      const gapPx = parseInt(gap) || 5;
-      const minW = parseInt(tileWidth) || 43;
-      const minH = parseInt(tileHeight) || 38;
-
-      let c = Math.floor((W + gapPx) / (minW + gapPx));
-      if (c < 1) c = 1;
-
-      let r = Math.floor((H + gapPx) / (minH + gapPx));
-      if (r < 1) r = 1;
-
-      setGridConfig({ cols: c, rows: r, itemsPerPage: c * r });
-    };
-
-    updateGrid();
-    const observer = new ResizeObserver(updateGrid);
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [tileWidth, tileHeight, gap]);
-
-  const cols = gridConfig.cols;
-  const ITEMS_PER_PAGE = itemsPerPage || gridConfig.itemsPerPage || (cols * 7);
+  const [gridConfig, setGridConfig] = useState({ cols: 13, rows: 6, itemsPerPage: 78 });
+  const [timeOffsetIdx, setTimeOffsetIdx] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -184,6 +144,8 @@ export function ComplianceMapV2({
       active = false;
     };
   }, []);
+
+  // The ResizeObserver will be placed after allLucs initialization
 
   // Subscribe to map dim filters from store
   useEffect(() => {
@@ -219,10 +181,55 @@ export function ComplianceMapV2({
     });
 
     // Sort alphanumerically
-    return Array.from(lucSet).sort((a, b) => {
+    const sorted = Array.from(lucSet).sort((a, b) => {
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     });
-  }, [apolices]);
+
+    return sorted;
+  }, [apolices, isSortedByScore, policyByLuc]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateGrid = () => {
+      const W = container.clientWidth;
+      const H = container.clientHeight;
+      const gap = 4;
+      const N = allLucs.length;
+
+      if (N === 0) {
+        setGridConfig({ cols: 1, rows: 1, itemsPerPage: 1 });
+        return;
+      }
+
+      let maxS = 0;
+      let bestCols = 1;
+      let bestRows = N;
+
+      // Mathematical optimization to find the largest square size
+      for (let c = 1; c <= N; c++) {
+        let r = Math.ceil(N / c);
+        
+        let sCol = (W - (c - 1) * gap) / c;
+        let sRow = (H - (r - 1) * gap) / r;
+        let s = Math.min(sCol, sRow);
+        
+        if (s > maxS) {
+          maxS = s;
+          bestCols = c;
+          bestRows = r;
+        }
+      }
+
+      setGridConfig({ cols: bestCols, rows: bestRows, itemsPerPage: N });
+    };
+
+    updateGrid();
+    const observer = new ResizeObserver(updateGrid);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [allLucs.length]);
 
   const maxCobertura = useMemo<number>(() => {
     let max = 0;
@@ -233,7 +240,8 @@ export function ComplianceMapV2({
     return max || 1;
   }, [apolices]);
 
-
+  const cols = gridConfig.cols;
+  const ITEMS_PER_PAGE = gridConfig.itemsPerPage;
 
   useEffect(() => {
     if (selectedLuc && !loading && apolices.length > 0) {
@@ -264,8 +272,6 @@ export function ComplianceMapV2({
 
       if (!['w', 'a', 's', 'd'].includes(key)) return;
 
-      if (!['w', 'a', 's', 'd'].includes(key)) return;
-
       let currentIndex = -1;
       if (selectedLuc) {
         currentIndex = allLucs.indexOf(selectedLuc);
@@ -292,7 +298,7 @@ export function ComplianceMapV2({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedLuc, allLucs, onSelectLuc, hideHeader, isSidebarCollapsed, currentPage, ITEMS_PER_PAGE]);
+  }, [selectedLuc, allLucs, onSelectLuc, hideHeader, isSidebarCollapsed, currentPage, ITEMS_PER_PAGE, cols]);
 
   const totalPages = Math.ceil(allLucs.length / ITEMS_PER_PAGE);
   const paginatedLucs = useMemo(() => {
@@ -368,7 +374,7 @@ export function ComplianceMapV2({
         </div>
       ) : (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar" style={{ scrollbarGutter: 'stable' }} ref={containerRef}>
+          <div className="flex-1 overflow-hidden min-h-0 pr-1 flex items-center justify-center" ref={containerRef}>
             <TooltipProvider delayDuration={100}>
               <AnimatePresence mode="popLayout">
                 <motion.div 
@@ -377,7 +383,7 @@ export function ComplianceMapV2({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                  className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}
+                  className="map-grid-container p-1" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: '4px', alignContent: 'center', justifyContent: 'center', width: '100%' }}
                 >
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
@@ -415,47 +421,31 @@ export function ComplianceMapV2({
               return (
                 <Tooltip key={luc}>
                   <TooltipTrigger asChild>
-                    <motion.button
+                    <button
                       ref={(el) => {
                         if (el && isSelected) {
                           el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
                       }}
                       onClick={() => onSelectLuc(isSelected ? null : luc)}
-                      className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile ${isSelected ? 'sel' : ''}`}
+                      className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none hover:scale-[1.05] hover:brightness-105 active:scale-95 hover:shadow-xl hover:z-40 transition-all duration-300 ease-out ${isSelected ? 'sel' : ''}`}
                       aria-label={`LUC ${luc}`}
                       style={{
                           width: '100%',
-                          height: tileHeight,
-                          borderRadius: '10px',
+                          aspectRatio: '1 / 1',
+                          borderRadius: '8px',
                           flexShrink: 0,
                           color: details.text,
                           zIndex: zIndexLevel,
                           pointerEvents: (isDimmed ? 'none' : 'auto') as React.CSSProperties['pointerEvents'],
                           WebkitTapHighlightColor: 'transparent',
-                      }}
-                      initial={hasMounted ? false : { scale: 0.5, opacity: 0 }}
-                      animate={{ 
-                        scale: isSelected ? baseScale * 1.05 : (hasSelection ? baseScale * 0.96 : baseScale), 
-                        opacity: isDimmed ? 0.12 : (hasSelection && !isSelected ? 0.65 : 1),
-                        outline: isSelected ? `2px solid ${details.bg}` : `0px solid transparent`,
-                        outlineOffset: isSelected ? '2px' : '0px',
-                        boxShadow: isSelected ? `0 6px 16px rgba(0,0,0,0.25)` : 'none',
-                        filter: isSelected ? 'brightness(1.05)' : 'brightness(1)',
-                        backgroundColor: details.bg
-                      }}
-                      whileHover={{
-                        scale: baseScale * 1.05,
-                        boxShadow: `0 8px 16px -4px ${details.bg}50, 0 4px 8px -4px rgba(0,0,0,0.1)`,
-                        filter: 'brightness(1.05)',
-                        zIndex: 40
-                      }}
-                      whileTap={{ scale: baseScale * 0.95 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: hasMounted ? 400 : 300,
-                        damping: hasMounted ? 25 : 20,
-                        delay: hasMounted ? 0 : (index % 13) * 0.02 + Math.floor(index / 13) * 0.02
+                          backgroundColor: details.bg,
+                          opacity: isDimmed ? 0.12 : (hasSelection && !isSelected ? 0.65 : 1),
+                          transform: `scale(${isSelected ? baseScale * 1.05 : (hasSelection ? baseScale * 0.96 : baseScale)})`,
+                          outline: isSelected ? `2px solid ${details.bg}` : `0px solid transparent`,
+                          outlineOffset: isSelected ? '2px' : '0px',
+                          boxShadow: isSelected ? `0 6px 16px rgba(0,0,0,0.25)` : 'none',
+                          filter: isSelected ? 'brightness(1.05)' : 'brightness(1)',
                       }}
                     />
                   </TooltipTrigger>
@@ -486,7 +476,7 @@ export function ComplianceMapV2({
 
           {/* Dot Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 shrink-0 pt-6 pb-2 mt-2">
+            <div className="flex items-center justify-center gap-3 shrink-0 py-2">
               <button
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}

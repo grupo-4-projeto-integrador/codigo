@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Command } from 'cmdk';
-import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2 } from 'lucide-react';
+import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2, Share2 as TopologyStar3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { searchApolices, deleteApolice, listApolices } from '../../api/apolice';
 import { toast } from 'sonner';
@@ -9,7 +9,7 @@ import {
   setFullscreenTableOpen,
   setFullscreenTableFilter,
   getFullscreenTableFilter,
-  subscribeFullscreenTable,
+  subscribeFullscreenTable
 } from '../store';
 
 export function CommandPalette() {
@@ -210,6 +210,16 @@ export function CommandPalette() {
                 >
                   <ShieldPlus className="w-4 h-4 opacity-70" />
                   <span>Ir para Nova Apólice</span>
+                </Command.Item>
+                <Command.Item 
+                  onSelect={() => {
+                    navigate('/graph');
+                    setOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <TopologyStar3 className="w-4 h-4 opacity-70" />
+                  <span>Graph View · Visualização por segmento</span>
                 </Command.Item>
                 <Command.Item 
                   onSelect={() => handleSelect(() => {
