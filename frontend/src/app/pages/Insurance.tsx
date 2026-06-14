@@ -1,5 +1,7 @@
 import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert, FilePlus, FilePenLine, RefreshCw, Trash2, Camera, Loader2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
 import React, { useState, useEffect, useRef, useId, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
@@ -692,6 +694,33 @@ export function Insurance() {
     return 0;
   });
 
+  // Onboarding interactivo
+  useEffect(() => {
+    if (!localStorage.getItem("onboarding_completed") && !isLoading && sortedPolicies.length > 0 && activeTab === 'visao-geral') {
+      setTimeout(() => {
+        const driverObj = driver({
+          showProgress: true,
+          nextBtnText: 'Próximo',
+          prevBtnText: 'Anterior',
+          doneBtnText: 'Concluir',
+          allowClose: true,
+          steps: [
+            { popover: { title: 'Bem-vindo ao Compliance!', description: 'Vamos fazer um tour rápido para você conhecer a tela de Seguros.', side: "bottom", align: 'start' } },
+            { element: '#kpis-tour', popover: { title: 'Visão Geral', description: 'Acompanhe a saúde das apólices, taxa de conformidade e indicadores críticos.', side: "bottom", align: 'start' } },
+            { element: '#mapa-tour', popover: { title: 'Mapa de Conformidade', description: 'Este é o Mapa de Conformidade. Clique num tile (loja) para ver os detalhes da apólice.', side: "left", align: 'start' } },
+            { element: '#filtros-tour', popover: { title: 'Filtros Inteligentes', description: 'Busque ou filtre por seguradora, status e segmento rapidamente.', side: "bottom", align: 'start' } },
+            { element: '#tabela-tour', popover: { title: 'Lista de Apólices', description: 'Visualize todas as apólices em detalhes. Arraste arquivos aqui para envio rápido.', side: "top", align: 'start' } },
+            { element: '#snapshot-tour', popover: { title: 'Exportação em PNG', description: 'Exporte relatórios! Você também pode capturar a tela inteira pressionando Alt + P.', side: "bottom", align: 'end' } }
+          ],
+          onDestroyed: () => {
+            localStorage.setItem("onboarding_completed", "true");
+          }
+        });
+        driverObj.drive();
+      }, 1000);
+    }
+  }, [isLoading, sortedPolicies.length, activeTab]);
+
   // Listen for custom events from CommandPalette
   useEffect(() => {
     const handleExport = () => {
@@ -1254,7 +1283,7 @@ export function Insurance() {
           </div>
 
           {activeTab === 'visao-geral' && (
-            <div className="flex items-center gap-2 lg:gap-2.5">
+            <div className="flex items-center gap-2 lg:gap-2.5" id="filtros-tour">
               <div className="relative w-[180px] xl:w-[260px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 <input
@@ -1364,6 +1393,7 @@ export function Insurance() {
               </DropdownMenu>
 
               <button
+                id="snapshot-tour"
                 onClick={() => window.dispatchEvent(new CustomEvent("trigger-snapshot"))}
                 className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1"
                 title="Capturar snapshot em PNG"
@@ -1440,7 +1470,7 @@ export function Insurance() {
           <div className={`grid grid-cols-1 ${isFocusMode ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_350px]'} flex-1 gap-x-6 gap-y-3 md:gap-y-4 lg:gap-y-6 min-h-0 px-6 overflow-y-auto pb-4 items-stretch`}>
 
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4" id="kpis-tour">
               {isLoading ? (
                 <>
                   <SkeletonCard />
@@ -1699,6 +1729,7 @@ export function Insurance() {
             </div>
 
             <div
+              id="mapa-tour"
               className="h-full"
               style={{
                 display: "grid",
@@ -1745,6 +1776,7 @@ export function Insurance() {
             ) : (
               <motion.div
                 ref={tableSectionRef}
+                id="tabela-tour"
                 className="bg-white dark:bg-[#151515] rounded-xl border overflow-hidden relative"
                 style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
                 transition={{ duration: 0.2, ease: "easeOut" }}

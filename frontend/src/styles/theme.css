@@ -289,3 +289,75 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }
+
+/* Driver.js Elegant Overrides */
+.driver-popover {
+  border-radius: 12px !important;
+  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+  padding: 20px !important;
+  font-family: inherit !important;
+}
+
+.driver-popover-title {
+  font-family: inherit !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  color: var(--color-text-primary) !important;
+  margin-bottom: 8px !important;
+}
+
+.driver-popover-description {
+  font-family: inherit !important;
+  font-size: 13px !important;
+  color: var(--color-text-secondary) !important;
+  line-height: 1.5 !important;
+}
+
+.driver-popover-footer button {
+  font-family: inherit !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  text-shadow: none !important;
+  padding: 6px 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.driver-popover-next-btn {
+  background-color: #9F1239 !important;
+  color: white !important;
+  border: 1px solid #9F1239 !important;
+}
+
+.driver-popover-next-btn:hover {
+  background-color: #880d2f !important;
+  box-shadow: 0 2px 8px rgba(159, 18, 57, 0.4) !important;
+}
+
+.driver-popover-prev-btn {
+  background-color: transparent !important;
+  color: var(--color-text-secondary) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.driver-popover-prev-btn:hover {
+  background-color: var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.driver-popover-close-btn {
+  color: var(--color-text-muted) !important;
+}
+
+.driver-popover-close-btn:hover {
+  color: var(--color-text-primary) !important;
+}
+
+.driver-popover-progress-text {
+  font-family: inherit !important;
+  font-size: 11px !important;
+  color: var(--color-text-muted) !important;
+}
