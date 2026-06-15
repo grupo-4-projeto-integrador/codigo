@@ -146,9 +146,9 @@ func (s *Service) UpdateObservacoes(luc string, observacoes string) error {
 	return s.repo.UpdateObservacoes(luc, observacoes)
 }
 
-func (s *Service) Renovar(luc string, novaVigenciaStr string, novoValor float64, ator string) error {
+func (s *Service) Renovar(luc string, novaVigenciaStr string, novoValor float64, novaSeguradora string, ator string) error {
 	if strings.TrimSpace(luc) == "" {
-		return ErrValidation("LUC nÃ£o pode estar vazio")
+		return ErrValidation("LUC não pode estar vazio")
 	}
 
 	novaVigencia, err := ParseDate(novaVigenciaStr)
@@ -156,7 +156,7 @@ func (s *Service) Renovar(luc string, novaVigenciaStr string, novoValor float64,
 		return err
 	}
 
-	return s.repo.Renovar(luc, novaVigencia, novoValor, ator, "Renovação realizada")
+	return s.repo.Renovar(luc, novaVigencia, novoValor, novaSeguradora, ator, "Renovação realizada")
 }
 
 func (s *Service) GetLojas() ([]LojaInfo, error) {

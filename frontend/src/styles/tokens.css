@@ -79,3 +79,11 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@media (max-width: 640px) {
+  :root {
+    --space-page: 12px;
+    --font-kpi: 28px;
+    --font-kpi-label: 8px;
+  }
+}

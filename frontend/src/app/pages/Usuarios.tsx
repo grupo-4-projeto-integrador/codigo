@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "../components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
 
 export function Usuarios() {
   const { role } = useAuth();
@@ -106,28 +108,76 @@ export function Usuarios() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-6xl mx-auto p-4 md:p-6 h-full flex flex-col">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Shield className="w-6 h-6 text-[#c4151f]" />
+          <h1 className="text-[18px] md:text-2xl font-semibold md:font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Shield className="hidden md:block w-6 h-6 text-[#c4151f]" />
             Gestão de Usuários
           </h1>
-          <p className="text-sm text-gray-500 dark:text-[#94A3B8] mt-1">
+          <p className="text-[12px] md:text-sm text-gray-500 dark:text-[#94A3B8] md:mt-1 mt-0.5" style={{ color: 'var(--color-text-secondary)' }}>
             Administre quem tem acesso ao sistema e os níveis de permissão.
           </p>
         </div>
         
         <button 
           onClick={() => setIsInviteOpen(true)}
-          className="bg-[#c4151f] hover:bg-[#a01119] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+          className="w-full md:w-auto bg-[#c4151f] hover:bg-[#a01119] text-white px-4 py-2.5 md:py-2 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Convidar Usuário
         </button>
       </div>
 
-      <div className="bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-xl overflow-hidden flex-1 flex flex-col min-h-0">
+      {/* Mobile List View */}
+      <div className="block md:hidden flex-1 overflow-y-auto pb-6">
+        <div className="flex flex-col gap-2">
+          {loading ? (
+            <div className="text-center py-8 text-gray-500">Carregando...</div>
+          ) : users.map(u => (
+            <div key={u.id} className="user-card-mobile flex items-center justify-between p-4 bg-white dark:bg-[#151515] border border-gray-100 dark:border-[#222] rounded-xl shadow-sm">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="avatar flex-shrink-0 w-[40px] h-[40px] rounded-full flex items-center justify-center font-bold text-[#c4151f] dark:text-[#e04444] bg-gray-200 dark:bg-[#2a2a2a] border-2 border-white dark:border-[#151515]">
+                  {getInitials(u.nome)}
+                </div>
+                <div className="user-info min-w-0 pr-2">
+                  <div className="user-name text-[14px] font-medium text-gray-900 dark:text-white truncate">{u.nome}</div>
+                  <div className="user-email text-[12px] text-gray-500 dark:text-[#94A3B8] truncate">{u.email}</div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className={`role-badge px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider ${
+                  u.role === 'admin' ? 'bg-[#3e0000] text-[#c4151f]' :
+                  u.role === 'gestor' ? 'bg-[#2a1f00] text-[#f9e4a0]' :
+                  'bg-white/5 text-white/40'
+                }`} style={u.role === 'visualizador' ? { backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' } : {}}>
+                  {u.role.toUpperCase()}
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="user-actions-btn p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded">
+                      <MoreHorizontal className="w-5 h-5" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={() => openEdit(u)} className="flex items-center gap-2">
+                      <Edit2 className="w-4 h-4" /> Editar role
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => toggleAtivo(u)} className="flex items-center gap-2">
+                      {u.ativo ? <Ban className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                      {u.ativo ? "Desativar" : "Reativar"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:flex bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-xl overflow-hidden flex-1 flex-col min-h-0">
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-gray-50 dark:bg-[#0a0a0a] text-xs uppercase font-semibold text-gray-500 dark:text-[#64748B] border-b border-gray-200 dark:border-[#222222] sticky top-0 z-10">

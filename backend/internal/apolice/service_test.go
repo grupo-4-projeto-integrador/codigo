@@ -84,7 +84,7 @@ func (m *MockRepository) UpdateObservacoes(luc string, observacoes string) error
 	return m.Err
 }
 
-func (m *MockRepository) Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error {
+func (m *MockRepository) Renovar(luc string, novoVencimento time.Time, novoValor float64, novaSeguradora string, ator string, descricao string) error {
 	return m.Err
 }
 

@@ -22,6 +22,7 @@ import { useUserProfile } from "../contexts/UserProfileContext";
 interface PolicyEditFormInputs {
   luc: string;
   loja: string;
+  cnpj: string;
   tipos_cobertura: string[];
   seguradora: string;
   vigencia: Date | undefined;
@@ -45,6 +46,7 @@ export function PolicyEdit() {
     defaultValues: {
       luc: id || "",
       loja: "",
+      cnpj: "",
       tipos_cobertura: [],
       seguradora: "",
       vigencia: undefined,
@@ -108,6 +110,7 @@ export function PolicyEdit() {
         reset({
           luc: data.luc || id || "",
           loja: data.lojista || "",
+          cnpj: data.cnpj || "",
           tipos_cobertura: (data.tipo || data.segmento || "").split(',').map((s: string) => s.trim()).filter(Boolean),
           seguradora: data.seguradora || "",
           vigencia: data.vigencia ? parseDateSafe(data.vigencia) : undefined,
@@ -147,6 +150,7 @@ export function PolicyEdit() {
         luc: data.luc || id,
         lojista: data.loja,
         loja: data.loja,
+        cnpj: data.cnpj,
         tipos_cobertura: data.tipos_cobertura,
         segmento: data.tipos_cobertura.join(', '), // para retrocompatibilidade
         seguradora: data.seguradora,
@@ -245,6 +249,15 @@ export function PolicyEdit() {
                 <Input 
                   {...register("loja")}
                   placeholder="Nome da loja" 
+                  className="dark:bg-[#0a0a0a]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-gray-700 dark:text-gray-300">CNPJ <span className="text-red-500">*</span></label>
+                <Input 
+                  {...register("cnpj", { required: true })}
+                  placeholder="00.000.000/0000-00"
                   className="dark:bg-[#0a0a0a]"
                 />
               </div>

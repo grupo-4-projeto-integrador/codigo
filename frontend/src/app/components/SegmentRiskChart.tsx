@@ -85,6 +85,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
   const [error, setError] = useState<string | null>(null);
   const [selectedLuc, setSelectedLuc] = useState(getSelectedApoliceLuc());
   const [lucToSegment, setLucToSegment] = useState<Record<string, string>>({});
+  const [showAllSegments, setShowAllSegments] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeSelectedApoliceLuc(() => {
@@ -180,9 +181,34 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
     return Math.max(Math.ceil(max / 10) * 10 + 10, 50);
   }, [data]);
 
+  const cssStyles = (
+    <style>{`
+      @media (max-width: 1024px) {
+        .segment-name { 
+          white-space: nowrap; 
+          overflow: hidden; 
+          text-overflow: ellipsis;
+          max-width: 140px;
+        }
+        .segment-meta { font-size: 10px; }
+      }
+      @media (max-width: 640px) {
+        .segment-name { max-width: 100px; }
+        /* Mostra apenas top 3 em mobile */
+        .segment-list:not(.expanded) .segment-item:nth-child(n+4) { display: none !important; }
+        .show-more-btn-container { display: block; }
+      }
+      @media (min-width: 641px) {
+        .show-more-btn-container { display: none !important; }
+      }
+    `}</style>
+  );
+
   if (isPresentationMode) {
     return (
-      <div className="h-full flex flex-col pt-1">
+      <>
+      {cssStyles}
+      <div className="h-auto md:h-full flex flex-col pt-1">
         <div className="flex-1 overflow-y-auto pr-1" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {loading ? (
             <div className="h-full flex items-center justify-center animate-pulse bg-white/5 rounded-lg"></div>
@@ -191,16 +217,16 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
           ) : data.length === 0 ? (
             <div className="h-full flex items-center justify-center text-[12px] text-gray-500">Nenhum risco.</div>
           ) : (
-            <div className="space-y-[14px]">
+            <div className={`space-y-[14px] segment-list ${showAllSegments ? 'expanded' : ''}`}>
               {data.slice(0, 5).map((item, index) => {
                 const width = Math.max((item.vencidas / maxVencidas) * 100, item.vencidas > 0 ? 12 : 0);
                 const barColor = SEGMENT_BAR_COLORS[index % SEGMENT_BAR_COLORS.length];
                 
                 return (
-                  <div key={item.segmento} className="group relative">
+                  <div key={item.segmento} className="group relative segment-item">
                     <div className="flex justify-between items-end mb-1">
-                      <span className="truncate text-[13px] font-bold text-gray-900 dark:text-white">{item.segmento}</span>
-                      <span className="text-[11px] font-bold text-gray-500 dark:text-white/50">{item.vencidas}vencidas</span>
+                      <span className="segment-name text-[13px] font-bold text-gray-900 dark:text-white">{item.segmento}</span>
+                      <span className="segment-meta text-[11px] font-bold text-gray-500 dark:text-white/50">{item.vencidas}vencidas</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-gray-200 dark:bg-white/5 overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${width}%`, background: barColor }} />
@@ -208,15 +234,28 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
                   </div>
                 );
               })}
+              {data.length > 3 && (
+                <div className="show-more-btn-container mt-4 flex justify-center pb-2">
+                  <button
+                    onClick={() => setShowAllSegments(!showAllSegments)}
+                    className="text-[12px] font-semibold text-[#8b1a1a] hover:text-[#6e150e] transition-colors px-4 py-1"
+                  >
+                    {showAllSegments ? "Recolher lista" : "Ver todos os segmentos"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+      </>
     );
   }
 
   return (
-    <section className="h-full rounded-xl bg-white p-4 shadow-sm border border-gray-100 dark:bg-[#151515] dark:border-[#222222] flex flex-col">
+    <>
+    {cssStyles}
+    <section className="h-auto md:h-full rounded-xl bg-white p-4 shadow-sm border border-gray-100 dark:bg-[#151515] dark:border-[#222222] flex flex-col relative">
       <div className="mb-3">
         <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white">Risco por Segmento</h3>
         <p className="text-[11px] text-gray-500 dark:text-[#94A3B8] mt-0.5">
@@ -236,12 +275,11 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
             Nenhum segmento com risco identificado.
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className={`space-y-4 segment-list ${showAllSegments ? 'expanded' : ''}`}>
             {data.map((item, index) => {
               const width = Math.max((item.vencidas / maxVencidas) * 100, item.vencidas > 0 ? 12 : 0);
               const isHighlighted = selectedSegment !== "" && normalizarSegmento(item.segmento) === selectedSegment;
               const barColor = SEGMENT_BAR_COLORS[index % SEGMENT_BAR_COLORS.length];
-              const isLightBar = barColor === "#f9e4a0";
 
               return (
                 <motion.div
@@ -249,18 +287,18 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: selectedSegment && !isHighlighted ? 0.3 : 1, y: 0 }}
                   transition={{ delay: index * 0.08, duration: 0.4, ease: "easeOut" }}
-                  className="group relative"
+                  className="group relative segment-item"
                 >
                   <div className="flex justify-between items-end mb-1.5">
                     <div className="flex flex-col">
                       <span
-                        className="truncate text-[13px] font-semibold text-gray-900 dark:text-gray-100 transition-colors"
+                        className="segment-name text-[13px] font-semibold text-gray-900 dark:text-gray-100 transition-colors"
                         style={{ color: isHighlighted ? "#a0191e" : undefined }}
                       >
                         {index + 1}. {item.segmento}
                       </span>
                       <span
-                        className="text-[11px] font-medium text-gray-500 dark:text-[#94A3B8] mt-0.5 transition-colors"
+                        className="segment-meta text-[11px] font-medium text-gray-500 dark:text-[#94A3B8] mt-0.5 transition-colors"
                         style={{ color: isHighlighted ? "#6e150e" : undefined }}
                       >
                         <span className="text-gray-900 dark:text-gray-300">{item.vencidas}</span> vencidas <span className="mx-1 text-gray-300 dark:text-gray-600">•</span> <span className="text-gray-900 dark:text-gray-300">{item.dias_medio_atraso}d</span> atraso médio
@@ -285,7 +323,18 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
             })}
           </div>
         )}
+        {data.length > 3 && (
+          <div className="show-more-btn-container mt-4 flex justify-center pb-2">
+            <button
+              onClick={() => setShowAllSegments(!showAllSegments)}
+              className="text-[12px] font-semibold text-[#8b1a1a] hover:text-[#6e150e] transition-colors bg-red-50 hover:bg-red-100 dark:bg-[#a0191e]/10 dark:text-[#fca5a5] dark:hover:bg-[#a0191e]/20 px-4 py-2 rounded-lg"
+            >
+              {showAllSegments ? "Recolher lista" : "Ver todos os segmentos"}
+            </button>
+          </div>
+        )}
       </div>
     </section>
+    </>
   );
 }

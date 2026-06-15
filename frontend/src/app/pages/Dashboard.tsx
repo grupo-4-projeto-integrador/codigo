@@ -85,7 +85,19 @@ export function Dashboard() {
         </div>
 
         {/* KPI Sidebar */}
-        <div className="flex flex-col gap-4 xl:gap-3">
+        <style>{`
+          .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+          @media (max-width: 640px) {
+            .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+          }
+          @media (max-width: 400px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+          }
+          @media (min-width: 1280px) {
+            .kpi-grid { display: flex; flex-direction: column; gap: 12px; }
+          }
+        `}</style>
+        <div className="kpi-grid">
           {/* Rate ring card */}
           <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] p-5 flex items-center gap-4">
             {/* Circular progress */}
@@ -117,10 +129,10 @@ export function Dashboard() {
               <p className="text-xs font-medium text-gray-500 dark:text-[#94A3B8] uppercase tracking-wide">
                 Taxa de Conformidade
               </p>
-              <p className="text-lg font-bold text-gray-900 dark:text-white mt-0.5">
+              <p className="font-bold text-gray-900 dark:text-white mt-0.5" style={{ fontSize: 'var(--font-kpi, 42px)' }}>
                 {activePolicies}/{totalPolicies}
               </p>
-              <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+              <p className="text-green-600 mt-1 flex items-center gap-1" style={{ fontSize: '10px' }}>
                 <TrendingUp className="w-3 h-3" /> apólices ativas
               </p>
             </div>
@@ -133,9 +145,9 @@ export function Dashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-500 dark:text-[#94A3B8]">Apólices Ativas</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{activePolicies}</p>
+              <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 'var(--font-kpi, 42px)' }}>{activePolicies}</p>
             </div>
-            <div className="w-1.5 h-10 rounded-full bg-green-500 opacity-60" />
+            <div className="w-1.5 rounded-full bg-green-500 opacity-60" style={{ height: '44px' }} />
           </div>
 
           {/* A Vencer */}
@@ -145,10 +157,10 @@ export function Dashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-500 dark:text-[#94A3B8]">A Vencer</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{expiringPolicies}</p>
-              <p className="text-xs text-orange-500 mt-0.5">Requer atenção</p>
+              <p className="font-bold text-gray-900 dark:text-white" style={{ fontSize: 'var(--font-kpi, 42px)' }}>{expiringPolicies}</p>
+              <p className="text-orange-500 mt-0.5" style={{ fontSize: '10px' }}>Requer atenção</p>
             </div>
-            <div className="w-1.5 h-10 rounded-full bg-orange-500 opacity-60" />
+            <div className="w-1.5 rounded-full bg-orange-500 opacity-60" style={{ height: '44px' }} />
           </div>
 
           {/* Vencidas */}
@@ -158,10 +170,10 @@ export function Dashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-[#D93030]">Vencidas</p>
-              <p className="text-2xl font-bold text-[#D93030]">{expiredPolicies}</p>
-              <p className="text-xs text-[#8B1A1A] mt-0.5">Exigem regularização</p>
+              <p className="font-bold text-[#D93030]" style={{ fontSize: 'var(--font-kpi, 42px)' }}>{expiredPolicies}</p>
+              <p className="text-[#8B1A1A] mt-0.5" style={{ fontSize: '10px' }}>Exigem regularização</p>
             </div>
-            <div className="w-1.5 h-10 rounded-full bg-[#D93030] opacity-70" />
+            <div className="w-1.5 rounded-full bg-[#D93030] opacity-70" style={{ height: '44px' }} />
           </div>
 
           {/* Quick Search */}

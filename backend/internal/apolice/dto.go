@@ -70,6 +70,7 @@ func ParseDate(value string) (time.Time, error) {
 type RenovacaoPayload struct {
 	NovaVigencia string  `json:"nova_vigencia"`
 	NovoValor    float64 `json:"novo_valor"`
+	Seguradora   string  `json:"seguradora"`
 }
 
 type UpdateResponsavelPayload struct {

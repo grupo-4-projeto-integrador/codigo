@@ -25,7 +25,7 @@ type Repository interface {
 	DeleteDocumento(id string) error
 	GetAtividadesRecentes(limit int) ([]AtividadeRecente, error)
 	UpdateObservacoes(luc string, observacoes string) error
-	Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error
+	Renovar(luc string, novoVencimento time.Time, novoValor float64, novaSeguradora string, ator string, descricao string) error
 	GetLojas() ([]LojaInfo, error)
 	GetUsuarios() ([]Usuario, error)
 	UpdateResponsavel(luc string, responsavelID int64, ator string) error
@@ -347,14 +347,25 @@ func (r *PostgresRepository) UpdateObservacoes(luc string, observacoes string) e
 	return tx.Commit()
 }
 
-func (r *PostgresRepository) Renovar(luc string, novoVencimento time.Time, novoValor float64, ator string, descricao string) error {
+func (r *PostgresRepository) Renovar(luc string, novoVencimento time.Time, novoValor float64, novaSeguradora string, ator string, descricao string) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	res, err := tx.Exec(fmt.Sprintf(`UPDATE %s SET vencimento = $1, cobertura = $2 WHERE luc = $3`, tableName), novoVencimento, novoValor, luc)
+	query := fmt.Sprintf(`UPDATE %s SET vencimento = $1, cobertura = $2`, tableName)
+	args := []interface{}{novoVencimento, novoValor}
+	
+	if novaSeguradora != "" {
+		query += `, seguradora = $3`
+		args = append(args, novaSeguradora)
+	}
+	
+	query += fmt.Sprintf(` WHERE luc = $%d`, len(args)+1)
+	args = append(args, luc)
+
+	res, err := tx.Exec(query, args...)
 	if err != nil {
 		return err
 	}

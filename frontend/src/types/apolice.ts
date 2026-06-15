@@ -5,6 +5,7 @@ export type ApoliceFormData = {
   seguradora: string;
   vigencia: string;
   vencimento: string;
+  cnpj?: string;
 };
 
 export type ApoliceDTO = {

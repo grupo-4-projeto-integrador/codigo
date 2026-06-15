@@ -29,6 +29,7 @@ func main() {
 		"add_responsavel.sql",
 		"002_multiuser_roles.sql",
 		"003_cnpj_numero_apolice.sql",
+		"004_coberturas_notificacoes.sql",
 	}
 
 	for _, mig := range migrations {

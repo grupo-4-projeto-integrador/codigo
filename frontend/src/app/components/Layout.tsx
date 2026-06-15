@@ -19,7 +19,8 @@ import {
   Presentation,
   X as XIcon,
   Archive,
-  Activity
+  Activity,
+  Menu
 } from "lucide-react";
 import logo from "../../imports/image-4.png";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
@@ -68,6 +69,7 @@ export function Layout() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -320,46 +322,135 @@ export function Layout() {
               </motion.div>
               {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#D93030] rounded-full"></span>}
             </button>
-            <UserAvatar profile={currentProfile} sizeClass="w-8 h-8 text-xs" />
+            <button 
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="relative rounded-full outline-none focus:outline-none focus:ring-0 [-webkit-tap-highlight-color:transparent]"
+            >
+              <UserAvatar profile={currentProfile} sizeClass="w-8 h-8 text-xs" />
+            </button>
           </div>
         </div>
 
-        {/* Navegação Horizontal com Scroll */}
-        <nav className="overflow-x-auto scrollbar-hide relative" style={{
-          WebkitOverflowScrolling: 'touch',
-          scrollBehavior: 'smooth'
-        }}>
-          {/* Gradient fade no final para indicar mais conteúdo */}
-          <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10" style={{
-            background: 'linear-gradient(to left, #6e150e 0%, transparent 100%)'
-          }} />
-
-          <div className="flex gap-1 px-3 py-2.5 min-w-max">
-            <div className="flex items-center px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 text-white/50 opacity-50 cursor-not-allowed">
-              <Home className="w-4 h-4 mr-2 opacity-90" /> Dashboard
-            </div>
-            <div className="flex items-center px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 text-white/50 opacity-50 cursor-not-allowed">
-              <ShieldAlert className="w-4 h-4 mr-2 opacity-90" /> Novo Sinistro
-            </div>
-            <div className="flex items-center px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 text-white/50 opacity-50 cursor-not-allowed">
-              <FileText className="w-4 h-4 mr-2 opacity-90" /> Histórico
-            </div>
-            <NavLink
-              to="/seguros"
-              className={({isActive}) => `flex items-center px-3 py-2 text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0 ${isActive ? 'text-white' : 'text-white/80 hover:text-white'}`}
-            >
-              <Shield className="w-4 h-4 mr-2 opacity-90" /> Seguros
-            </NavLink>
-            <div className="flex items-center px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 text-white/50 opacity-50 cursor-not-allowed">
-              <Users className="w-4 h-4 mr-2 opacity-90" /> Lojistas
-            </div>
-            <div className="flex items-center px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap flex-shrink-0 text-white/50 opacity-50 cursor-not-allowed">
-              <BarChart3 className="w-4 h-4 mr-2 opacity-90" /> Relatórios
-            </div>
-            {/* Padding extra no final para melhor visualização */}
+        {/* Navegação Horizontal Dinâmica */}
+        <style>{`
+          @media (max-width: 640px) {
+            .nav-items { overflow-x: auto; scrollbar-width: none; }
+            .nav-items::-webkit-scrollbar { display: none; }
+            .nav-item { font-size: 11px; padding: 8px 10px; white-space: nowrap; }
+          }
+        `}</style>
+        <nav className="nav-items relative" style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}>
+          <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10" style={{ background: 'linear-gradient(to left, #6e150e 0%, transparent 100%)' }} />
+          <div className="flex px-3 py-2.5 min-w-max" style={{ gap: '4px' }}>
+            {(() => {
+              const navLinks = [
+                { id: 'dashboard', icon: Home, label: 'Dashboard', to: '#', disabled: true },
+                { id: 'sinistro', icon: ShieldAlert, label: 'Novo Sinistro', to: '#', disabled: true },
+                { id: 'historico', icon: FileText, label: 'Histórico', to: '#', disabled: true },
+                { id: 'seguros', icon: Shield, label: 'Seguros', to: '/seguros', disabled: false },
+                { id: 'lojistas', icon: Users, label: 'Lojistas', to: '#', disabled: true },
+                { id: 'relatorios', icon: BarChart3, label: 'Relatórios', to: '#', disabled: true },
+              ];
+              const isMany = navLinks.length > 4;
+              const visible = isMany ? navLinks.slice(0, 4) : navLinks;
+              const overflow = isMany ? navLinks.slice(4) : [];
+              return (
+                <>
+                  {visible.map((item) => (
+                    item.disabled ? (
+                      <div key={item.id} className="nav-item flex items-center rounded-lg font-medium flex-shrink-0 text-white/50 opacity-50 cursor-not-allowed">
+                        <item.icon className="w-4 h-4 mr-2 opacity-90" /> {item.label}
+                      </div>
+                    ) : (
+                      <NavLink key={item.id} to={item.to} className={({isActive}) => `nav-item flex items-center rounded-lg font-medium transition-colors flex-shrink-0 outline-none focus:outline-none focus:ring-0 [-webkit-tap-highlight-color:transparent] ${isActive ? 'text-white bg-white/10' : 'text-white/80 hover:text-white'}`}>
+                        <item.icon className="w-4 h-4 mr-2 opacity-90" /> {item.label}
+                      </NavLink>
+                    )
+                  ))}
+                  {isMany && (
+                    <button onClick={() => setIsMobileDrawerOpen(true)} className="nav-item flex items-center rounded-lg font-medium transition-colors flex-shrink-0 text-white/80 hover:text-white bg-[#a0191e50] outline-none focus:outline-none focus:ring-0 [-webkit-tap-highlight-color:transparent]">
+                        <Menu className="w-4 h-4 mr-2" /> Mais
+                    </button>
+                  )}
+                </>
+              );
+            })()}
             <div className="w-4 flex-shrink-0" />
           </div>
         </nav>
+
+        {/* Drawer for overflow nav items */}
+        <AnimatePresence>
+          {isMobileDrawerOpen && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsMobileDrawerOpen(false)} className="fixed inset-0 bg-black/50 z-[60]" />
+              <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#151515] rounded-t-2xl z-[70] shadow-2xl pb-6">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#222222]">
+                  <h3 className="font-bold text-gray-900 dark:text-white">Mais Opções</h3>
+                  <button onClick={() => setIsMobileDrawerOpen(false)} className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><XIcon className="w-5 h-5" /></button>
+                </div>
+                <div className="flex flex-col p-2">
+                  {(() => {
+                    const overflow = [
+                      { id: 'lojistas', icon: Users, label: 'Lojistas', to: '#', disabled: true },
+                      { id: 'relatorios', icon: BarChart3, label: 'Relatórios', to: '#', disabled: true },
+                    ];
+                    return overflow.map((item) => (
+                      item.disabled ? (
+                        <div key={item.id} className="flex items-center p-3 text-sm font-medium text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50">
+                          <item.icon className="w-5 h-5 mr-3" /> {item.label}
+                        </div>
+                      ) : (
+                        <NavLink key={item.id} to={item.to} onClick={() => setIsMobileDrawerOpen(false)} className="flex items-center p-3 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#222222] rounded-lg">
+                          <item.icon className="w-5 h-5 mr-3" /> {item.label}
+                        </NavLink>
+                      )
+                    ));
+                  })()}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Drawer for Profile Menu */}
+        <AnimatePresence>
+          {isProfileMenuOpen && (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsProfileMenuOpen(false)} className="fixed inset-0 bg-black/50 z-[60] md:hidden" />
+              <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed bottom-0 left-0 right-0 bg-white dark:bg-[#151515] rounded-t-2xl z-[70] shadow-2xl pb-6 md:hidden">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-[#222222]">
+                  <h3 className="font-bold text-gray-900 dark:text-white">Trocar Perfil</h3>
+                  <button onClick={() => setIsProfileMenuOpen(false)} className="p-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white outline-none focus:outline-none [-webkit-tap-highlight-color:transparent]"><XIcon className="w-5 h-5" /></button>
+                </div>
+                <div className="flex flex-col p-2">
+                  {(Object.keys(profileConfig) as UserProfile[])?.map((profileKey) => {
+                    const profile = profileConfig[profileKey];
+                    const isActive = profileKey === userProfile;
+                    return (
+                      <button
+                        key={profileKey}
+                        onClick={() => handleProfileChange(profileKey)}
+                        className={`flex items-center gap-3 p-3 w-full text-left rounded-lg transition-colors outline-none focus:outline-none [-webkit-tap-highlight-color:transparent] ${isActive ? 'bg-gray-50 dark:bg-[#222222]' : 'hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
+                      >
+                        <UserAvatar profile={profile} sizeClass="w-10 h-10 text-base" sizeStyle={{ width: '40px', height: '40px' }} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-[#F1F5F9] truncate">
+                            {profile.userName}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-[#94A3B8] truncate">
+                            {profile.name}
+                          </p>
+                        </div>
+                        {isActive && <Check className="w-4 h-4 text-green-600 dark:text-green-500" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Mobile Notification Panel */}
         {isNotificationOpen && (

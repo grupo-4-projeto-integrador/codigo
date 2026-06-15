@@ -9,7 +9,7 @@ import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
-import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2 } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2, Map as MapIcon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, getMapFilters, subscribeMapFilters, getSidebarCollapsed, subscribeSidebarCollapsed } from '../store';
@@ -122,6 +122,7 @@ export function ComplianceMapV2({
   const [mapFilters, setMapFiltersState] = useState(getMapFilters);
   const [timeOffsetIdx, setTimeOffsetIdx] = useState(0);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getSidebarCollapsed());
+  const [showMapModal, setShowMapModal] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [gridConfig, setGridConfig] = useState({ 
@@ -144,7 +145,8 @@ export function ComplianceMapV2({
       let c = Math.floor((W + gapPx) / (minW + gapPx));
       if (c < 1) c = 1;
 
-      let r = Math.floor((H + gapPx) / (minH + gapPx));
+      const actualTileSize = (W - (c - 1) * gapPx) / c;
+      let r = Math.floor((H + gapPx) / (actualTileSize + gapPx));
       if (r < 1) r = 1;
 
       setGridConfig({ cols: c, rows: r, itemsPerPage: c * r });
@@ -296,23 +298,32 @@ export function ComplianceMapV2({
 
   const totalPages = Math.ceil(allLucs.length / ITEMS_PER_PAGE);
   const paginatedLucs = useMemo(() => {
+    if (showMapModal) return allLucs;
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return allLucs.slice(start, start + ITEMS_PER_PAGE);
-  }, [allLucs, currentPage, ITEMS_PER_PAGE]);
+  }, [allLucs, currentPage, ITEMS_PER_PAGE, showMapModal]);
 
-  const { totalLucs, percentualVencidas } = useMemo(() => {
+  const { totalLucs, percentualVencidas, conformesCount, aVencerCount, vencidasCount } = useMemo(() => {
     let vencidasUnicas = 0;
+    let conformes = 0;
+    let aVencer = 0;
+    let vencidas = 0;
     allLucs.forEach(luc => {
       const policy = policyByLuc.get(luc);
       const details = getStatusDetails(policy?.status);
       if (details.label === "Vencida") {
         vencidasUnicas++;
+        vencidas++;
+      } else if (details.label === "Conforme" || details.label === "Ativa") {
+        conformes++;
+      } else if (details.label === "A vencer") {
+        aVencer++;
       }
     });
     
     const total = allLucs.length;
     const percent = total > 0 ? Math.round((vencidasUnicas / total) * 100) : 0;
-    return { totalLucs: total, percentualVencidas: percent };
+    return { totalLucs: total, percentualVencidas: percent, conformesCount: conformes, aVencerCount: aVencer, vencidasCount: vencidas };
   }, [allLucs, policyByLuc]);
 
   const handleNextPage = () => setCurrentPage((p: number) => Math.min(totalPages, p + 1));
@@ -321,23 +332,24 @@ export function ComplianceMapV2({
   const selectedPolicy: ApoliceRecord | null = selectedLuc ? policyByLuc.get(selectedLuc) ?? null : null;
   const selectedDetails = getStatusDetails(selectedPolicy?.status);
 
-  return (
+  const mapContent = (
     <section
-      className={hideHeader ? "w-full relative h-full flex flex-col" : "w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#151515] dark:border-[#222222] relative"}
+      className={hideHeader ? "w-full relative h-full flex flex-col" : "w-full rounded-xl bg-white p-6 shadow-sm border border-gray-100 dark:bg-[#151515] dark:border-[#222222] relative flex flex-col h-full"}
+      style={showMapModal ? { borderRadius: 0, border: 'none', height: '100%', padding: '12px' } : {}}
     >
       {/* Header */}
-      {!hideHeader && (
+      {!hideHeader && !showMapModal && (
         <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="text-[12px] font-normal" style={{ color: 'var(--color-text-secondary)' }}>
             <span className="font-medium">{totalLucs}</span> lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
           </div>
           {/* Temporal Slider */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#1f1f1f] rounded-full p-0.5">
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#1f1f1f] rounded-full p-0.5 temporal-filters">
             {TIME_OFFSETS.map((t, i) => (
               <button
                 key={t.days}
                 onClick={() => setTimeOffsetIdx(i)}
-                className={`relative px-3 py-1 rounded-full text-[11px] font-semibold transition-all duration-200 ${
+                className={`temporal-filter-btn relative px-3 py-1 rounded-full text-[11px] font-semibold transition-all duration-200 ${
                   timeOffsetIdx === i
                     ? 'text-white'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
@@ -377,7 +389,7 @@ export function ComplianceMapV2({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                  className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: tileHeight, gap: gap, justifyContent: 'start', width: '100%' }}
+                  className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: 'auto', gap: gap, justifyContent: 'start', width: '100%' }}
                 >
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
@@ -422,7 +434,7 @@ export function ComplianceMapV2({
                         }
                       }}
                       onClick={() => onSelectLuc(isSelected ? null : luc)}
-                      className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile ${isSelected ? 'sel' : ''}`}
+                      className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile compliance-tile ${isSelected ? 'sel' : ''}`}
                       aria-label={`LUC ${luc}`}
                       style={{
                           width: '100%',
@@ -485,7 +497,7 @@ export function ComplianceMapV2({
           </div>
 
           {/* Dot Pagination */}
-          {totalPages > 1 && (
+          {!showMapModal && totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 shrink-0 pt-6 pb-2 mt-2">
               <button
                 onClick={handlePrevPage}
@@ -526,6 +538,115 @@ export function ComplianceMapV2({
         </div>
       )}
     </section>
+  );
+
+  return (
+    <>
+      <style>{`
+        /* Resposta ao Prompt 4: Ajustes de grid no Insurance.tsx via CSS injetado */
+        @media (max-width: 1024px) {
+          #mapa-tour {
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          #mapa-tour > div {
+            min-height: 400px;
+          }
+        }
+        @media (min-width: 641px) {
+          .mobile-summary-wrapper { display: none !important; }
+        }
+        @media (max-width: 640px) {
+          .desktop-map-wrapper { display: none !important; }
+          #mapa-tour > div { min-height: auto; }
+          .mobile-summary {
+            background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eee;
+            display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          }
+          .dark .mobile-summary { background: #151515; border-color: #222; }
+          .ms-stat { padding: 12px; border-radius: 8px; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
+          .ms-stat.green { background: rgba(22, 136, 33, 0.1); color: #168821; border: 1px solid rgba(22,136,33,0.2); }
+          .ms-stat.amber { background: rgba(245, 158, 11, 0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+          .ms-stat.red { background: rgba(160, 25, 30, 0.1); color: #a0191e; border: 1px solid rgba(160,25,30,0.2); }
+          .ms-btn { margin-top: 8px; padding: 14px; background: #8b1a1a; color: white; border-radius: 8px; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+          .ms-btn:active { background: #6e150e; }
+          .temporal-filters {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+            justify-content: flex-start;
+          }
+          .temporal-filters::-webkit-scrollbar { display: none; }
+          .temporal-filter-btn { flex-shrink: 0; }
+        }
+        .compliance-tile {
+          aspect-ratio: 1;
+          height: auto !important; /* sobrescreve height fixo */
+          min-width: 28px;
+          max-width: 58px;
+        }
+        /* Override tiles for Modal */
+        .mobile-map-modal {
+          height: 100dvh;
+          display: flex;
+          flex-direction: column;
+        }
+        .fullscreen-map-container {
+          overflow-y: auto !important;
+        }
+        .fullscreen-map-container .map-grid-container {
+          display: grid !important;
+          grid-template-columns: repeat(13, 1fr) !important;
+          grid-auto-rows: auto !important;
+          gap: 4px !important;
+          padding: 12px;
+          height: auto !important;
+          align-content: start;
+        }
+        .fullscreen-map-container .map-tile {
+          width: 100% !important;
+          height: auto !important;
+          aspect-ratio: 1;
+          border-radius: 4px !important;
+          min-width: 0 !important;
+          max-width: none !important;
+        }
+      `}</style>
+
+      {/* Mobile Summary */}
+      <div className="mobile-summary-wrapper w-full">
+        <div className="mobile-summary">
+          <button className="ms-btn flex items-center justify-center gap-2" onClick={() => navigate('/graph')}>
+            <MapIcon className="w-4 h-4" /> Visualização em Gráfico
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Map */}
+      <div className="desktop-map-wrapper h-full w-full">
+        {!showMapModal && mapContent}
+      </div>
+
+      {/* Fullscreen Map Modal */}
+      <AnimatePresence>
+        {showMapModal && (
+          <div className="fixed inset-0 z-[100] bg-gray-50 dark:bg-[#0a0a0a] flex flex-col mobile-map-modal">
+            <div className="p-4 border-b border-gray-200 dark:border-[#222] flex justify-between items-center bg-white dark:bg-[#151515] shadow-sm">
+              <h2 className="font-bold text-gray-900 dark:text-white">Mapa de Conformidade</h2>
+              <button onClick={() => setShowMapModal(false)} className="p-2 bg-gray-100 dark:bg-[#222] rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors">
+                <X className="w-5 h-5"/>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 fullscreen-map-container">
+              {mapContent}
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
