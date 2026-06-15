@@ -41,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 type KPIHistoryPoint = {
   label: string;
   value: number;
@@ -1262,7 +1263,7 @@ export function Insurance() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 page-header">
           <div className="flex items-center gap-6">
             <div>
-              <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 dark:text-white leading-tight page-title" style={{ fontFamily: 'Inter, sans-serif' }}>Seguros</h1>
+              <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 dark:text-white leading-tight page-title" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>Seguros</h1>
               <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1 page-description">Gestão de apólices, mapa de lucs e auditoria de ações.</p>
             </div>
 
@@ -1272,7 +1273,7 @@ export function Insurance() {
                 <div className="flex flex-col">
                   <span className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-bold mb-0.5" style={{ letterSpacing: '0.12em' }}>Health Score</span>
                   <div className="flex items-end gap-2">
-                    <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums health-score-value" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums health-score-value" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
                       {healthScore.score}
                     </span>
                   </div>
@@ -1291,8 +1292,8 @@ export function Insurance() {
           </div>
 
           {activeTab === 'visao-geral' && (
-            <div className="flex items-center gap-2 lg:gap-2.5 filter-row" id="filtros-tour">
-              <div className="relative w-[180px] xl:w-[260px]">
+            <div className="flex items-center justify-between w-full gap-2 lg:gap-2.5 filter-row" id="filtros-tour">
+              <div className="relative w-[180px] xl:w-[260px] flex-shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 <input
                   id="insurance-search-input"
@@ -1304,7 +1305,7 @@ export function Insurance() {
                 />
               </div>
 
-              <div className="relative hidden lg:flex items-center">
+              <div className="relative hidden lg:flex items-center hide-on-laptop">
                 <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
                   <SelectTrigger
                     className={`h-9 w-[175px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
@@ -1325,7 +1326,7 @@ export function Insurance() {
                 )}
               </div>
 
-              <div className="relative hidden lg:flex items-center">
+              <div className="relative hidden lg:flex items-center hide-on-laptop">
                 <Select value={tipoFilter} onValueChange={setTipoFilter}>
                   <SelectTrigger
                     className={`h-9 w-[150px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
@@ -1346,7 +1347,7 @@ export function Insurance() {
                 )}
               </div>
 
-              <div className="relative hidden lg:flex items-center">
+              <div className="relative hidden lg:flex items-center hide-on-laptop">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger
                     className={`h-9 w-[140px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
@@ -1367,14 +1368,79 @@ export function Insurance() {
                 )}
               </div>
 
-              <button 
-                onClick={() => setShowMobileFilters(true)}
-                className="flex lg:hidden items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1"
-              >
-                <Settings2 className="w-4 h-4" />
-                <span className="text-[13px] font-medium">Filtros</span>
-              </button>
+              {/* Popover Filtros Agrupado (Aparece no laptop c/ sidebar aberta) */}
+              <div className="flex lg:hidden show-on-laptop">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1">
+                      <Filter className="w-4 h-4" />
+                      <span className="text-[13px] font-medium">Filtros</span>
+                      {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
+                        <span className="w-2 h-2 rounded-full bg-[#c4151f]"></span>
+                      )}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-64 p-4 rounded-xl shadow-xl border-[#c4151f]/20 bg-white dark:bg-[#151515] z-[100]">
+                    <div className="flex flex-col gap-4">
+                      <div className="text-[13px] font-bold text-[#9F1239] dark:text-[#E23B44] border-b border-gray-100 dark:border-[#222222] pb-2">
+                        Filtros de Apólice
+                      </div>
+                      
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Seguradora</label>
+                        <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
+                          <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
+                            <SelectValue placeholder="Seguradora" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
+                            <SelectItem value="todas">Todas</SelectItem>
+                            {uniqueSeguradoras.map(seg => <SelectItem key={seg} value={seg}>{seg}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Segmento</label>
+                        <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                          <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
+                            <SelectValue placeholder="Segmento" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
+                            <SelectItem value="todos">Todos</SelectItem>
+                            {uniqueTipos.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Status</label>
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
+                            <SelectItem value="todas">Todos</SelectItem>
+                            <SelectItem value="ativa">Ativa</SelectItem>
+                            <SelectItem value="a vencer">A Vencer</SelectItem>
+                            <SelectItem value="vencida">Vencida</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
+                        <button 
+                          onClick={() => { setSeguradoraFilter('todas'); setTipoFilter('todos'); setStatusFilter('todas'); }}
+                          className="mt-2 text-[12px] font-medium text-[#c4151f] hover:underline text-center"
+                        >
+                          Limpar Filtros
+                        </button>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
               <DropdownMenu>
                 <TooltipProvider>
                   <ShadcnTooltip>
@@ -1444,10 +1510,11 @@ export function Insurance() {
                 </motion.button>
               </RequireRole>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        {/* Tabs */}
+      {/* Tabs */}
         <div className={`flex items-center gap-6 border-b border-gray-200 dark:border-[#222222] transition-all duration-300 ${isFocusMode ? 'mb-2 px-6' : 'mb-4'}`}>
           <button
             onClick={() => setActiveTab('visao-geral')}

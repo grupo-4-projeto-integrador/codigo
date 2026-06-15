@@ -110,7 +110,7 @@
   
   /* Compliance Map (Laptop) */
   .compliance-map-grid {
-    grid-template-columns: repeat(14, 1fr) !important;
+    grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)) !important;
     gap: 3px !important;
   }
   .compliance-tile {
@@ -127,6 +127,7 @@
 @media (min-width: 1024px) and (max-width: 1366px) {
   .info-laptop-only { display: inline-block; }
   .sidebar-open .hide-on-laptop { display: none !important; }
+  .sidebar-open .show-on-laptop { display: flex !important; }
   
   .col-vigencia { display: none !important; }
   .col-seguradora { display: none !important; }
@@ -137,6 +138,8 @@
   .col-segmento { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .col-cobertura { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+.show-on-laptop { display: none !important; }
 
 [data-theme="dark"] {
   --color-background-page: #0a0a0a;
