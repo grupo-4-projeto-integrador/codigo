@@ -98,20 +98,23 @@ PG_SSLMODE=disable
 		log.Printf("⚠️  Não achou migrations/initial_schema.sql: %v", err)
 	}
 
-	// Add deleted_at and dias rest. columns (migration)
-	_, err = db.Exec("ALTER TABLE seguros ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL;")
-	if err != nil {
-		log.Printf("⚠️  Aviso ao adicionar deleted_at: %v", err)
-	} else {
-		fmt.Println("✅ Estrutura de exclusão (deleted_at) configurada com sucesso.")
+	// Add missing columns (migration)
+	columnsToAdd := []string{
+		"ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL",
+		"ADD COLUMN IF NOT EXISTS \"dias rest.\" INTEGER DEFAULT NULL",
+		"ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()",
+		"ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()",
+		"ADD COLUMN IF NOT EXISTS cnpj VARCHAR(20) DEFAULT ''",
+		"ADD COLUMN IF NOT EXISTS numero_apolice VARCHAR(50) DEFAULT ''",
 	}
 
-	_, err = db.Exec("ALTER TABLE seguros ADD COLUMN IF NOT EXISTS \"dias rest.\" INTEGER DEFAULT NULL;")
-	if err != nil {
-		log.Printf("⚠️  Aviso ao adicionar dias rest.: %v", err)
-	} else {
-		fmt.Println("✅ Coluna 'dias rest.' configurada com sucesso.")
+	for _, col := range columnsToAdd {
+		_, err = db.Exec(fmt.Sprintf("ALTER TABLE seguros %s;", col))
+		if err != nil {
+			log.Printf("⚠️  Aviso ao adicionar coluna: %v", err)
+		}
 	}
+	fmt.Println("✅ Estrutura de colunas extras (deleted_at, etc) configurada com sucesso.")
 
 	// Create historico_apolice table (migration)
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS historico_apolice (

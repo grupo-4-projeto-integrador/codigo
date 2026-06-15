@@ -76,12 +76,16 @@ chmod +x dev.sh && ./dev.sh up
 
 ### 1. Configurando o Banco de Dados
 
-O backend possui um utilitário que roda as migrações e insere dados de teste automaticamente. Certifique-se de que o seu `.env` esteja configurado com as credenciais corretas do banco antes de executar:
+O backend possui um assistente interativo que cria o arquivo `.env`, configura o banco de dados do zero, roda as migrações (criando ou atualizando tabelas e colunas) e opcionalmente insere dados de teste.
+
+Para preparar o banco de dados de forma automatizada, execute:
 
 ```bash
 cd backend
-go run ./cmd/migrate
+go run prepare_db.go
 ```
+
+O script fará algumas perguntas no terminal (como a senha do seu usuário PostgreSQL) e cuidará de todo o resto automaticamente!
 
 ### 2. Rodando o Backend (API)
 

@@ -24,11 +24,15 @@ CREATE TABLE IF NOT EXISTS seguros (
     vencimento date,
     status character varying,
     cobertura numeric DEFAULT 0,
-    "dias rest." INTEGER DEFAULT NULL,
     responsavel character varying DEFAULT '',
     responsavel_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
     observacoes text DEFAULT '',
-    deleted_at timestamp DEFAULT NULL
+    deleted_at timestamp DEFAULT NULL,
+    "dias rest." INTEGER DEFAULT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    cnpj VARCHAR(20) DEFAULT '',
+    numero_apolice VARCHAR(50) DEFAULT ''
 );
 
 ALTER TABLE seguros OWNER TO postgres;
