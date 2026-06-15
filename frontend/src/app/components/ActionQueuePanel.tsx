@@ -213,10 +213,10 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key="action-queue"
-        initial={{ opacity: 0, x: 40 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20, transition: { duration: 0.1, delay: 0 } }}
-        transition={{ type: 'spring', stiffness: 350, damping: 30, delay: 0.1 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         className="bg-white dark:bg-[#151515] rounded-xl border flex flex-col h-full shadow-sm dark:border-[#222222]"
       >
       <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between dark:border-[#222222]">

@@ -55,7 +55,7 @@
     gap: 0 16px !important;
     margin-bottom: 12px !important;
   }
-  .page-title { font-size: 20px !important; margin: 0 !important; }
+  .page-title { font-size: var(--font-page-title) !important; margin: 0 !important; }
   .page-description { display: none !important; }
   
   .health-score-block {
@@ -65,8 +65,8 @@
     gap: 8px !important;
     padding-left: 16px !important;
   }
-  .health-score-value { font-size: 24px !important; }
-  .health-score-delta { font-size: 10px !important; margin-top: 0 !important; }
+  .health-score-value { font-size: var(--font-kpi) !important; }
+  .health-score-delta { font-size: var(--font-kpi-sub) !important; margin-top: 0 !important; }
 }
 
 /* Barra de Filtros (Laptop) */
@@ -91,7 +91,7 @@
   }
   
   .kpi-grid {
-    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
     gap: 10px !important;
   }
   .kpi-card {
@@ -126,6 +126,7 @@
 
 @media (min-width: 1024px) and (max-width: 1366px) {
   .info-laptop-only { display: inline-block; }
+  .sidebar-open .hide-on-laptop { display: none !important; }
   
   .col-vigencia { display: none !important; }
   .col-seguradora { display: none !important; }

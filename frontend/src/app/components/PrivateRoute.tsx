@@ -28,7 +28,8 @@ export function PrivateRoute() {
         const htmlEl = document.documentElement;
         const bodyEl = document.body;
         const rootEl = document.getElementById('root');
-        const layoutEl = document.querySelector('.h-screen.overflow-hidden') as HTMLElement;
+        const layoutEl = document.querySelector('.app-root') as HTMLElement;
+        const mainContentEl = document.querySelector('.main-content') as HTMLElement;
         const mainEl = document.querySelector('main') as HTMLElement;
         
         const originalHtmlHeight = htmlEl.style.height;
@@ -39,6 +40,8 @@ export function PrivateRoute() {
         const originalRootOverflow = rootEl ? rootEl.style.overflow : '';
         const originalLayoutHeight = layoutEl ? layoutEl.style.height : '';
         const originalLayoutOverflow = layoutEl ? layoutEl.style.overflow : '';
+        const originalMainContentOverflow = mainContentEl ? mainContentEl.style.overflow : '';
+        const originalMainContentHeight = mainContentEl ? mainContentEl.style.height : '';
         const originalMainOverflow = mainEl ? mainEl.style.overflow : '';
         const originalMainHeight = mainEl ? mainEl.style.height : '';
 
@@ -54,6 +57,10 @@ export function PrivateRoute() {
         if (layoutEl) {
           layoutEl.style.setProperty('height', 'auto', 'important');
           layoutEl.style.setProperty('overflow', 'visible', 'important');
+        }
+        if (mainContentEl) {
+          mainContentEl.style.setProperty('height', 'auto', 'important');
+          mainContentEl.style.setProperty('overflow', 'visible', 'important');
         }
         if (mainEl) {
           mainEl.style.setProperty('height', 'auto', 'important');
@@ -112,6 +119,10 @@ export function PrivateRoute() {
           if (layoutEl) {
             layoutEl.style.height = originalLayoutHeight;
             layoutEl.style.overflow = originalLayoutOverflow;
+          }
+          if (mainContentEl) {
+            mainContentEl.style.overflow = originalMainContentOverflow;
+            mainContentEl.style.height = originalMainContentHeight;
           }
           if (mainEl) {
             mainEl.style.overflow = originalMainOverflow;

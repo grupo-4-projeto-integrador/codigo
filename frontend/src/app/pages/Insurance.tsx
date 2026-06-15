@@ -1231,7 +1231,7 @@ export function Insurance() {
   return (
     <div
       ref={dashboardRef}
-      className="flex flex-col md:h-[calc(100vh-120px)] md:overflow-hidden transition-all duration-500"
+      className="flex flex-col min-h-[calc(100vh-120px)] transition-all duration-500"
       style={{
         backgroundColor: colors.pageBg,
         fontSize: isFocusMode ? '115%' : undefined,
@@ -1262,7 +1262,7 @@ export function Insurance() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 page-header">
           <div className="flex items-center gap-6">
             <div>
-              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight page-title" style={{ fontFamily: 'Inter, sans-serif' }}>Seguros</h1>
+              <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 dark:text-white leading-tight page-title" style={{ fontFamily: 'Inter, sans-serif' }}>Seguros</h1>
               <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1 page-description">Gestão de apólices, mapa de lucs e auditoria de ações.</p>
             </div>
 
@@ -1604,7 +1604,7 @@ export function Insurance() {
                           </span>
                         </div>
 
-                        <div className="mt-2 flex items-center justify-between gap-3">
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                           <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
                             nos próximos 15 dias
                           </span>
@@ -1656,7 +1656,7 @@ export function Insurance() {
                           </span>
                         </div>
 
-                        <div className="mt-2 flex items-center justify-between gap-3">
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                           <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
                             requerem ação imediata
                           </span>
@@ -1710,12 +1710,12 @@ export function Insurance() {
                           )}
                         </div>
 
-                        <div className="mt-2 flex items-center justify-between gap-3">
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
                           <span className="text-[11px] text-gray-500 dark:text-[#94A3B8]">
                             valor total assegurado
                           </span>
                           <span className="flex items-center gap-1 text-[11px] font-medium text-[#639922]">
-                            <ChevronUp className="w-3 h-3" /> {Math.abs(Math.round(((coverageDisponivelValues[coverageDisponivelValues.length - 1] ?? totalCobertura) - (coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura)) / Math.max(coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura, 1) * 100))}% vs semana anterior
+                            <ChevronUp className="w-3 h-3" /> {Math.abs(Math.round(((coverageDisponivelValues[coverageDisponivelValues.length - 1] ?? totalCobertura) - (coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura)) / Math.max(coverageDisponivelValues[coverageDisponivelValues.length - 2] ?? totalCobertura, 1) * 100))}% vs sem. ant.
                           </span>
                         </div>
                       </div>
@@ -1725,13 +1725,13 @@ export function Insurance() {
                       </div>
                     </div>
 
-                    <div className="mt-3 flex items-center gap-3 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
-                      <span>Cobertura disponível vs. sinistros</span>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] uppercase tracking-[0.06em] text-gray-500 opacity-60 dark:text-[#94A3B8]">
+                      <span>Cobertura disp. vs sinistros</span>
                       <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
                         <span className="inline-block h-2 w-2 rounded-full bg-[#639922]" />
                         <span>Disponível</span>
                       </span>
-                      <span className="flex items-center gap-1 normal-case tracking-normal opacity-100">
+                      <span className="flex items-center gap-1 normal-case tracking-normal opacity-100 hide-on-laptop">
                         <span className="inline-block h-2 w-2 rounded-full border-2 border-dashed border-[#A32D2D]" />
                         <span>Sinistros pagos</span>
                       </span>

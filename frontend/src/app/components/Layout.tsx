@@ -20,7 +20,8 @@ import {
   X as XIcon,
   Archive,
   Activity,
-  Menu
+  Menu,
+  Check
 } from "lucide-react";
 import logo from "../../imports/image-4.png";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
@@ -294,7 +295,7 @@ export function Layout() {
   };
   
   return (
-    <div className="flex flex-col md:flex-row w-full bg-[#F7F4EF] dark:bg-[#0F1117] relative app-root">
+    <div className={`flex flex-col md:flex-row w-full bg-[#F7F4EF] dark:bg-[#0F1117] relative app-root ${isSidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-open'}`}>
 
       {/* Mobile Header com Logo e Navegação Horizontal */}
       <div className="md:hidden flex flex-col sticky top-0 z-30" style={{ backgroundColor: '#6e150e' }}>
@@ -983,10 +984,10 @@ export function Layout() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key={location.pathname}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
                   {outlet}
                 </motion.div>

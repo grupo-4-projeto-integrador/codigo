@@ -446,7 +446,7 @@ export function ComplianceMapV2({
                           pointerEvents: (isDimmed ? 'none' : 'auto') as React.CSSProperties['pointerEvents'],
                           WebkitTapHighlightColor: 'transparent',
                       }}
-                      initial={hasMounted ? false : { scale: 0.5, opacity: 0 }}
+                      initial={false}
                       animate={{ 
                         scale: isSelected ? baseScale * 1.05 : (hasSelection ? baseScale * 0.96 : baseScale), 
                         opacity: isDimmed ? 0.12 : (hasSelection && !isSelected ? 0.65 : 1),
