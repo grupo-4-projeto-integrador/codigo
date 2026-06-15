@@ -93,7 +93,7 @@ export function KpiChartModal({ isOpen, onClose, metrica, historyValues, svgPath
             <div className="grid grid-cols-4 gap-4 divide-x divide-gray-100 dark:divide-white/10">
               <div className="flex flex-col pl-2 first:pl-0">
                 <span className="text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Atual</span>
-                <span className="text-2xl font-light text-gray-900 dark:text-white" style={{ color }}>{formatValue(metrica, atual)}</span>
+                <span className="text-[length:var(--font-kpi)] font-light text-gray-900 dark:text-white" style={{ color }}>{formatValue(metrica, atual)}</span>
               </div>
               <div className="flex flex-col pl-4">
                 <span className="text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Pico (8 sem)</span>

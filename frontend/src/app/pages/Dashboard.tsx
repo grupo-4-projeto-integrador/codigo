@@ -63,7 +63,7 @@ export function Dashboard() {
       {/* ── Page Header ──────────────────────────────────────────────────── */}
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Visão Geral</h1>
+          <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 dark:text-white">Visão Geral</h1>
           <p className="text-gray-500 dark:text-[#94A3B8] mt-1 text-sm">
             Resumo operacional e mapa de conformidade do complexo.
           </p>

@@ -126,7 +126,7 @@ export function ClaimDetails() {
         <div className="p-8">
           <div className="flex justify-between items-start border-b border-gray-100 dark:border-[#222222] pb-6 mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{claim.id}</h1>
+              <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 mb-2">{claim.id}</h1>
               <div className="flex items-center text-sm text-gray-500 space-x-4">
                 <span className="flex items-center"><Building2 className="w-4 h-4 mr-1.5 text-[#C8A882]" /> {claim.store}</span>
                 <span className="flex items-center"><Calendar className="w-4 h-4 mr-1.5 text-[#C8A882]" /> {new Date(claim.date).toLocaleDateString('pt-BR')}</span>

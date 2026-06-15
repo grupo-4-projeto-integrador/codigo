@@ -1272,7 +1272,7 @@ export function Insurance() {
                 <div className="flex flex-col">
                   <span className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-bold mb-0.5" style={{ letterSpacing: '0.12em' }}>Health Score</span>
                   <div className="flex items-end gap-2">
-                    <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums" style={{ fontFamily: 'Inter, sans-serif' }}>
                       {healthScore.score}
                     </span>
                   </div>
@@ -1488,7 +1488,7 @@ export function Insurance() {
             <div className="md:hidden flex items-center justify-between p-4 mx-6 mt-4 mb-2 bg-[#151515] rounded-[14px]">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-[#94A3B8]">Health Score</span>
-                <span className="text-[28px] font-light text-[#0F172A] dark:text-white leading-none mt-1">{healthScore.score}</span>
+                <span className="text-[length:var(--font-kpi)] font-light text-[#0F172A] dark:text-white leading-none mt-1">{healthScore.score}</span>
               </div>
               <div className="flex flex-col items-end">
                 {healthScore.delta === 0 ? (
@@ -1528,7 +1528,7 @@ export function Insurance() {
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
                             {animatedConformidade}
                           </span>
                           <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
@@ -1596,7 +1596,7 @@ export function Insurance() {
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#BA7517] kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#BA7517] kpi-number">
                             {animatedExpiring}
                           </span>
                           <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
@@ -1648,7 +1648,7 @@ export function Insurance() {
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number">
                             {animatedExpired}
                           </span>
                           <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
@@ -1700,7 +1700,7 @@ export function Insurance() {
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[28px] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
                             {formattedCoverageTotal.value}
                           </span>
                           {formattedCoverageTotal.suffix && (
@@ -2069,7 +2069,7 @@ export function Insurance() {
                 <div className="sticky top-0 bg-white dark:bg-[#151515] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
                   <div>
                     <div className="flex items-center gap-3">
-                      <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Apólice {selectedPolicy.id}</h2>
+                      <h2 className="text-[length:var(--font-page-title)] font-bold" style={{ color: colors.brandMaroon }}>Apólice {selectedPolicy.id}</h2>
                       <span
                         className="px-3 py-1 rounded-full text-[12px] font-medium"
                         style={getStatusBadgeStyle(selectedPolicy.status)}
@@ -2137,11 +2137,11 @@ export function Insurance() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                       <div>
                         <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-2">Cobertura Total</div>
-                        <div className="text-[24px] font-bold" style={{ color: colors.forest }}>{selectedPolicy.cobertura}</div>
+                        <div className="text-[length:var(--font-page-title)] font-bold" style={{ color: colors.forest }}>{selectedPolicy.cobertura}</div>
                       </div>
                       <div>
                         <div className="text-[11px] text-gray-500 dark:text-[#94A3B8] mb-2">Prêmio Anual</div>
-                        <div className="text-[24px] font-bold" style={{ color: colors.brandRed }}>{selectedPolicy.premio}</div>
+                        <div className="text-[length:var(--font-page-title)] font-bold" style={{ color: colors.brandRed }}>{selectedPolicy.premio}</div>
                       </div>
                     </div>
                   </div>
@@ -2208,7 +2208,7 @@ export function Insurance() {
                 >
                   <div className="bg-white dark:bg-[#151515] border-b p-6 flex items-center justify-between rounded-t-xl" style={{ borderColor: colors.cardBorder }}>
                     <div>
-                      <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Conformidade das Lojas</h2>
+                      <h2 className="text-[length:var(--font-page-title)] font-bold" style={{ color: colors.brandMaroon }}>Conformidade das Lojas</h2>
                       <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Lojas com apólices vencidas que precisam de regularização</p>
                     </div>
                     <motion.button
@@ -2338,7 +2338,7 @@ export function Insurance() {
               <div className="bg-white dark:bg-[#151515] rounded-xl w-full max-w-2xl max-h-[95vh] md:max-h-[90vh] overflow-y-auto" style={{ border: `1px solid ${colors.cardBorder}`, boxShadow: `0 20px 60px ${colors.brandMaroon}30` }}>
                 <div className="sticky top-0 bg-white dark:bg-[#151515] border-b p-6 flex items-center justify-between" style={{ borderColor: colors.cardBorder }}>
                   <div>
-                    <h2 className="text-[24px] font-bold" style={{ color: colors.brandMaroon }}>Upload de Apólice</h2>
+                    <h2 className="text-[length:var(--font-page-title)] font-bold" style={{ color: colors.brandMaroon }}>Upload de Apólice</h2>
                     <p className="text-[12px] text-gray-500 dark:text-[#94A3B8] mt-1">Envie o arquivo PDF da apólice</p>
                   </div>
                   <motion.button

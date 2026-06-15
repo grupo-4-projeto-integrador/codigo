@@ -155,7 +155,7 @@ export function SinistroForm() {
             <div className="w-12 h-12 bg-[#8B1A1A] rounded-full flex items-center justify-center">
               <AlertCircle className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-[#8B1A1A]">Registro de Sinistros</h1>
+            <h1 className="text-[length:var(--font-kpi)] font-bold text-[#8B1A1A]">Registro de Sinistros</h1>
           </div>
           <div className="w-40 h-16">
             <img src={logoFlamboyant} alt="Flamboyant" className="w-full h-full object-contain" />
@@ -369,7 +369,7 @@ export function SinistroForm() {
           <>
             {/* Relatórios */}
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-[#8B1A1A]">Relatórios de Sinistros</h2>
+              <h2 className="text-[length:var(--font-page-title)] font-bold text-[#8B1A1A]">Relatórios de Sinistros</h2>
 
               {/* Filtros */}
               <div className="bg-[#C8A882]/10 p-6 rounded-lg border border-[#C8A882]/30">
@@ -426,22 +426,22 @@ export function SinistroForm() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border-l-4 border-blue-600">
                   <p className="text-sm text-blue-700 font-medium mb-1">Total de Sinistros</p>
-                  <p className="text-3xl font-bold text-blue-900">{stats.total}</p>
+                  <p className="text-[length:var(--font-kpi)] font-bold text-blue-900">{stats.total}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg border-l-4 border-purple-600">
                   <p className="text-sm text-purple-700 font-medium mb-1">Indenizações</p>
-                  <p className="text-2xl font-bold text-purple-900">{formatarMoeda(stats.totalIndenizacao)}</p>
+                  <p className="text-[length:var(--font-page-title)] font-bold text-purple-900">{formatarMoeda(stats.totalIndenizacao)}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg border-l-4 border-orange-600">
                   <p className="text-sm text-orange-700 font-medium mb-1">Franquias</p>
-                  <p className="text-2xl font-bold text-orange-900">{formatarMoeda(stats.totalFranquia)}</p>
+                  <p className="text-[length:var(--font-page-title)] font-bold text-orange-900">{formatarMoeda(stats.totalFranquia)}</p>
                 </div>
 
                 <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg border-l-4 border-green-600">
                   <p className="text-sm text-green-700 font-medium mb-1">Valor Líquido</p>
-                  <p className="text-2xl font-bold text-green-900">{formatarMoeda(stats.totalLiquido)}</p>
+                  <p className="text-[length:var(--font-page-title)] font-bold text-green-900">{formatarMoeda(stats.totalLiquido)}</p>
                 </div>
               </div>
 

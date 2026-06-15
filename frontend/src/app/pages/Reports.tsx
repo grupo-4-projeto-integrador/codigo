@@ -31,7 +31,7 @@ export function Reports() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#8B1A1A]">Relatórios e Análise</h1>
+          <h1 className="text-[length:var(--font-page-title)] font-bold text-[#8B1A1A]">Relatórios e Análise</h1>
           <p className="text-gray-600 mt-1">Visão gerencial consolidada das ocorrências e impacto financeiro.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export function Reports() {
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold tracking-tight">R$ 1.245.890</span>
+              <span className="text-[length:var(--font-kpi)] font-bold tracking-tight">R$ 1.245.890</span>
             </div>
             <div className="mt-4 flex items-center text-sm font-medium text-white/80 gap-1 bg-black/10 w-fit px-2.5 py-1 rounded-full">
               <TrendingUp className="w-4 h-4" />
@@ -87,7 +87,7 @@ export function Reports() {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-gray-900 tracking-tight">145</span>
+            <span className="text-[length:var(--font-kpi)] font-bold text-gray-900 tracking-tight">145</span>
             <span className="text-sm text-gray-500 font-medium">ocorrências</span>
           </div>
           <div className="mt-4 flex items-center text-sm font-medium text-emerald-600 gap-1 bg-emerald-50 w-fit px-2.5 py-1 rounded-full">
@@ -105,7 +105,7 @@ export function Reports() {
             </div>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-bold text-gray-900 tracking-tight">R$ 8.592</span>
+            <span className="text-[length:var(--font-kpi)] font-bold text-gray-900 tracking-tight">R$ 8.592</span>
           </div>
           <div className="mt-4 flex items-center text-sm font-medium text-amber-600 gap-1 bg-amber-50 w-fit px-2.5 py-1 rounded-full">
             <TrendingUp className="w-4 h-4" />
@@ -200,7 +200,7 @@ export function Reports() {
             </ResponsiveContainer>
             {/* Center Text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-              <span className="text-3xl font-bold text-gray-900">100</span>
+              <span className="text-[length:var(--font-kpi)] font-bold text-gray-900">100</span>
               <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total</span>
             </div>
           </div>
