@@ -1305,6 +1305,7 @@ export function Insurance() {
                 />
               </div>
 
+              <div className="flex items-center gap-2 flex-1 justify-center">
               <div className="relative hidden lg:flex items-center hide-on-laptop">
                 <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
                   <SelectTrigger
@@ -1438,6 +1439,7 @@ export function Insurance() {
                     </div>
                   </PopoverContent>
                 </Popover>
+              </div>
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">

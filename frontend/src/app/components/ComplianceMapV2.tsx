@@ -128,7 +128,8 @@ export function ComplianceMapV2({
   const [gridConfig, setGridConfig] = useState({ 
     cols: hideHeader ? 16 : (isSidebarCollapsed ? 15 : 13), 
     rows: 7, 
-    itemsPerPage: 0 
+    itemsPerPage: 0,
+    tileSize: parseInt(tileWidth) || 43
   });
 
   useEffect(() => {
@@ -143,13 +144,16 @@ export function ComplianceMapV2({
       const minH = parseInt(tileHeight) || 38;
 
       let c = Math.floor((W + gapPx) / (minW + gapPx));
+      if (window.innerWidth >= 1024 && window.innerWidth <= 1440) {
+        c = 14;
+      }
       if (c < 1) c = 1;
 
-      const actualTileSize = (W - (c - 1) * gapPx) / c;
+      const actualTileSize = Math.floor((W - (c - 1) * gapPx) / c);
       let r = Math.floor((H + gapPx) / (actualTileSize + gapPx));
       if (r < 1) r = 1;
 
-      setGridConfig({ cols: c, rows: r, itemsPerPage: c * r });
+      setGridConfig({ cols: c, rows: r, itemsPerPage: c * r, tileSize: actualTileSize });
     };
 
     updateGrid();
@@ -389,7 +393,7 @@ export function ComplianceMapV2({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                  className="map-grid-container compliance-map-grid pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: 'auto', gap: gap, justifyContent: 'start', width: '100%' }}
+                  className="map-grid-container compliance-map-grid pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, ${gridConfig.tileSize}px)`, gridAutoRows: `${gridConfig.tileSize}px`, gap: gap, justifyContent: 'center', alignContent: 'start', width: '100%' }}
                 >
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
