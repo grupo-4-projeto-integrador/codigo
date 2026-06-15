@@ -46,6 +46,95 @@
     --space-page: clamp(12px, 1.5vw, 24px);
     --card-padding: clamp(10px, 1.2vw, 18px);
   }
+  
+  .page-header {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    grid-template-rows: auto !important;
+    align-items: center !important;
+    gap: 0 16px !important;
+    margin-bottom: 12px !important;
+  }
+  .page-title { font-size: 20px !important; margin: 0 !important; }
+  .page-description { display: none !important; }
+  
+  .health-score-block {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding-left: 16px !important;
+  }
+  .health-score-value { font-size: 24px !important; }
+  .health-score-delta { font-size: 10px !important; margin-top: 0 !important; }
+}
+
+/* Barra de Filtros (Laptop) */
+@media (min-width: 1024px) and (max-width: 1366px) {
+  .filter-row {
+    overflow: hidden;
+  }
+  .filter-dropdown { 
+    max-width: 120px !important; 
+    font-size: 11px !important; 
+    padding: 5px 8px !important; 
+  }
+  .filter-dropdown span {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .btn-nova-apolice { 
+    flex-shrink: 0 !important; 
+    white-space: nowrap !important; 
+    margin-left: auto !important;
+  }
+  
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 10px !important;
+  }
+  .kpi-card {
+    min-height: 160px !important;
+    padding: var(--card-padding) !important;
+  }
+  .kpi-card .kpi-value {
+    font-size: var(--font-kpi) !important;
+    line-height: 1 !important;
+  }
+  .kpi-card .kpi-label {
+    font-size: 9px !important;
+    letter-spacing: 0.08em !important;
+  }
+  .kpi-sparkline { height: 36px !important; }
+  
+  /* Compliance Map (Laptop) */
+  .compliance-map-grid {
+    grid-template-columns: repeat(14, 1fr) !important;
+    gap: 3px !important;
+  }
+  .compliance-tile {
+    aspect-ratio: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 7px !important;
+  }
+}
+
+/* Tabela Responsiva no Laptop */
+.info-laptop-only { display: none; }
+
+@media (min-width: 1024px) and (max-width: 1366px) {
+  .info-laptop-only { display: inline-block; }
+  
+  .col-vigencia { display: none !important; }
+  .col-seguradora { display: none !important; }
+  
+  .table-container { overflow-x: hidden !important; }
+  
+  .col-loja { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col-segmento { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col-cobertura { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 [data-theme="dark"] {

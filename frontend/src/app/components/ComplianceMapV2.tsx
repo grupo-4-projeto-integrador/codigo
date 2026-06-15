@@ -389,7 +389,7 @@ export function ComplianceMapV2({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                  className="map-grid-container pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: 'auto', gap: gap, justifyContent: 'start', width: '100%' }}
+                  className="map-grid-container compliance-map-grid pb-2 p-1.5" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridAutoRows: 'auto', gap: gap, justifyContent: 'start', width: '100%' }}
                 >
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);

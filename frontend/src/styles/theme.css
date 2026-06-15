@@ -1,5 +1,29 @@
 @custom-variant dark (&:is(.dark *));
 
+/* Correção de Scroll Global */
+html, body { height: 100%; overflow: hidden; }
+
+.app-root {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.sidebar {
+  flex-shrink: 0;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.main-content {
+  flex: 1;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(196,21,31,0.3) transparent;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */

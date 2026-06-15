@@ -294,7 +294,7 @@ export function Layout() {
   };
   
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-[#F7F4EF] dark:bg-[#0F1117] relative overflow-hidden">
+    <div className="flex flex-col md:flex-row w-full bg-[#F7F4EF] dark:bg-[#0F1117] relative app-root">
 
       {/* Mobile Header com Logo e Navegação Horizontal */}
       <div className="md:hidden flex flex-col sticky top-0 z-30" style={{ backgroundColor: '#6e150e' }}>
@@ -586,7 +586,7 @@ export function Layout() {
 
       {/* Sidebar Desktop */}
       <aside
-        className={`text-white flex-col hidden md:flex transition-[width,padding,opacity,margin] duration-300 overflow-hidden h-screen sticky top-0`}
+        className={`text-white flex-col hidden md:flex transition-[width,padding,opacity,margin] duration-300 sticky top-0 sidebar`}
         style={{
           backgroundColor: '#6e150e',
           width: isSidebarCollapsed ? '80px' : '256px'
@@ -710,7 +710,7 @@ export function Layout() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex flex-col min-w-0 main-content">
         {/* Top Header - Hidden on mobile */}
         <header className="hidden md:flex h-16 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] items-center justify-between px-6 z-50 transition-[height,padding,margin,border] duration-300">
           <div className="flex-1 max-w-xl">
@@ -977,7 +977,7 @@ export function Layout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto scroll-smooth bg-[#F7F4EF] dark:bg-[#0F1117] transition-[padding,height] duration-300 p-4 md:p-6">
+        <main className="flex-1 scroll-smooth bg-[#F7F4EF] dark:bg-[#0F1117] transition-[padding,height] duration-300 p-4 md:p-6">
           <div className="w-full">
             <UserProfileProvider value={{ userProfile, canEdit }}>
               <AnimatePresence mode="wait">

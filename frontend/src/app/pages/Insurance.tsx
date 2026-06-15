@@ -1259,24 +1259,24 @@ export function Insurance() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 page-header">
           <div className="flex items-center gap-6">
             <div>
-              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight" style={{ fontFamily: 'Inter, sans-serif' }}>Seguros</h1>
-              <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1">Gestão de apólices, mapa de lucs e auditoria de ações.</p>
+              <h1 className="text-[22px] font-bold text-gray-900 dark:text-white leading-tight page-title" style={{ fontFamily: 'Inter, sans-serif' }}>Seguros</h1>
+              <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1 page-description">Gestão de apólices, mapa de lucs e auditoria de ações.</p>
             </div>
 
             {/* Health Score Widget */}
             {healthScore && (
-              <div className="hidden lg:flex items-center gap-4 pl-6 border-l border-gray-200 dark:border-[#222222]">
+              <div className="hidden lg:flex items-center gap-4 pl-6 border-l border-gray-200 dark:border-[#222222] health-score-block">
                 <div className="flex flex-col">
                   <span className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-bold mb-0.5" style={{ letterSpacing: '0.12em' }}>Health Score</span>
                   <div className="flex items-end gap-2">
-                    <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums" style={{ fontFamily: 'Inter, sans-serif' }}>
+                    <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums health-score-value" style={{ fontFamily: 'Inter, sans-serif' }}>
                       {healthScore.score}
                     </span>
                   </div>
-                  <div className="text-[11px] mt-1 font-medium">
+                  <div className="text-[11px] mt-1 font-medium health-score-delta">
                     {healthScore.delta === 0 ? (
                       <span className="text-gray-500">Estável</span>
                     ) : healthScore.delta > 0 ? (
@@ -1291,7 +1291,7 @@ export function Insurance() {
           </div>
 
           {activeTab === 'visao-geral' && (
-            <div className="flex items-center gap-2 lg:gap-2.5" id="filtros-tour">
+            <div className="flex items-center gap-2 lg:gap-2.5 filter-row" id="filtros-tour">
               <div className="relative w-[180px] xl:w-[260px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
                 <input
@@ -1307,7 +1307,7 @@ export function Insurance() {
               <div className="relative hidden lg:flex items-center">
                 <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
                   <SelectTrigger
-                    className={`h-9 w-[175px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
+                    className={`h-9 w-[175px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
                   >
                     <SelectValue placeholder="Seguradora" />
                   </SelectTrigger>
@@ -1328,7 +1328,7 @@ export function Insurance() {
               <div className="relative hidden lg:flex items-center">
                 <Select value={tipoFilter} onValueChange={setTipoFilter}>
                   <SelectTrigger
-                    className={`h-9 w-[150px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
+                    className={`h-9 w-[150px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
                   >
                     <SelectValue placeholder="Segmento" />
                   </SelectTrigger>
@@ -1349,7 +1349,7 @@ export function Insurance() {
               <div className="relative hidden lg:flex items-center">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger
-                    className={`h-9 w-[140px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
+                    className={`h-9 w-[140px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
                   >
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
@@ -1421,7 +1421,7 @@ export function Insurance() {
               <RequireRole roles={['admin', 'gestor']}>
                 <motion.button
                   onClick={handleNovaApolice}
-                  className="hidden md:flex relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold items-center justify-center shadow-sm ml-1 whitespace-nowrap group"
+                  className="btn-nova-apolice hidden md:flex relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold items-center justify-center shadow-sm ml-1 whitespace-nowrap group"
                   whileHover={{ scale: 1.02, backgroundColor: "#880d2f", boxShadow: "0 4px 14px rgba(159, 18, 57, 0.4)" }}
                   whileTap={{ scale: 0.97 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -1502,10 +1502,10 @@ export function Insurance() {
             </div>
           )}
 
-          <div className={`grid grid-cols-1 ${isFocusMode ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_350px]'} flex-1 gap-x-6 gap-y-3 md:gap-y-4 lg:gap-y-6 min-h-0 px-6 md:overflow-y-auto pb-4 items-stretch`}>
+          <div className={`grid grid-cols-1 ${isFocusMode ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_350px]'} flex-1 gap-x-6 gap-y-3 md:gap-y-4 lg:gap-y-6 min-h-0 px-6 pb-4 items-stretch`}>
 
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 order-1 md:order-none" id="kpis-tour">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 order-1 md:order-none kpi-grid self-start" id="kpis-tour">
               {isLoading ? (
                 <>
                   <SkeletonCard />
@@ -1517,18 +1517,18 @@ export function Insurance() {
                 <>
                   {/* Card 1 - Taxa de Conformidade */}
                   <div
-                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card"
                     style={{ border: 'none' }}
                   >
                     <CardPulseOverlay value={conformidadeCount} color="rgba(16, 185, 129, 0.15)" />
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8] kpi-label" style={{ letterSpacing: '0.12em' }}>
                           TAXA DE CONFORMIDADE
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number kpi-value">
                             {animatedConformidade}
                           </span>
                           <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
@@ -1571,7 +1571,7 @@ export function Insurance() {
                       Evolução 8 semanas
                     </div>
 
-                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)] kpi-sparkline">
                       <MemoSingleSparkline
                         values={sparklineValues}
                         area={sparklineArea}
@@ -1585,18 +1585,18 @@ export function Insurance() {
 
                   {/* Card 2 - A Vencer */}
                   <div
-                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card"
                     style={{ border: 'none' }}
                   >
                     <CardPulseOverlay value={expiringPolicies} color="rgba(245, 158, 11, 0.15)" />
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8] kpi-label" style={{ letterSpacing: '0.12em' }}>
                           A VENCER
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#BA7517] kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#BA7517] kpi-number kpi-value">
                             {animatedExpiring}
                           </span>
                           <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
@@ -1623,7 +1623,7 @@ export function Insurance() {
                       Vencimentos por semana
                     </div>
 
-                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)] kpi-sparkline">
                       <MemoSingleSparkline
                         values={expiringSparklineValues}
                         area={expiringArea}
@@ -1637,18 +1637,18 @@ export function Insurance() {
 
                   {/* Card 3 - Vencidas */}
                   <div
-                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card"
                     style={{ border: 'none' }}
                   >
                     <CardPulseOverlay value={expiredPolicies} color="rgba(159, 18, 57, 0.15)" />
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8]" style={{ letterSpacing: '0.12em' }}>
+                        <p className="text-[9px] font-medium uppercase text-gray-500 dark:text-[#94A3B8] kpi-label" style={{ letterSpacing: '0.12em' }}>
                           VENCIDAS
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number kpi-value">
                             {animatedExpired}
                           </span>
                           <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
@@ -1675,7 +1675,7 @@ export function Insurance() {
                       Acumulado 8 semanas
                     </div>
 
-                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)]">
+                    <div className="mt-2 -mx-[1.2rem] w-[calc(100%+2.4rem)] kpi-sparkline">
                       <MemoSingleSparkline
                         values={vencidasHistory}
                         area={vencidasArea}
@@ -1700,7 +1700,7 @@ export function Insurance() {
                         </p>
 
                         <div className="mt-2 flex items-end gap-1 leading-none">
-                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number">
+                          <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number kpi-value">
                             {formattedCoverageTotal.value}
                           </span>
                           {formattedCoverageTotal.suffix && (
@@ -1855,15 +1855,29 @@ export function Insurance() {
                   <table className="w-full min-w-[800px] text-left border-collapse responsive-table">
                     <thead className="bg-[#F7F8FA] dark:bg-[#0a0a0a]">
                       <tr>
-                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>LUC</th>
+                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                          <div className="flex items-center gap-1.5">
+                            LUC
+                            <TooltipProvider>
+                              <ShadcnTooltip>
+                                <TooltipTrigger className="info-laptop-only cursor-help">
+                                  <Info className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-[250px] text-center">
+                                  <p>Algumas colunas ocultas nesta resolução. Use a Tabela Completa (Alt+T) para ver todas.</p>
+                                </TooltipContent>
+                              </ShadcnTooltip>
+                            </TooltipProvider>
+                          </div>
+                        </th>
                         <th className="px-4 py-3 text-left col-loja" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile col-segmento" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile col-seguradora" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile col-vigencia" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
                         <th className="px-4 py-3 text-left hide-on-mobile" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
 
                         <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile col-cobertura" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
                         <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
                       </tr>
                     </thead>
@@ -1881,14 +1895,14 @@ export function Insurance() {
                             >
                               <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.id}</td>
                               <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 col-loja">{policy.lojista}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile">{policy.tipo}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile">{policy.seguradora}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile">{policy.vigencia}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-segmento">{policy.tipo}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-seguradora">{policy.seguradora}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile col-vigencia">{policy.vigencia}</td>
                               <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile">{policy.vencimento}</td>
                               <td className="px-4 py-3" style={{ minWidth: '110px' }}>
                                 {renderStatusBadge(policy.status)}
                               </td>
-                              <td className="px-4 py-3 text-[13px] font-medium text-gray-900 dark:font-normal dark:text-gray-100 table-number hide-on-mobile">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
+                              <td className="px-4 py-3 text-[13px] font-medium text-gray-900 dark:font-normal dark:text-gray-100 table-number hide-on-mobile col-cobertura">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
                               <td className="px-4 py-3 text-[13px] table-number">
                                 <span className={`font-semibold ${
                                   (policy.dias_restantes ?? 0) < 0 ? 'text-red-600 dark:text-red-400' :

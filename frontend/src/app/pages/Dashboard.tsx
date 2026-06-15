@@ -61,10 +61,10 @@ export function Dashboard() {
   return (
     <div className="space-y-5">
       {/* ── Page Header ──────────────────────────────────────────────────── */}
-      <div className="flex justify-between items-end">
+      <div className="flex justify-between items-end page-header">
         <div>
-          <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 dark:text-white">Visão Geral</h1>
-          <p className="text-gray-500 dark:text-[#94A3B8] mt-1 text-sm">
+          <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 dark:text-white page-title">Visão Geral</h1>
+          <p className="text-gray-500 dark:text-[#94A3B8] mt-1 text-sm page-description">
             Resumo operacional e mapa de conformidade do complexo.
           </p>
         </div>
