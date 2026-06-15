@@ -98,12 +98,19 @@ PG_SSLMODE=disable
 		log.Printf("⚠️  Não achou migrations/initial_schema.sql: %v", err)
 	}
 
-	// Add deleted_at column (migration)
+	// Add deleted_at and dias rest. columns (migration)
 	_, err = db.Exec("ALTER TABLE seguros ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL;")
 	if err != nil {
 		log.Printf("⚠️  Aviso ao adicionar deleted_at: %v", err)
 	} else {
 		fmt.Println("✅ Estrutura de exclusão (deleted_at) configurada com sucesso.")
+	}
+
+	_, err = db.Exec("ALTER TABLE seguros ADD COLUMN IF NOT EXISTS \"dias rest.\" INTEGER DEFAULT NULL;")
+	if err != nil {
+		log.Printf("⚠️  Aviso ao adicionar dias rest.: %v", err)
+	} else {
+		fmt.Println("✅ Coluna 'dias rest.' configurada com sucesso.")
 	}
 
 	// Create historico_apolice table (migration)
