@@ -1,6 +1,9 @@
 package audit
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -10,29 +13,80 @@ import (
 // Service encapsula o repositório e expõe métodos de alto nível.
 type Service struct {
 	repo *Repository
+	db   *sql.DB // para resolver nome do usuário via user_id
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+// contextKeyUserID é a mesma chave usada pelo pacote auth (duplicada aqui para evitar ciclo de import).
+type contextKey string
+
+const contextKeyUserID contextKey = "user_id"
+
+func NewService(repo *Repository, db *sql.DB) *Service {
+	return &Service{repo: repo, db: db}
 }
 
 // Log grava um AuditLog de forma assíncrona para não bloquear a resposta HTTP.
 // Erros são apenas logados — um erro de auditoria NUNCA deve impedir a ação principal.
-func (s *Service) Log(log AuditLog) {
+func (s *Service) Log(entry AuditLog) {
 	go func() {
-		log.Timestamp = time.Now().UTC()
-		if err := s.repo.Insert(log); err != nil {
-			// Registra falha no stderr mas não propaga
-			_ = err
+		entry.Timestamp = time.Now().UTC()
+		if err := s.repo.Insert(entry); err != nil {
+			log.Printf("Erro ao salvar audit log: %v", err)
 		}
 	}()
 }
 
+// resolveUserName busca o nome do usuário pelo ID numérico.
+// Retorna o ID em string como fallback se não encontrar.
+func (s *Service) resolveUserName(userID int) string {
+	if s.db == nil || userID == 0 {
+		return "sistema"
+	}
+	var nome string
+	err := s.db.QueryRow(`SELECT nome FROM usuarios WHERE id = $1`, userID).Scan(&nome)
+	if err != nil {
+		return fmt.Sprintf("usuario_%d", userID)
+	}
+	return nome
+}
+
 // LogFromRequest constrói e grava um AuditLog usando dados da requisição HTTP.
+// Resolve o nome real do usuário, captura IP e User-Agent.
 func (s *Service) LogFromRequest(r *http.Request, acao, entidade, entidadeID string, anterior, novo *string) {
 	ip := extractIP(r)
+	userID, _ := r.Context().Value(contextKeyUserID).(int)
+	userName := s.resolveUserName(userID)
+
+	// payload_novo recebe também o user-agent como metadado de sessão
+	var novoFinal *string
+	if novo != nil {
+		novoFinal = novo
+	} else {
+		ua := fmt.Sprintf(`{"user_agent":%q,"ip":%q}`, r.UserAgent(), ip)
+		novoFinal = &ua
+	}
+
 	s.Log(AuditLog{
-		UserID:          extractUser(r),
+		UserID:          userName,
+		Acao:            acao,
+		Entidade:        entidade,
+		EntidadeID:      entidadeID,
+		PayloadAnterior: anterior,
+		PayloadNovo:     novoFinal,
+		IP:              ip,
+		UserAgent:       r.UserAgent(),
+	})
+}
+
+// LogFromRequestWithPayloads é como LogFromRequest mas respeita payloads explícitos
+// e ainda anexa user-agent/ip no campo user_agent.
+func (s *Service) LogFromRequestWithPayloads(r *http.Request, acao, entidade, entidadeID string, anterior, novo *string) {
+	ip := extractIP(r)
+	userID, _ := r.Context().Value(contextKeyUserID).(int)
+	userName := s.resolveUserName(userID)
+
+	s.Log(AuditLog{
+		UserID:          userName,
 		Acao:            acao,
 		Entidade:        entidade,
 		EntidadeID:      entidadeID,
@@ -41,6 +95,20 @@ func (s *Service) LogFromRequest(r *http.Request, acao, entidade, entidadeID str
 		IP:              ip,
 		UserAgent:       r.UserAgent(),
 	})
+}
+
+// Registrar — mantido para compatibilidade; internamente delega para Log sem request.
+// Prefira LogFromRequest quando tiver o *http.Request disponível.
+func (s *Service) Registrar(ctx context.Context, userID, acao, entidade, entidadeID string, anterior, novo *string) error {
+	s.Log(AuditLog{
+		UserID:          userID,
+		Acao:            acao,
+		Entidade:        entidade,
+		EntidadeID:      entidadeID,
+		PayloadAnterior: anterior,
+		PayloadNovo:     novo,
+	})
+	return nil
 }
 
 func (s *Service) List(f ListFilter) ([]AuditLog, int, error) {
@@ -63,15 +131,6 @@ func extractIP(r *http.Request) string {
 		return r.RemoteAddr
 	}
 	return host
-}
-
-// extractUser lê o usuário do header X-User-ID (definido pelo frontend/auth).
-// Em produção, substitua por validação de JWT.
-func extractUser(r *http.Request) string {
-	if u := r.Header.Get("X-User-ID"); u != "" {
-		return u
-	}
-	return "sistema"
 }
 
 func splitAndTrim(s string) []string {

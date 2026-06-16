@@ -94,15 +94,40 @@ export function PresentationMode({
 
   return (
     <div 
-      className="fixed inset-0 z-50 overflow-hidden flex flex-col bg-[#F7F4EF] dark:bg-[#0a0a0a]"
+      className="fixed inset-0 z-50 overflow-hidden flex flex-col bg-[#F7F4EF] dark:bg-[#0a0a0a] pres-main-grid"
       style={{
         display: 'grid',
         gridTemplateRows: 'auto auto 1fr auto',
-        height: '100vh',
-        padding: '28px',
-        gap: '20px',
+        height: '100dvh',
+        padding: 'clamp(16px, 2vw, 28px)',
+        gap: 'clamp(12px, 1.5vw, 20px)',
       }}
     >
+      <style>{`
+        .pres-dynamic-layout {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) clamp(260px, 22vw, 320px);
+          grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr);
+          grid-template-areas: 
+            "map risco"
+            "map acao";
+        }
+        @media (max-height: 800px) {
+          .pres-main-grid {
+            padding: 16px !important;
+            gap: 12px !important;
+          }
+          .pres-dynamic-layout {
+            grid-template-columns: minmax(0, 1fr) clamp(200px, 22vw, 260px) clamp(220px, 26vw, 300px);
+            grid-template-rows: minmax(0, 1fr);
+            grid-template-areas: 
+              "map risco acao";
+          }
+        }
+        .pres-side-panel, .pres-side-panel * {
+          font-size: clamp(10px, 0.9vw, 13px);
+        }
+      `}</style>
       {/* Absolute Toggle Button (Bottom Center) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -136,7 +161,7 @@ export function PresentationMode({
           </div>
         </div>
         <div className="text-right flex flex-col items-end pt-1" style={{ minWidth: '180px' }}>
-          <div className="text-[72px] font-[100] tracking-[-0.04em] leading-none text-gray-900 dark:text-white">
+          <div className="font-[100] tracking-[-0.04em] leading-none text-gray-900 dark:text-white" style={{ fontSize: 'clamp(40px, 5vw, 72px)' }}>
             {healthScore ? healthScore.score : '--'}
           </div>
           <div className="text-[11px] tracking-[0.1em] uppercase opacity-30 text-gray-900 dark:text-white mt-2 font-medium">
@@ -154,16 +179,17 @@ export function PresentationMode({
         </div>
       </header>
 
-      {/* Row 2: KPIs */}
-      <div className="grid grid-cols-4 gap-5">
+      {/* Row 2: KPIs — 4 colunas desktop, 2 em laptop/mobile (P2) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
         {/* Card 1: Taxa de Conformidade */}
         <div 
           onClick={() => setModalAberto('conformidade')}
-          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl p-5 border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          style={{ padding: 'clamp(12px, 1.2vw, 20px)' }}
         >
           <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 mb-2">Taxa de Conformidade</div>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-[42px] font-[200] leading-none text-gray-900 dark:text-white">{Math.round(complianceRate)}</span>
+            <span className="font-[200] leading-none text-gray-900 dark:text-white" style={{ fontSize: 'clamp(28px, 3vw, 42px)' }}>{Math.round(complianceRate)}</span>
             <span className="text-[16px] text-gray-400 dark:text-gray-500 font-light">/{totalPolicies}</span>
           </div>
           <div className="text-[12px] text-gray-500 dark:text-gray-400 mt-2 font-medium">apólices conformes</div>
@@ -174,11 +200,12 @@ export function PresentationMode({
         {/* Card 2: A Vencer */}
         <div 
           onClick={() => setModalAberto('avencer')}
-          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl p-5 border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          style={{ padding: 'clamp(12px, 1.2vw, 20px)' }}
         >
           <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 mb-2">A Vencer</div>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-[42px] font-[200] leading-none text-gray-900 dark:text-white">{expiringPolicies}</span>
+            <span className="font-[200] leading-none text-gray-900 dark:text-white" style={{ fontSize: 'clamp(28px, 3vw, 42px)' }}>{expiringPolicies}</span>
             <span className="text-[16px] text-gray-400 dark:text-gray-500 font-light">apólices</span>
           </div>
           <div className="text-[12px] text-gray-500 dark:text-gray-400 mt-2 font-medium">nos próximos 15 dias</div>
@@ -189,11 +216,12 @@ export function PresentationMode({
         {/* Card 3: Vencidas */}
         <div 
           onClick={() => setModalAberto('vencidas')}
-          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl p-5 border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          style={{ padding: 'clamp(12px, 1.2vw, 20px)' }}
         >
           <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 mb-2">Vencidas</div>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-[42px] font-[200] leading-none text-[#D92D20]">{expiredPolicies}</span>
+            <span className="font-[200] leading-none text-[#D92D20]" style={{ fontSize: 'clamp(28px, 3vw, 42px)' }}>{expiredPolicies}</span>
             <span className="text-[16px] text-gray-400 dark:text-gray-500 font-light">apólices</span>
           </div>
           <div className="text-[12px] text-gray-500 dark:text-gray-400 mt-2 font-medium">requerem ação imediata</div>
@@ -204,11 +232,12 @@ export function PresentationMode({
         {/* Card 4: Cobertura Total */}
         <div 
           onClick={() => setModalAberto('cobertura')}
-          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl p-5 border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          className="group relative bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] overflow-hidden flex flex-col cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+          style={{ padding: 'clamp(12px, 1.2vw, 20px)' }}
         >
           <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 mb-2">Cobertura Total</div>
           <div className="flex items-baseline gap-1 mt-1">
-            <span className="text-[42px] font-[200] leading-none text-gray-900 dark:text-white">{formatCurrency(totalCobertura)}</span>
+            <span className="font-[200] leading-none text-gray-900 dark:text-white" style={{ fontSize: 'clamp(28px, 3vw, 42px)' }}>{formatCurrency(totalCobertura)}</span>
           </div>
           <div className="text-[12px] text-gray-500 dark:text-gray-400 mt-2 font-medium">valor total assegurado</div>
           <div className="text-[12px] font-medium text-[#639922] mt-4">↑ 10% vs semana anterior</div>
@@ -217,15 +246,15 @@ export function PresentationMode({
         </div>
       </div>
 
-      {/* Row 3: Main Layout */}
-      <div className="grid grid-cols-[1fr_320px] gap-5 min-h-0">
+      {/* Row 3: Main Layout — Dynamic Grid Areas */}
+      <div className="pres-dynamic-layout gap-4 lg:gap-5 min-h-0 w-full">
         
         {/* Left: Map */}
-        <div className="bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] px-6 pt-5 pb-1 flex flex-col min-h-0">
+        <div style={{ gridArea: 'map' }} className="bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] px-6 pt-5 pb-1 flex flex-col min-h-0">
           <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 mb-3 shrink-0">
             Mapa de Conformidade - {totalPolicies} lojas
           </div>
-          <div className="flex-1 overflow-hidden min-h-0 pr-2 flex flex-col">
+          <div className="flex-1 overflow-hidden min-h-0 pr-2 flex flex-col" style={{ maxHeight: 'calc(100vh - 340px)' }}>
             <PresentationGrid 
               selectedLuc={selectedMapLuc} 
               onSelectLuc={setSelectedMapLuc}
@@ -234,22 +263,21 @@ export function PresentationMode({
           </div>
         </div>
 
-        {/* Right: Stacked Cards */}
-        <div className="flex flex-col gap-5 min-h-0">
-          <div className="bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] p-5 flex flex-col flex-1 min-h-0 relative">
-            <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 mb-4 shrink-0">Risco por Segmento</div>
-            <div className="absolute inset-0 top-[40px] p-5 pt-0">
-              <SegmentRiskChart isPresentationMode={true} />
-            </div>
+        {/* Right 1: Risco */}
+        <div style={{ gridArea: 'risco' }} className="pres-side-panel bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] p-5 flex flex-col min-h-0 relative">
+          <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 mb-4 shrink-0">Risco por Segmento</div>
+          <div className="absolute inset-0 top-[40px] p-5 pt-0">
+            <SegmentRiskChart isPresentationMode={true} />
           </div>
-          
-          <div className="bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] flex flex-col flex-1 min-h-0 overflow-hidden">
-            <div className="p-5 pb-3">
-              <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 shrink-0">Ação Urgente</div>
-            </div>
-            <div className="flex-1 overflow-hidden px-5 pb-5">
-              <ActionQueuePanel onSelectLuc={setSelectedMapLuc} isPresentationMode={true} />
-            </div>
+        </div>
+        
+        {/* Right 2: Ação Urgente */}
+        <div style={{ gridArea: 'acao' }} className="pres-side-panel bg-gray-50 dark:bg-[#151515] rounded-xl border border-gray-200 dark:border-[#222] flex flex-col min-h-0 overflow-hidden">
+          <div className="p-5 pb-3">
+            <div className="text-[10px] font-bold tracking-[0.08em] uppercase text-gray-500 dark:text-gray-400 shrink-0">Ação Urgente</div>
+          </div>
+          <div className="flex-1 overflow-hidden px-5 pb-5">
+            <ActionQueuePanel onSelectLuc={setSelectedMapLuc} isPresentationMode={true} />
           </div>
         </div>
 

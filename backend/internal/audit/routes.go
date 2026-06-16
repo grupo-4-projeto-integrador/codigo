@@ -7,7 +7,7 @@ import (
 
 func RegisterRoutes(mux *http.ServeMux, db *sql.DB) *Service {
 	repo := NewRepository(db)
-	service := NewService(repo)
+	service := NewService(repo, db)
 	handler := NewHandler(service)
 
 	mux.HandleFunc("GET /api/admin/audit", handler.GetLogs)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getFilaDeAcao } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
-import { Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle, ArrowUpDown } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -66,7 +66,7 @@ function SortableQueueItem({ item, index, isLast, onSelectLuc }: { item: Apolice
     <div 
       ref={setNodeRef} 
       style={style} 
-      className={`group flex items-center px-3 py-1.5 gap-2 border-b border-gray-50 bg-white hover:bg-gray-50 transition-colors text-left dark:border-[#222222] dark:bg-[#151515] dark:hover:bg-[#1f1f1f] ${isLast ? 'border-b-0' : ''} ${isDragging ? 'shadow-md opacity-90' : ''}`}
+      className={`action-queue-item group flex items-center px-3 py-1.5 gap-2 border-b border-gray-50 bg-white hover:bg-gray-50 transition-colors text-left dark:border-[#222222] dark:bg-[#151515] dark:hover:bg-[#1f1f1f] ${isLast ? 'border-b-0' : ''} ${isDragging ? 'shadow-md opacity-90' : ''}`}
     >
       <div 
         {...attributes} 
@@ -106,6 +106,16 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
+  const cssStyles = (
+    <style>{`
+      @media (min-width: 1024px) and (max-width: 1440px) {
+        .action-queue-card {
+          max-height: none !important;
+        }
+      }
+    `}</style>
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -115,7 +125,7 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
     setLoading(true);
     try {
       let data = await getFilaDeAcao();
-      data = data.slice(0, 3);
+      data = data.slice(0, 4);
       setOriginalItems([...data]);
 
       const storedOrder = localStorage.getItem('actionQueueOrder');
@@ -211,13 +221,14 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
 
   return (
     <AnimatePresence mode="wait" initial={false}>
+      {cssStyles}
       <motion.div
         key="action-queue"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="bg-white dark:bg-[#151515] rounded-xl border flex flex-col h-full shadow-sm dark:border-[#222222]"
+        className="action-queue-card bg-white dark:bg-[#151515] rounded-xl border flex flex-col h-full shadow-sm dark:border-[#222222]"
       >
       <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between dark:border-[#222222]">
         <div className="flex items-center gap-1.5">
@@ -225,10 +236,18 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
           <span className="bg-[#8B1A1A] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
             {items.length}
           </span>
+          <button
+            onClick={showWarning ? handleRestore : undefined}
+            className="ml-1 cursor-pointer transition-colors outline-none flex items-center justify-center"
+            title={showWarning ? "Ordenação manual ativa — clique para restaurar automática" : "Ordem automática original"}
+            style={{ color: showWarning ? '#BA7517' : 'rgba(255,255,255,0.3)' }}
+          >
+            <ArrowUpDown className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col relative before:content-[''] before:absolute before:left-[48px] before:top-[20px] before:bottom-[20px] before:w-[1px] before:border-l before:border-dashed before:border-[rgba(196,21,31,0.25)]">
+      <div className="flex flex-col flex-1 justify-between relative before:content-[''] before:absolute before:left-[48px] before:top-[20px] before:bottom-[20px] before:w-[1px] before:border-l before:border-dashed before:border-[rgba(196,21,31,0.25)]">
         {loading && items.length === 0 ? (
           <div className="flex justify-center p-8">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8B1A1A]"></div>
@@ -239,16 +258,7 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
           </div>
         ) : (
           <>
-            {showWarning && (
-              <div className="px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-between border-b border-yellow-100 dark:border-yellow-900/30">
-                <span className="text-[10px] text-yellow-800 dark:text-yellow-500 font-medium flex items-center gap-1.5">
-                  <AlertTriangle className="w-3 h-3" /> Ordenação manual ativa
-                </span>
-                <button onClick={handleRestore} className="text-[10px] text-[#c4151f] hover:underline font-bold">
-                  Restaurar automática
-                </button>
-              </div>
-            )}
+
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={items.map(i => i.id || i.luc)} strategy={verticalListSortingStrategy}>
                 {items.map((item, index) => (

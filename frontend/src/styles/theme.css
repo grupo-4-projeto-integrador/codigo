@@ -17,6 +17,7 @@ html, body { height: 100%; overflow: hidden; }
 
 .main-content {
   flex: 1;
+  min-width: 0; /* P5 — evita overflow em flex com texto longo */
   height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;

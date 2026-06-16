@@ -81,6 +81,13 @@ func (h *Handler) logAudit(r *http.Request, acao, entidade, entidadeID string, a
 	}
 }
 
+// logAuditWithPayloads envia auditoria preservando payloads explícitos (diff de dados).
+func (h *Handler) logAuditWithPayloads(r *http.Request, acao, entidade, entidadeID string, anterior, novo *string) {
+	if h.auditSvc != nil {
+		h.auditSvc.LogFromRequestWithPayloads(r, acao, entidade, entidadeID, anterior, novo)
+	}
+}
+
 func (h *Handler) GetMapLayout(w http.ResponseWriter, r *http.Request) {
 	requestID := middleware.RequestIDFromContext(r.Context())
 
@@ -560,7 +567,7 @@ func (h *Handler) Collection(w http.ResponseWriter, r *http.Request) {
 		}
 
 		novoJSON := toJSON(item)
-		h.logAudit(r, audit.AcaoCriar, audit.EntidadeApolice, item.Luc, nil, &novoJSON)
+		h.logAudit(r, "criar", "apolice", item.Luc, nil, &novoJSON)
 		_ = response.Success(w, http.StatusCreated, ToResponse(item), requestID)
 
 	default:
@@ -607,7 +614,7 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 				return
 			}
 			novoJSON := toJSON(item)
-			h.logAudit(r, audit.AcaoEditar, audit.EntidadeApolice, itemID, &anteriorJSON, &novoJSON)
+			h.logAuditWithPayloads(r, "editar", "apolice", itemID, &anteriorJSON, &novoJSON)
 			_ = response.Success(w, http.StatusOK, ToResponse(item), requestID)
 
 		case http.MethodDelete:
@@ -617,7 +624,7 @@ func (h *Handler) Item(routePrefix string) http.HandlerFunc {
 				h.writeError(w, requestID, err)
 				return
 			}
-			h.logAudit(r, audit.AcaoExcluir, audit.EntidadeApolice, itemID, &anteriorJSON, nil)
+			h.logAuditWithPayloads(r, "excluir", "apolice", itemID, &anteriorJSON, nil)
 			_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice excluída com sucesso"}, requestID)
 
 		default:
@@ -758,7 +765,7 @@ func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
 	}
 
 	detalhes := fmt.Sprintf(`{"nova_vigencia":%q,"novo_valor":%f,"seguradora":%q}`, payload.NovaVigencia, payload.NovoValor, payload.Seguradora)
-	h.logAudit(r, audit.AcaoRenovar, audit.EntidadeApolice, itemID, nil, &detalhes)
+	h.logAuditWithPayloads(r, "renovar", "apolice", itemID, nil, &detalhes)
 	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice renovada com sucesso"}, requestID)
 }
 
@@ -849,8 +856,8 @@ func (h *Handler) DownloadDocumento(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", doc.Nome))
 	http.ServeFile(w, r, safePath)
 
-	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, doc.Nome)
-	h.logAudit(r, audit.AcaoExportar, audit.EntidadeDocumento, id, nil, &arquivoJSON)
+	arquivoJSON := fmt.Sprintf(`{"filename": %q}`, doc.Nome)
+	h.logAuditWithPayloads(r, "download", "documento", id, nil, &arquivoJSON)
 }
 
 func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {
@@ -954,8 +961,8 @@ func (h *Handler) UploadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	arquivoJSON := fmt.Sprintf(`{"arquivo": %q}`, sanitizedNome)
-	h.logAudit(r, audit.AcaoUpload, audit.EntidadeApolice, id, nil, &arquivoJSON)
+	arquivoJSON := fmt.Sprintf(`{"filename": %q}`, sanitizedNome)
+	h.logAuditWithPayloads(r, "upload", "documento", id, nil, &arquivoJSON)
 
 	response.Success(w, http.StatusCreated, createdDoc, middleware.RequestIDFromContext(r.Context()))
 }

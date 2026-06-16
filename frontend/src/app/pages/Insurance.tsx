@@ -1232,7 +1232,7 @@ export function Insurance() {
   return (
     <div
       ref={dashboardRef}
-      className="flex flex-col min-h-[calc(100vh-120px)] transition-all duration-500"
+      className="flex flex-col min-h-[calc(100dvh-120px)] transition-all duration-500"
       style={{
         backgroundColor: colors.pageBg,
         fontSize: isFocusMode ? '115%' : undefined,
@@ -1272,19 +1272,19 @@ export function Insurance() {
               <div className="hidden lg:flex items-center gap-4 pl-6 border-l border-gray-200 dark:border-[#222222] health-score-block">
                 <div className="flex flex-col">
                   <span className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-bold mb-0.5" style={{ letterSpacing: '0.12em' }}>Health Score</span>
-                  <div className="flex items-end gap-2">
+                  <div className="flex items-baseline gap-2.5">
                     <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums health-score-value" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
                       {healthScore.score}
                     </span>
-                  </div>
-                  <div className="text-[11px] mt-1 font-medium health-score-delta">
-                    {healthScore.delta === 0 ? (
-                      <span className="text-gray-500">Estável</span>
-                    ) : healthScore.delta > 0 ? (
-                      <span className="text-[#639922]">↑ {healthScore.delta} {healthScore.delta === 1 ? 'ponto' : 'pontos'} na sem.</span>
-                    ) : (
-                      <span className="text-[#E23B44]">↓ {Math.abs(healthScore.delta)} {Math.abs(healthScore.delta) === 1 ? 'ponto' : 'pontos'} na sem.</span>
-                    )}
+                    <span className="text-[10px] font-medium health-score-delta opacity-75">
+                      {healthScore.delta === 0 ? (
+                        <span className="text-gray-500">Estável</span>
+                      ) : healthScore.delta > 0 ? (
+                        <span className="text-[#639922]">↑ {healthScore.delta} {healthScore.delta === 1 ? 'ponto' : 'pontos'}</span>
+                      ) : (
+                        <span className="text-[#E23B44]">↓ {Math.abs(healthScore.delta)} {Math.abs(healthScore.delta) === 1 ? 'ponto' : 'pontos'}</span>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1292,20 +1292,94 @@ export function Insurance() {
           </div>
 
           {activeTab === 'visao-geral' && (
-            <div className="flex items-center justify-between w-full gap-2 lg:gap-2.5 filter-row" id="filtros-tour">
-              <div className="relative w-[180px] xl:w-[260px] flex-shrink-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
-                <input
-                  id="insurance-search-input"
-                  type="text"
-                  placeholder="Buscar por loja, LUC ou segmento..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] text-[#9F1239] dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-                />
-              </div>
+            <div className="flex items-center justify-end flex-1 w-full gap-2 lg:gap-2.5 filter-row min-w-0" id="filtros-tour">
+              {/* ACTION BAR: Busca, Filtros, Download, Snapshot, Nova Apólice (Ancorada à Direita) */}
+              <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap lg:flex-nowrap justify-end">
+                <div className="relative w-full lg:max-w-[320px] search-input-fluid flex-shrink-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                  <input
+                    id="insurance-search-input"
+                    type="text"
+                    placeholder="Buscar por loja, LUC ou segmento..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] text-[#9F1239] dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                  />
+                </div>
 
-              <div className="flex items-center gap-2 flex-1 justify-center">
+                {/* Popover Filtros Agrupado (Aparece no laptop c/ sidebar aberta) */}
+                <div className="flex lg:hidden show-on-laptop">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
+                        <Filter className="w-4 h-4" />
+                        <span className="text-[13px] font-medium">Filtros</span>
+                        {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
+                          <span className="w-2 h-2 rounded-full bg-[#c4151f]"></span>
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="center" className="w-64 p-4 rounded-xl shadow-xl border-[#c4151f]/20 bg-white dark:bg-[#151515] z-[100]">
+                      <div className="flex flex-col gap-4">
+                        <div className="text-[13px] font-bold text-[#9F1239] dark:text-[#E23B44] border-b border-gray-100 dark:border-[#222222] pb-2">
+                          Filtros de Apólice
+                        </div>
+                        
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Seguradora</label>
+                          <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
+                            <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
+                              <SelectValue placeholder="Seguradora" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
+                              <SelectItem value="todas">Todas</SelectItem>
+                              {uniqueSeguradoras.map(seg => <SelectItem key={seg} value={seg}>{seg}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Segmento</label>
+                          <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                            <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
+                              <SelectValue placeholder="Segmento" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
+                              <SelectItem value="todos">Todos</SelectItem>
+                              {uniqueTipos.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Status</label>
+                          <Select value={statusFilter} onValueChange={setStatusFilter}>
+                            <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
+                              <SelectItem value="todas">Todos</SelectItem>
+                              <SelectItem value="ativa">Ativa</SelectItem>
+                              <SelectItem value="a vencer">A Vencer</SelectItem>
+                              <SelectItem value="vencida">Vencida</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
+                          <button 
+                            onClick={() => { setSeguradoraFilter('todas'); setTipoFilter('todos'); setStatusFilter('todas'); }}
+                            className="mt-2 text-[12px] font-medium text-[#c4151f] hover:underline text-center"
+                          >
+                            Limpar Filtros
+                          </button>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+              {/* Filtros Individuais Desktop */}
               <div className="relative hidden lg:flex items-center hide-on-laptop">
                 <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
                   <SelectTrigger
@@ -1369,86 +1443,15 @@ export function Insurance() {
                 )}
               </div>
 
-              {/* Popover Filtros Agrupado (Aparece no laptop c/ sidebar aberta) */}
-              <div className="flex lg:hidden show-on-laptop">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1">
-                      <Filter className="w-4 h-4" />
-                      <span className="text-[13px] font-medium">Filtros</span>
-                      {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
-                        <span className="w-2 h-2 rounded-full bg-[#c4151f]"></span>
-                      )}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="center" className="w-64 p-4 rounded-xl shadow-xl border-[#c4151f]/20 bg-white dark:bg-[#151515] z-[100]">
-                    <div className="flex flex-col gap-4">
-                      <div className="text-[13px] font-bold text-[#9F1239] dark:text-[#E23B44] border-b border-gray-100 dark:border-[#222222] pb-2">
-                        Filtros de Apólice
-                      </div>
-                      
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Seguradora</label>
-                        <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
-                          <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
-                            <SelectValue placeholder="Seguradora" />
-                          </SelectTrigger>
-                          <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
-                            <SelectItem value="todas">Todas</SelectItem>
-                            {uniqueSeguradoras.map(seg => <SelectItem key={seg} value={seg}>{seg}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
 
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Segmento</label>
-                        <Select value={tipoFilter} onValueChange={setTipoFilter}>
-                          <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
-                            <SelectValue placeholder="Segmento" />
-                          </SelectTrigger>
-                          <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
-                            <SelectItem value="todos">Todos</SelectItem>
-                            {uniqueTipos.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
 
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Status</label>
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger className={`h-9 border rounded-lg text-[13px] font-medium transition-colors ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200'}`}>
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent className="z-[110] bg-white dark:bg-[#151515]">
-                            <SelectItem value="todas">Todos</SelectItem>
-                            <SelectItem value="ativa">Ativa</SelectItem>
-                            <SelectItem value="a vencer">A Vencer</SelectItem>
-                            <SelectItem value="vencida">Vencida</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
 
-                      {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
-                        <button 
-                          onClick={() => { setSeguradoraFilter('todas'); setTipoFilter('todos'); setStatusFilter('todas'); }}
-                          className="mt-2 text-[12px] font-medium text-[#c4151f] hover:underline text-center"
-                        >
-                          Limpar Filtros
-                        </button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              </div>
-
-              <div className="flex items-center gap-2 flex-shrink-0">
               <DropdownMenu>
                 <TooltipProvider>
                   <ShadcnTooltip>
                     <TooltipTrigger asChild>
                       <DropdownMenuTrigger asChild>
-                        <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1">
+                        <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
                           <IconDownload size={18} stroke={1.5} />
                         </button>
                       </DropdownMenuTrigger>
@@ -1479,7 +1482,7 @@ export function Insurance() {
               <button
                 id="snapshot-tour"
                 onClick={() => window.dispatchEvent(new CustomEvent("trigger-snapshot"))}
-                className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm ml-1"
+                className="flex items-center justify-center flex-shrink-0 h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm"
                 title="Capturar snapshot em PNG"
               >
                 <Camera className="w-4 h-4" />
@@ -1489,7 +1492,7 @@ export function Insurance() {
               <RequireRole roles={['admin', 'gestor']}>
                 <motion.button
                   onClick={handleNovaApolice}
-                  className="btn-nova-apolice hidden md:flex relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold items-center justify-center shadow-sm ml-1 whitespace-nowrap group"
+                  className="btn-nova-apolice hidden md:flex flex-shrink-0 relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold items-center justify-center shadow-sm whitespace-nowrap group"
                   whileHover={{ scale: 1.02, backgroundColor: "#880d2f", boxShadow: "0 4px 14px rgba(159, 18, 57, 0.4)" }}
                   whileTap={{ scale: 0.97 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -1586,7 +1589,7 @@ export function Insurance() {
                 <>
                   {/* Card 1 - Taxa de Conformidade */}
                   <div
-                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card"
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card overflow-hidden"
                     style={{ border: 'none' }}
                   >
                     <CardPulseOverlay value={conformidadeCount} color="rgba(16, 185, 129, 0.15)" />
@@ -1654,7 +1657,7 @@ export function Insurance() {
 
                   {/* Card 2 - A Vencer */}
                   <div
-                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card"
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card overflow-hidden"
                     style={{ border: 'none' }}
                   >
                     <CardPulseOverlay value={expiringPolicies} color="rgba(245, 158, 11, 0.15)" />
@@ -1706,7 +1709,7 @@ export function Insurance() {
 
                   {/* Card 3 - Vencidas */}
                   <div
-                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card"
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] kpi-card overflow-hidden"
                     style={{ border: 'none' }}
                   >
                     <CardPulseOverlay value={expiredPolicies} color="rgba(159, 18, 57, 0.15)" />
@@ -1758,7 +1761,7 @@ export function Insurance() {
 
                   {/* Card 4 - Valor Segurado */}
                   <div
-                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                    className="relative bg-white dark:bg-[#151515] rounded-[14px] p-5 flex h-full min-h-0 flex-col shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden"
                     style={{ border: 'none' }}
                   >
                     <CardPulseOverlay value={totalCobertura} color="rgba(59, 130, 246, 0.15)" />
@@ -1834,7 +1837,7 @@ export function Insurance() {
 
             <div
               id="mapa-tour"
-              className={`order-2 md:order-none grid gap-4 transition-all duration-500 md:h-full ${isFocusMode ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[60fr_40fr]"}`}
+              className={`order-2 md:order-none grid gap-4 transition-all duration-500 md:h-[340px] lg:h-[340px] xl:h-[400px] 2xl:h-[440px] ${isFocusMode ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-[minmax(0,60fr)_minmax(0,40fr)]"}`}
             >
               <div className="min-h-0 relative">
                 {isLoading ? (
@@ -1921,10 +1924,10 @@ export function Insurance() {
                 {/* Table wrapper */}
                 <div className="table-wrapper-outer">
                 <div className="table-container">
-                  <table className="w-full min-w-[800px] text-left border-collapse responsive-table">
+                  <table className="w-full min-w-[800px] lg:min-w-0 xl:min-w-[800px] text-left border-collapse responsive-table table-fixed">
                     <thead className="bg-[#F7F8FA] dark:bg-[#0a0a0a]">
                       <tr>
-                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                        <th className="px-4 py-3 text-left w-[8%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                           <div className="flex items-center gap-1.5">
                             LUC
                             <TooltipProvider>
@@ -1939,15 +1942,15 @@ export function Insurance() {
                             </TooltipProvider>
                           </div>
                         </th>
-                        <th className="px-4 py-3 text-left col-loja" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile col-segmento" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile col-seguradora" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile col-vigencia" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
+                        <th className="px-4 py-3 text-left w-[21%] col-loja" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile w-[9%] col-segmento" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile w-[15%] col-seguradora" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile w-[10%] col-vigencia" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile hide-on-laptop-sidebar-open w-[10%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
 
-                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile col-cobertura" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
-                        <th className="px-4 py-3 text-left" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
+                        <th className="px-4 py-3 text-left w-[12%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
+                        <th className="px-4 py-3 text-left hide-on-mobile hide-on-laptop-sidebar-open w-[14%] col-cobertura" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
+                        <th className="px-4 py-3 text-left w-[9%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1962,16 +1965,18 @@ export function Insurance() {
                               className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
                               style={{ borderColor: colors.cardBorder }}
                             >
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number">{policy.id}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 col-loja">{policy.lojista}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-segmento">{policy.tipo}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-seguradora">{policy.seguradora}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile col-vigencia">{policy.vigencia}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile">{policy.vencimento}</td>
-                              <td className="px-4 py-3" style={{ minWidth: '110px' }}>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number truncate">{policy.id}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 col-loja truncate" title={policy.lojista}>{policy.lojista}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-segmento truncate" title={policy.tipo}>{policy.tipo}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-seguradora truncate" title={policy.seguradora}>{policy.seguradora}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile col-vigencia truncate">{policy.vigencia}</td>
+                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile hide-on-laptop-sidebar-open truncate">{policy.vencimento}</td>
+                              <td className="px-4 py-3 truncate" style={{ minWidth: '110px' }}>
                                 {renderStatusBadge(policy.status)}
                               </td>
-                              <td className="px-4 py-3 text-[13px] font-medium text-gray-900 dark:font-normal dark:text-gray-100 table-number hide-on-mobile col-cobertura">{formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}</td>
+                              <td className="px-4 py-3 text-[13px] font-medium text-gray-900 dark:font-normal dark:text-gray-100 table-number hide-on-mobile hide-on-laptop-sidebar-open col-cobertura truncate" title={formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}>
+                                {formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}
+                              </td>
                               <td className="px-4 py-3 text-[13px] table-number">
                                 <span className={`font-semibold ${
                                   (policy.dias_restantes ?? 0) < 0 ? 'text-red-600 dark:text-red-400' :

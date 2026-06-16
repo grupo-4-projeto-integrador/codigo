@@ -61,6 +61,9 @@ func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 	CREATE INDEX IF NOT EXISTS idx_audit_entidade ON audit_logs (entidade);
 	CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_logs (user_id);`); err != nil {
 		log.Printf("Aviso: não foi possível criar tabela audit_logs: %v", err)
+	} else {
+		// Corrige a sequência do ID caso o banco tenha sido populado com IDs manuais
+		db.Exec("SELECT setval('audit_logs_id_seq', COALESCE((SELECT MAX(id) FROM audit_logs), 1));")
 	}
 
 	// Auth — rotas públicas de login

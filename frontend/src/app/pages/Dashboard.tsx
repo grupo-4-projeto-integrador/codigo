@@ -77,8 +77,8 @@ export function Dashboard() {
         </button>
       </div>
 
-      {/* ── Main Grid: Mapa (dominante) + Sidebar KPIs ───────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5 items-start">
+      {/* Main Grid: Mapa (dominante) + Sidebar KPIs — P4: minmax previne overflow */}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,280px)] gap-5 items-start">
         {/* Compliance Map — Dominant Feature */}
         <div className="min-w-0">
           <ComplianceMap />
@@ -265,7 +265,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* ── Recent Policies Table ─────────────────────────────────────────── */}
+      {/* Recent Policies Table — P5: overflow-hidden explicito */}
       <div className="bg-white dark:bg-[#151515] rounded-xl shadow-sm border border-gray-100 dark:border-[#222222] overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 dark:border-[#222222] flex justify-between items-center bg-gray-50/50 dark:bg-[#0a0a0a]/50">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Últimas Ocorrências</h3>

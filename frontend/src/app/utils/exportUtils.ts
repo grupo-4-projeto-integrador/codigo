@@ -228,7 +228,7 @@ export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
   }
 
   // 8. Salvar PDF
-  const safeId = (apolice.luc || apolice.id || "geral").replace(/[^a-zA-Z0-9]/g, '');
+  const safeId = String(apolice.luc || apolice.id || "geral").replace(/[^a-zA-Z0-9]/g, '');
   const dataFile = now.toISOString().split("T")[0];
   doc.save(`apolice-${safeId}-${dataFile}.pdf`);
 };

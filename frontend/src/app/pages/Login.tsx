@@ -30,8 +30,8 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-[100vh] bg-gray-50 dark:bg-[#0a0a0a] flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8 transition-colors">
-      <div className="w-[380px] bg-white dark:bg-[#151515] p-8 shadow-sm border border-gray-100 dark:border-[#222222] rounded-2xl flex flex-col items-center">
+    <div className="min-h-[100dvh] bg-gray-50 dark:bg-[#0a0a0a] flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 transition-colors">
+      <div className="w-full max-w-sm bg-white dark:bg-[#151515] p-8 shadow-sm border border-gray-100 dark:border-[#222222] rounded-2xl flex flex-col items-center">
         
         <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-[#c4151f] to-[#8a0f16] shadow flex items-center justify-center p-2.5 mb-6">
           <img src={logo} alt="Flamboyant" className="w-full h-full object-contain filter brightness-0 invert" />

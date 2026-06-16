@@ -127,7 +127,7 @@ export function ComplianceMapV2({
   const containerRef = useRef<HTMLDivElement>(null);
   const [gridConfig, setGridConfig] = useState({ 
     cols: hideHeader ? 16 : (isSidebarCollapsed ? 15 : 13), 
-    rows: 7, 
+    rows: 6, 
     itemsPerPage: 0,
     tileSize: parseInt(tileWidth) || 43
   });
@@ -140,27 +140,68 @@ export function ComplianceMapV2({
       const W = container.clientWidth;
       const H = container.clientHeight;
       const gapPx = parseInt(gap) || 5;
-      const minW = parseInt(tileWidth) || 43;
+      const minW = 28; // Abaixado para permitir blocos menores e gerar ~7 linhas
       const minH = parseInt(tileHeight) || 38;
 
-      let c = Math.floor((W + gapPx) / (minW + gapPx));
-      if (window.innerWidth >= 1024 && window.innerWidth <= 1440) {
-        c = 14;
+      const horizontalPadding = 12; // p-1.5 (6px) esquerda/direita
+      const verticalPadding = 14; // p-1.5 (6px) topo + pb-2 (8px) base
+
+      let bestFill = 0;
+      let bestC = 8;
+      let bestR = 6;
+      let bestTileSize = 30;
+
+      // Se o container estiver esmagado, protege
+      if (W < 50 || H < 50) return;
+
+      // Otimizador: testa várias densidades de colunas para ver qual preenche melhor a tela
+      // Reduzimos W e H em 4px como margem de segurança antes do cálculo
+      const safeW = W - 4;
+      const safeH = H - 4;
+
+      // Otimizador Algorítmico 2.1: Dinâmico para qualquer altura (até 25 linhas para telas 4K/Modal)
+      let bestScore = Infinity;
+
+      for (let testR = 6; testR <= 25; testR++) {
+        // Calcula o tamanho exato do quadrado para preencher perfeitamente a altura disponível
+        const tW = Math.floor((safeH - verticalPadding - (testR - 1) * gapPx) / testR);
+        
+        if (tW < 20) continue; // Limite mínimo do CSS
+        if (tW > 58) continue; // Limite máximo do CSS
+
+        // Quantas colunas cabem com esse tamanho de tile?
+        const testC = Math.floor((safeW - horizontalPadding + gapPx) / (tW + gapPx));
+        if (testC < 1) continue;
+
+        // Quanta largura sobrou vazia?
+        const usedW = testC * tW + (testC - 1) * gapPx;
+        const wasteW = safeW - horizontalPadding - usedW;
+
+        // Otimização inteligente: para telas curtas (dashboard), favorece ~7 linhas. 
+        // Para telas muito altas (modal), não penaliza linhas extras, apenas evita quadradões vazios.
+        const targetR = safeH > 400 ? (safeH / 36) : 7.5; // Em telas altas, o ideal é tiles de ~36px
+        const rowPenalty = Math.abs(testR - targetR) * 5;
+        const score = wasteW + rowPenalty;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestC = testC;
+          bestR = testR;
+          bestTileSize = tW;
+        }
       }
-      if (c < 1) c = 1;
 
-      const actualTileSize = Math.floor((W - (c - 1) * gapPx) / c);
-      let r = Math.floor((H + gapPx) / (actualTileSize + gapPx));
-      if (r < 1) r = 1;
+      // Se nenhum se encaixar bem, o fallback padrão (bestC=8, bestR=6, tW=30) será usado
+      const actualTileSize = bestTileSize;
 
-      setGridConfig({ cols: c, rows: r, itemsPerPage: c * r, tileSize: actualTileSize });
+      setGridConfig({ cols: bestC, rows: bestR, itemsPerPage: bestC * bestR, tileSize: actualTileSize });
     };
 
     updateGrid();
     const observer = new ResizeObserver(updateGrid);
     observer.observe(container);
     return () => observer.disconnect();
-  }, [tileWidth, tileHeight, gap]);
+  }, [tileWidth, tileHeight, gap, loading]); // adicionado 'loading' para forçar execução após o spinner
 
   const cols = gridConfig.cols;
   const ITEMS_PER_PAGE = itemsPerPage || gridConfig.itemsPerPage || (cols * 7);
@@ -343,7 +384,7 @@ export function ComplianceMapV2({
     >
       {/* Header */}
       {!hideHeader && !showMapModal && (
-        <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="mb-2 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="text-[12px] font-normal" style={{ color: 'var(--color-text-secondary)' }}>
             <span className="font-medium">{totalLucs}</span> lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
           </div>
@@ -384,7 +425,7 @@ export function ComplianceMapV2({
         </div>
       ) : (
         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
-          <div className="flex-1 overflow-y-auto min-h-0 pr-1 custom-scrollbar" style={{ scrollbarGutter: 'stable' }} ref={containerRef}>
+          <div className="flex-1 overflow-hidden min-h-0 pr-1 flex flex-col justify-center" ref={containerRef}>
             <TooltipProvider delayDuration={100}>
               <AnimatePresence mode="popLayout">
                 <motion.div 
@@ -502,7 +543,7 @@ export function ComplianceMapV2({
 
           {/* Dot Pagination */}
           {!showMapModal && totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3 shrink-0 pt-6 pb-2 mt-2">
+            <div className="flex items-center justify-center gap-3 shrink-0 pt-2 pb-0 mt-0">
               <button
                 onClick={handlePrevPage}
                 disabled={currentPage === 1}
@@ -589,7 +630,7 @@ export function ComplianceMapV2({
         .compliance-tile {
           aspect-ratio: 1;
           height: auto !important; /* sobrescreve height fixo */
-          min-width: 28px;
+          min-width: 20px;
           max-width: 58px;
         }
         /* Override tiles for Modal */
@@ -673,7 +714,7 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
     if (!selectedPolicy) return;
     setIsDownloadingApolice(true);
     try {
-      const lucStr = selectedPolicy.luc || selectedPolicy.id || '';
+      const lucStr = String(selectedPolicy.luc || selectedPolicy.id || '');
       const docs = documentos || [];
       let targetDoc = docs.find(d => {
         const n = (d.nome || d.nome_arquivo || '').toLowerCase();
@@ -685,11 +726,18 @@ export function ComplianceSidePanel({ selectedLuc, onClose, onViewApolice, onEdi
       });
 
       if (targetDoc) {
-        await downloadArquivo(targetDoc.id, targetDoc.nome || targetDoc.nome_arquivo || `apolice_${lucStr}.pdf`);
-      } else {
-        const coberturas = await getCoberturas(selectedPolicy.id);
-        exportApoliceParaPDF(selectedPolicy, coberturas);
-      }
+        try {
+          await downloadArquivo(targetDoc.id, targetDoc.nome || targetDoc.nome_arquivo || `apolice_${lucStr}.pdf`);
+          setIsDownloadingApolice(false);
+          return; // Success!
+        } catch (downloadErr) {
+          console.warn("Falha ao baixar arquivo físico, tentando fallback para PDF:", downloadErr);
+        }
+      } 
+      
+      // Fallback
+      const coberturas = await getCoberturas(lucStr);
+      exportApoliceParaPDF(selectedPolicy, coberturas);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao baixar apólice");

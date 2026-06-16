@@ -19,8 +19,8 @@ import { request } from "../../api/client";
 import type { ApoliceRecord } from "../../types/apolice";
 import joaoCarlosImg from "../../assets/joao-carlos.jpg";
 import { DocumentListWithUpload } from "../components/DocumentListWithUpload";
+import { PolicyRenewalWizard } from "../components/wizards/PolicyRenewalWizard";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { DatePicker } from "../components/ui/date-picker";
 import { Button } from "../components/ui/button";
@@ -56,8 +56,7 @@ export function PolicyDetail() {
   const { canEdit } = useUserProfile();
   const [savingObs, setSavingObs] = useState(false);
 
-  const [showRenewDialog, setShowRenewDialog] = useState(false);
-  const [isRenewing, setIsRenewing] = useState(false);
+  const [showRenewWizard, setShowRenewWizard] = useState(false);
 
   useEffect(() => {
     if (!loading && window.location.hash === '#historico') {
@@ -79,23 +78,6 @@ export function PolicyDetail() {
     }
   }, [loading]);
 
-  useEffect(() => {
-    if (policy && !loading && window.location.hash === '#renovar') {
-      // Small timeout to ensure everything is rendered
-      setTimeout(() => {
-        openRenewDialog();
-        // Remove hash to prevent reopening
-        window.history.replaceState(null, '', window.location.pathname);
-      }, 300);
-    }
-  }, [policy, loading]);
-
-  const { control: renewControl, handleSubmit: handleRenewSubmit, reset: resetRenew } = useForm({
-    defaultValues: {
-      nova_vigencia: undefined as Date | undefined,
-      novo_valor: "0"
-    }
-  });
 
   const loadData = () => {
     if (!id) return;
@@ -136,40 +118,6 @@ export function PolicyDetail() {
     loadData();
   }, [id]);
 
-  const openRenewDialog = () => {
-    if (!policy) return;
-    resetRenew({
-      nova_vigencia: addYears(new Date(), 1),
-      novo_valor: policy.cobertura?.toString() || "0"
-    });
-    setShowRenewDialog(true);
-  };
-
-  const onConfirmRenew = async (data: { nova_vigencia?: Date, novo_valor: string }) => {
-    if (!id || !data.nova_vigencia) return;
-    setIsRenewing(true);
-    
-    try {
-      const payload = {
-        nova_vigencia: format(data.nova_vigencia, "dd/MM/yyyy"),
-        novo_valor: parseFloat(data.novo_valor) || 0
-      };
-
-      await request(`/apolices/${id}/renovar`, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-      
-      toast.success("Apólice renovada com sucesso!");
-      setShowRenewDialog(false);
-      loadData(); // Re-fetch all data to invalidate cache and show updates
-    } catch (err) {
-      console.error(err);
-      toast.error("Falha ao renovar a apólice");
-    } finally {
-      setIsRenewing(false);
-    }
-  };
 
   const handleAssignResponsible = async (userId: string, userName: string) => {
     if (!id) return;
@@ -511,7 +459,7 @@ export function PolicyDetail() {
             <div className="mt-8 flex flex-col gap-2">
               <RequireRole roles={['admin', 'gestor']}>
                 <>
-                  <button onClick={openRenewDialog} className="w-full bg-[#c4151f] hover:bg-[#a01119] text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
+                  <button onClick={() => setShowRenewWizard(true)} className="w-full bg-[#c4151f] hover:bg-[#a01119] text-white font-medium text-sm py-2.5 rounded-lg transition-colors">
                     Renovar Apólice
                   </button>
                   <button onClick={() => navigate(`/seguros/apolice/${id}/editar`)} className="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] font-medium text-sm py-2.5 rounded-lg transition-colors">
@@ -532,67 +480,17 @@ export function PolicyDetail() {
         </div>
       </div>
 
-        <Dialog open={showRenewDialog} onOpenChange={setShowRenewDialog}>
-          <DialogContent className="sm:max-w-[425px]" onOpenAutoFocus={(e) => e.preventDefault()}>
-            <DialogHeader>
-              <DialogTitle>Confirmar Renovação</DialogTitle>
-            </DialogHeader>
-            
-            {policy && (
-              <form onSubmit={handleRenewSubmit(onConfirmRenew)} className="flex flex-col gap-4 py-4">
-                <div className="bg-gray-50 dark:bg-[#0a0a0a] p-4 rounded-lg flex flex-col gap-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Vencimento Atual:</span>
-                    <span className="font-medium">{end.toLocaleDateString('pt-BR')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Novo Vencimento:</span>
-                    <span className="font-bold text-[#6e150e] dark:text-[#E04444]">
-                      {addYears(end, 1).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Data da Renovação</label>
-                  <Controller
-                    name="nova_vigencia"
-                    control={renewControl}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <DatePicker
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Selecione a nova data"
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Novo Valor Segurado (R$)</label>
-                  <Controller
-                    name="novo_valor"
-                    control={renewControl}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <Input type="number" {...field} />
-                    )}
-                  />
-                </div>
-
-                <DialogFooter className="mt-4">
-                  <Button type="button" variant="outline" onClick={() => setShowRenewDialog(false)} disabled={isRenewing}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={isRenewing} className="bg-[#168821] hover:bg-[#126b1a] text-white">
-                    {isRenewing ? "Renovando..." : "Confirmar Renovação"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
+      {showRenewWizard && (
+        <PolicyRenewalWizard
+          open={showRenewWizard}
+          onOpenChange={setShowRenewWizard}
+          apoliceId={id!}
+          onSuccess={() => {
+            setShowRenewWizard(false);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }

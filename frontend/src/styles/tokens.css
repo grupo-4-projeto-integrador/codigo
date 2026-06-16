@@ -32,6 +32,7 @@
   /* Variáveis Dinâmicas de Tipografia e Espaçamento */
   --font-kpi: 36px;
   --font-kpi-sub: 13px;
+  --font-kpi-label: 9px;
   --font-page-title: 28px;
   --space-page: 24px;
   --card-padding: 18px;
@@ -69,6 +70,17 @@
   .health-score-delta { font-size: var(--font-kpi-sub) !important; margin-top: 0 !important; }
 }
 
+/* Desktop: > 1440px */
+@media (min-width: 1441px) {
+  :root {
+    --font-kpi: 42px;
+    --font-kpi-sub: 14px;
+    --font-page-title: 32px;
+    --space-page: 32px;
+    --card-padding: 24px;
+  }
+}
+
 /* Barra de Filtros (Laptop) */
 @media (min-width: 1024px) and (max-width: 1366px) {
   .filter-row {
@@ -87,7 +99,6 @@
   .btn-nova-apolice { 
     flex-shrink: 0 !important; 
     white-space: nowrap !important; 
-    margin-left: auto !important;
   }
   
   .kpi-grid {
@@ -95,18 +106,20 @@
     gap: 10px !important;
   }
   .kpi-card {
-    min-height: 160px !important;
-    padding: var(--card-padding) !important;
+    min-height: auto !important;
+    padding: 12px !important;
   }
   .kpi-card .kpi-value {
     font-size: var(--font-kpi) !important;
     line-height: 1 !important;
   }
   .kpi-card .kpi-label {
-    font-size: 9px !important;
+    font-size: var(--font-kpi-label) !important;
     letter-spacing: 0.08em !important;
   }
-  .kpi-sparkline { height: 36px !important; }
+  /* Ocultar axis labels de sparklines em laptop — P6 */
+  .sparkline-axis-label { display: none !important; }
+  .kpi-sparkline { height: 28px !important; }
   
   /* Compliance Map (Laptop) - CSS override removed, logic moved to JS */
   .compliance-tile {
@@ -125,16 +138,22 @@
   .hide-on-laptop { display: none !important; }
   .show-on-laptop { display: flex !important; }
   
+  .sidebar-open .hide-on-laptop-sidebar-open { display: none !important; }
+  
   .col-vigencia { display: none !important; }
   .col-seguradora { display: none !important; }
   
   .table-container { overflow-x: hidden !important; }
   
-  .col-loja { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .col-segmento { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .col-cobertura { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col-loja { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col-segmento { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .col-cobertura { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
+/* Utilities */
+.kpi-sparkline-axis { font-size: 8px; color: var(--color-text-secondary); opacity: 0.6; }
+.search-input-responsive { width: 100%; transition: width 0.3s ease; }
+@media (min-width: 768px) { .search-input-responsive { width: 240px; } }
 
 [data-theme="dark"] {
   --color-background-page: #0a0a0a;
@@ -186,10 +205,14 @@
   }
 }
 
+/* Mobile: < 640px — P3 valores mínimos */
 @media (max-width: 640px) {
   :root {
     --space-page: 12px;
-    --font-kpi: 28px;
-    --font-kpi-label: 8px;
+    --font-kpi: clamp(22px, 7vw, 28px);
+    --font-kpi-sub: clamp(10px, 2.5vw, 12px);
+    --font-kpi-label: clamp(7px, 1.8vw, 9px);
+    --font-page-title: clamp(18px, 5vw, 22px);
+    --card-padding: 14px;
   }
 }
