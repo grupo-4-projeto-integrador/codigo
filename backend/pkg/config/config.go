@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	HTTP      HTTPConfig
-	Postgres  PostgresConfig
-	Frontend  FrontendConfig
-	JWTSecret string
+	HTTP               HTTPConfig
+	Postgres           PostgresConfig
+	Frontend           FrontendConfig
+	JWTSecret          string
 	JWTExpirationHours int
+	GeminiAPIKey       string // loaded from GEMINI_API_KEY; never logged or exposed
 }
 
 type HTTPConfig struct {
@@ -52,8 +53,9 @@ func Load() (Config, error) {
 		Frontend: FrontendConfig{
 			Dir: getEnv("FRONTEND_DIR", filepath.Join("..", "frontend", "dist")),
 		},
-		JWTSecret: getEnv("JWT_SECRET", ""),
+		JWTSecret:          getEnv("JWT_SECRET", ""),
 		JWTExpirationHours: getEnvAsInt("JWT_EXPIRATION_HOURS", 8),
+		GeminiAPIKey:       os.Getenv("GEMINI_API_KEY"),
 	}
 
 	if len(cfg.JWTSecret) < 32 {
@@ -73,6 +75,17 @@ func (c Config) Addr() string {
 	}
 	return ":" + c.HTTP.Port
 }
+
+// String implementa fmt.Stringer redatando todos os campos secretos.
+// Impede que log.Printf("%v", cfg) ou fmt.Println(cfg) exponha chaves.
+func (c Config) String() string {
+	return fmt.Sprintf("Config{Port:%s, PG:%s@%s/%s, JWT:[REDACTED], Gemini:[REDACTED]}",
+		c.HTTP.Port, c.Postgres.User, c.Postgres.Host, c.Postgres.DBName)
+}
+
+// GoString implementa fmt.GoStringer para redatar segredos em %#v também.
+func (c Config) GoString() string { return c.String() }
+
 
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {

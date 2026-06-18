@@ -232,3 +232,55 @@ export const exportApoliceParaPDF = (apolice: any, coberturas: any[] = []) => {
   const dataFile = now.toISOString().split("T")[0];
   doc.save(`apolice-${safeId}-${dataFile}.pdf`);
 };
+
+export const exportRelatorioToPDF = (texto: string, filename: string = "relatorio_executivo.pdf") => {
+  if (!texto) return;
+
+  const doc = new jsPDF();
+  const now = new Date();
+  
+  // Header
+  doc.setFontSize(18);
+  doc.setTextColor(196, 21, 31);
+  doc.text("Relatório Executivo", 14, 20);
+
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Gerado em: ${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR")}`, 196, 20, { align: "right" });
+
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.5);
+  doc.line(14, 25, 196, 25);
+
+  // Body text
+  doc.setFontSize(11);
+  doc.setTextColor(50, 50, 50);
+  
+  // Use splitTextToSize for automatic wrapping
+  const pageHeight = doc.internal.pageSize.height;
+  const margin = 14;
+  const maxLineWidth = 196 - margin;
+  
+  // Sanitize markdown before PDF generation
+  const cleanTexto = texto
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/### /g, '')
+    .replace(/## /g, '')
+    .replace(/# /g, '');
+    
+  const lines = doc.splitTextToSize(cleanTexto, maxLineWidth);
+  
+  let y = 35;
+  for (let i = 0; i < lines.length; i++) {
+    if (y > pageHeight - 20) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.text(lines[i], margin, y);
+    y += 6; // line height
+  }
+
+  const finalFilename = filename.endsWith('.pdf') ? filename : `${filename}.pdf`;
+  doc.save(finalFilename);
+};

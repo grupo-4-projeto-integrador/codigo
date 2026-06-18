@@ -84,7 +84,7 @@
 /* Barra de Filtros (Laptop) */
 @media (min-width: 1024px) and (max-width: 1366px) {
   .filter-row {
-    overflow: hidden;
+    /* overflow: hidden; removido para permitir que os itens respirem/quebrem de linha */
   }
   .filter-dropdown { 
     max-width: 120px !important; 
@@ -154,6 +154,11 @@
 .kpi-sparkline-axis { font-size: 8px; color: var(--color-text-secondary); opacity: 0.6; }
 .search-input-responsive { width: 100%; transition: width 0.3s ease; }
 @media (min-width: 768px) { .search-input-responsive { width: 240px; } }
+
+.search-bar-dynamic { width: 100%; max-width: 320px; transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+@media (min-width: 1024px) and (max-width: 1366px) {
+  .sidebar-open .search-bar-dynamic { max-width: 275px; }
+}
 
 [data-theme="dark"] {
   --color-background-page: #0a0a0a;

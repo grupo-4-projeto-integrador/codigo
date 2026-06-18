@@ -12,6 +12,7 @@ import (
 	"grupo4/seguros/internal/database"
 	"grupo4/seguros/internal/middleware"
 	"grupo4/seguros/internal/notificacao"
+	"grupo4/seguros/internal/relatorio"
 	"grupo4/seguros/pkg/config"
 	"grupo4/seguros/pkg/response"
 )
@@ -72,6 +73,7 @@ func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 	notificacao.RegisterRoutes(mux, db, cfg.JWTSecret)
 
 	apolice.RegisterRoutesWithAudit(mux, db, auditSvc, cfg.JWTSecret)
+	relatorio.RegisterRoutes(mux, cfg.JWTSecret, cfg.GeminiAPIKey)
 	registerStaticFiles(mux, cfg.Frontend.Dir)
 
 	return middleware.Chain(mux,

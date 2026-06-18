@@ -2,4 +2,8 @@ node_modules/
 dist/
 backend/seguros.db
 *.exe
+
+# SECRETS — NEVER commit these (defence-in-depth, root .gitignore also covers these)
 .env
+.env.*
+!.env.example

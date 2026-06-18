@@ -10,7 +10,7 @@ import { ComplianceMapV2, ComplianceSidePanel } from "../components/ComplianceMa
 import { SegmentRiskChart } from "../components/SegmentRiskChart";
 import { ActionQueuePanel } from "../components/ActionQueuePanel";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, setMapFilters } from "../store";
-import { exportToPDF, exportToCSV } from "../utils/exportUtils";
+import { exportToPDF, exportToCSV, exportRelatorioToPDF } from "../utils/exportUtils";
 import { PolicyDetail } from "../components/PolicyDetail";
 import { PolicyCreationWizard } from "../components/wizards/PolicyCreationWizard";
 import { PolicyRenewalWizard } from "../components/wizards/PolicyRenewalWizard";
@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { Usuarios } from "./Usuarios";
 import { getHealthScore } from "../../api/apolice";
 import { motion, AnimatePresence } from "motion/react";
+import ReactMarkdown from "react-markdown";
 import { SkeletonCard } from "../components/ui/SkeletonCard";
 import { SkeletonTable } from "../components/ui/SkeletonTable";
 import { SkeletonMap } from "../components/ui/SkeletonMap";
@@ -167,6 +168,11 @@ export function Insurance() {
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Relatório Executivo IA
+  const [showRelatorioModal, setShowRelatorioModal] = useState(false);
+  const [relatorioTexto, setRelatorioTexto] = useState("");
+  const [loadingRelatorio, setLoadingRelatorio] = useState(false);
 
   // Table sorting states
   const [kpiMetrics, setKpiMetrics] = useState<any | null>(null);
@@ -957,6 +963,53 @@ export function Insurance() {
     }
   };
 
+  const handleGerarRelatorio = async () => {
+    setLoadingRelatorio(true);
+    setShowRelatorioModal(true);
+    setRelatorioTexto("");
+    try {
+      const segmentosCriticos = [
+        ...new Set(
+          allPolicies
+            .filter(p => (p.status || '').toLowerCase() === 'vencida')
+            .map(p => p.segmento || p.tipo || '')
+            .filter(Boolean)
+        )
+      ].slice(0, 3).join(', ') || 'Nenhum';
+
+      const acoesUrgentes = allPolicies
+        .filter(p => (p.status || '').toLowerCase() === 'vencida' || (p.status || '').toLowerCase() === 'a vencer')
+        .slice(0, 3)
+        .map(p => `${p.loja || p.lojista || p.luc}: ${p.status}`)
+        .join('; ') || 'Nenhuma';
+
+      const payload = {
+        nome_shopping: 'Flamboyant',
+        health_score: healthScore?.score ?? 0,
+        delta_semanal: healthScore?.delta ?? 0,
+        total_apolices: totalPolicies,
+        conformes: activePolicies,
+        a_vencer: expiringPolicies,
+        vencidas: expiredPolicies,
+        cobertura_total_m: parseFloat((totalCobertura / 1_000_000).toFixed(1)),
+        segmentos_criticos: segmentosCriticos,
+        acoes_urgentes: acoesUrgentes,
+        data_referencia: new Date().toLocaleDateString('pt-BR'),
+      };
+
+      const data = await request<{ relatorio: string }>('/relatorio/executivo', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      setRelatorioTexto(data?.relatorio || 'Não foi possível gerar o relatório.');
+    } catch (err) {
+      console.error('Erro ao gerar relatório IA:', err);
+      setRelatorioTexto('Serviço de IA indisponível. Contate o administrador do sistema.');
+    } finally {
+      setLoadingRelatorio(false);
+    }
+  };
+
   const handleRenovarApolice = (policyId: string) => {
     setRenewalApoliceId(policyId);
     setIsRenewalWizardOpen(true);
@@ -1294,13 +1347,13 @@ export function Insurance() {
           {activeTab === 'visao-geral' && (
             <div className="flex items-center justify-end flex-1 w-full gap-2 lg:gap-2.5 filter-row min-w-0" id="filtros-tour">
               {/* ACTION BAR: Busca, Filtros, Download, Snapshot, Nova Apólice (Ancorada à Direita) */}
-              <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap lg:flex-nowrap justify-end">
-                <div className="relative w-full lg:max-w-[320px] search-input-fluid flex-shrink-0">
+              <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap justify-end">
+                <div className="relative w-full search-bar-dynamic flex-shrink-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
                   <input
                     id="insurance-search-input"
                     type="text"
-                    placeholder="Buscar por loja, LUC ou segmento..."
+                    placeholder="Buscar loja, LUC ou segmento..."
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] text-[#9F1239] dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
@@ -1489,27 +1542,69 @@ export function Insurance() {
                 <span className="text-[13px] font-medium hidden xl:inline">Snapshot</span>
               </button>
 
+              {/* Botão Relatório IA */}
+              <RequireRole roles={['admin', 'gestor']}>
+                <TooltipProvider>
+                  <ShadcnTooltip>
+                    <TooltipTrigger asChild>
+                      <motion.button
+                        id="relatorio-ia-btn"
+                        onClick={handleGerarRelatorio}
+                        disabled={loadingRelatorio}
+                        className="flex items-center justify-center flex-shrink-0 h-9 px-3 gap-2 rounded-lg border-none text-[13px] font-semibold transition-colors shadow-sm whitespace-nowrap relative overflow-hidden group btn-shimmer-brand"
+                        whileHover={{ scale: 1.02, boxShadow: '0 4px 16px rgba(159,18,57,0.3)' }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                      >
+                        <span className="relative z-10 flex items-center gap-1.5 text-[#f9e4a0]">
+                          {loadingRelatorio ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                              <path d="M2 17l10 5 10-5" />
+                              <path d="M2 12l10 5 10-5" />
+                            </svg>
+                          )}
+                          <span className="hidden xl:inline">Relatório IA</span>
+                        </span>
+                        <motion.div
+                          className="absolute inset-y-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] w-[60%] pointer-events-none"
+                          animate={{ left: ["-100%", "200%", "-100%"] }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 6,
+                            ease: "linear",
+                          }}
+                        />
+                      </motion.button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p>Gerar relatório executivo com IA</p>
+                    </TooltipContent>
+                  </ShadcnTooltip>
+                </TooltipProvider>
+              </RequireRole>
+
               <RequireRole roles={['admin', 'gestor']}>
                 <motion.button
                   onClick={handleNovaApolice}
-                  className="btn-nova-apolice hidden md:flex flex-shrink-0 relative overflow-hidden px-4 py-2 bg-[#9F1239] text-white rounded-lg text-[13px] font-semibold items-center justify-center shadow-sm whitespace-nowrap group"
-                  whileHover={{ scale: 1.02, backgroundColor: "#880d2f", boxShadow: "0 4px 14px rgba(159, 18, 57, 0.4)" }}
+                  className="btn-nova-apolice hidden md:flex flex-shrink-0 relative overflow-hidden px-4 py-2 rounded-lg border-none text-[13px] font-semibold items-center justify-center shadow-sm whitespace-nowrap group btn-shimmer-brand"
+                  whileHover={{ scale: 1.02, boxShadow: "0 4px 16px rgba(159, 18, 57, 0.3)" }}
                   whileTap={{ scale: 0.97 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
-                  <span className="relative z-10 flex items-center gap-1.5">
+                  <span className="relative z-10 flex items-center gap-1.5 text-[#f9e4a0]">
                     <Plus className="w-4 h-4" /> Nova Apólice
                   </span>
 
                   <motion.div
-                    className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-[-20deg] w-[150%] pointer-events-none"
-                    initial={{ x: "-150%" }}
-                    animate={{ x: "150%" }}
+                    className="absolute inset-y-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] w-[60%] pointer-events-none"
+                    animate={{ left: ["-100%", "200%", "-100%"] }}
                     transition={{
                       repeat: Infinity,
-                      duration: 1.5,
-                      repeatDelay: 4,
-                      ease: "easeInOut",
+                      duration: 6,
+                      ease: "linear"
                     }}
                   />
                 </motion.button>
@@ -1599,12 +1694,12 @@ export function Insurance() {
                           TAXA DE CONFORMIDADE
                         </p>
 
-                        <div className="mt-2 flex items-end gap-1 leading-none">
+                        <div className="mt-2 flex items-baseline gap-1 leading-none flex-wrap">
                           <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number kpi-value">
                             {animatedConformidade}
                           </span>
-                          <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
-                            / {conformidadeTotal}
+                          <span className="text-[14px] font-normal text-gray-500 dark:text-[#94A3B8] whitespace-nowrap">
+                            /{conformidadeTotal}
                           </span>
                         </div>
 
@@ -1667,11 +1762,11 @@ export function Insurance() {
                           A VENCER
                         </p>
 
-                        <div className="mt-2 flex items-end gap-1 leading-none">
+                        <div className="mt-2 flex items-baseline gap-1 leading-none flex-wrap">
                           <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#BA7517] kpi-number kpi-value">
                             {animatedExpiring}
                           </span>
-                          <span className="pb-1 text-[14px] font-normal text-[#BA7517] opacity-60">
+                          <span className="text-[14px] font-normal text-[#BA7517] opacity-60 whitespace-nowrap">
                             apólices
                           </span>
                         </div>
@@ -1719,11 +1814,11 @@ export function Insurance() {
                           VENCIDAS
                         </p>
 
-                        <div className="mt-2 flex items-end gap-1 leading-none">
+                        <div className="mt-2 flex items-baseline gap-1 leading-none flex-wrap">
                           <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#A32D2D] kpi-number kpi-value">
                             {animatedExpired}
                           </span>
-                          <span className="pb-1 text-[14px] font-normal text-[#A32D2D] opacity-60">
+                          <span className="text-[14px] font-normal text-[#A32D2D] opacity-60 whitespace-nowrap">
                             apólices
                           </span>
                         </div>
@@ -1771,12 +1866,12 @@ export function Insurance() {
                           COBERTURA TOTAL
                         </p>
 
-                        <div className="mt-2 flex items-end gap-1 leading-none">
+                        <div className="mt-2 flex items-baseline gap-1 leading-none flex-nowrap whitespace-nowrap">
                           <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white kpi-number kpi-value">
                             {formattedCoverageTotal.value}
                           </span>
                           {formattedCoverageTotal.suffix && (
-                            <span className="pb-1 text-[14px] font-normal text-gray-500 dark:text-[#94A3B8]">
+                            <span className="text-[14px] font-normal text-gray-500 dark:text-[#94A3B8] whitespace-nowrap">
                               {formattedCoverageTotal.suffix}
                             </span>
                           )}
@@ -2734,12 +2829,10 @@ export function Insurance() {
         <RequireRole roles={['admin', 'gestor']}>
           <button
             onClick={handleNovaApolice}
-            className="md:hidden fixed z-[50] flex items-center justify-center gap-2 transition-transform active:scale-95"
+            className="md:hidden fixed z-[50] flex items-center justify-center gap-2 transition-transform active:scale-95 btn-shimmer-brand"
             style={{ 
               bottom: '20px', 
               right: '16px', 
-              background: '#c4151f', 
-              color: 'white', 
               borderRadius: '50px', 
               padding: '12px 20px', 
               fontSize: '13px', 
@@ -2836,6 +2929,166 @@ export function Insurance() {
           fetchPolicies(); // Refresh the list
         }}
       />
+
+      {/* ── Modal Relatório Executivo com IA ── */}
+      <AnimatePresence>
+        {showRelatorioModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="relatorio-backdrop"
+              className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !loadingRelatorio && setShowRelatorioModal(false)}
+            />
+
+            {/* Modal Panel */}
+            <motion.div
+              key="relatorio-panel"
+              className="fixed z-[201] inset-0 flex items-center justify-center p-4 pointer-events-none"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+            >
+              <div
+                className="pointer-events-auto relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
+                style={{
+                  background: 'linear-gradient(145deg, #3e0000 0%, #6e150e 40%, #3e0000 100%)',
+                  border: '1px solid rgba(196,21,31,0.35)',
+                  boxShadow: '0 25px 80px rgba(0,0,0,0.7), 0 0 60px rgba(196,21,31,0.15)',
+                }}
+              >
+                {/* Decorative gradient top bar */}
+                <div
+                  className="absolute top-0 left-0 right-0 h-[2px]"
+                  style={{ background: 'linear-gradient(90deg, #c4151f, #f9e4a0, #bc9b7c, #c4151f)' }}
+                />
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #6e150e, #c4151f)' }}
+                    >
+                      <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                        <path d="M2 17l10 5 10-5" />
+                        <path d="M2 12l10 5 10-5" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-[16px] font-bold text-white leading-tight">Relatório Executivo</h2>
+                      <p className="text-[11px] text-[#bc9b7c] font-medium">Gerado por Gemini Flash</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowRelatorioModal(false)}
+                    disabled={loadingRelatorio}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#bc9b7c] hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Divider */}
+                <div className="mx-6 h-px" style={{ background: 'rgba(196,21,31,0.2)' }} />
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 min-h-0">
+                  {loadingRelatorio ? (
+                    <div className="flex flex-col items-center justify-center py-16 gap-4">
+                      <div className="relative w-14 h-14">
+                        <div
+                          className="absolute inset-0 rounded-full animate-spin"
+                          style={{ background: 'conic-gradient(from 0deg, #c4151f, #f9e4a0, transparent)', padding: '2px' }}
+                        >
+                          <div className="w-full h-full rounded-full" style={{ background: '#3e0000' }} />
+                        </div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <svg className="w-6 h-6 text-[#f9e4a0]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                            <path d="M2 17l10 5 10-5" />
+                            <path d="M2 12l10 5 10-5" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[#f9e4a0] font-semibold text-[14px]">Analisando dados do dashboard...</p>
+                        <p className="text-[#bc9b7c] text-[12px] mt-1">A IA está processando as métricas de conformidade</p>
+                      </div>
+                      <div className="flex gap-1.5 mt-2">
+                        {[0, 1, 2].map(i => (
+                          <motion.div
+                            key={i}
+                            className="w-1.5 h-1.5 rounded-full bg-[#f9e4a0]"
+                            animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                            transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <div
+                        className="report-content text-[13px] leading-[1.75] font-sans break-words [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-3 [&>h1]:text-[16px] [&>h1]:font-bold [&>h1]:mb-2 [&>h1]:mt-4 [&>h2]:text-[15px] [&>h2]:font-bold [&>h2]:mb-2 [&>h2]:mt-4 [&>h3]:text-[14px] [&>h3]:font-bold [&>h3]:mb-2 [&>h3]:mt-3"
+                        style={{ color: '#bc9b7c' }}
+                      >
+                        <ReactMarkdown>{relatorioTexto}</ReactMarkdown>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                {!loadingRelatorio && relatorioTexto && (
+                  <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid rgba(196,21,31,0.2)' }}>
+                    <p className="text-[11px] text-[#bc9b7c]">
+                      {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(relatorioTexto);
+                          toast.success('Relatório copiado para a área de transferência');
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#bc9b7c] hover:text-white hover:bg-white/10 transition-colors"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        Copiar texto
+                      </button>
+                      <button
+                        onClick={() => {
+                          exportRelatorioToPDF(relatorioTexto, "relatorio_executivo_flamboyant.pdf");
+                          toast.success('Download do PDF iniciado');
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#bc9b7c] hover:text-white hover:bg-white/10 transition-colors"
+                      >
+                        <IconDownload className="w-4 h-4" />
+                        Baixar PDF
+                      </button>
+                      <button
+                        onClick={handleGerarRelatorio}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors btn-shimmer-brand text-[#f9e4a0]"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                        Regenerar
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

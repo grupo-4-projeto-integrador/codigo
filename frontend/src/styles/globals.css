@@ -1,0 +1,20 @@
+.btn-shimmer-brand {
+  background: linear-gradient(
+    135deg,
+    #9F1239 0%,
+    #c4151f 30%,
+    #f9e4a0 50%,
+    #c4151f 70%,
+    #9F1239 100%
+  );
+  background-size: 300% auto;
+  animation: shimmer-brand 8s ease-in-out infinite;
+  color: #f9e4a0;
+  border: none;
+}
+
+@keyframes shimmer-brand {
+  0%   { background-position: 0% center; }
+  50%  { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}

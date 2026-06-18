@@ -715,17 +715,7 @@ export function Layout() {
         {/* Top Header - Hidden on mobile */}
         <header className="hidden md:flex h-16 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] items-center justify-between px-6 z-50 transition-[height,padding,margin,border] duration-300">
           <div className="flex-1 max-w-xl">
-            {/* Command Palette Trigger */}
-            <div className="relative flex items-center">
-              <button
-                onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-lg border bg-gray-50 dark:bg-[#0a0a0a] border-gray-200 dark:border-[#222222] text-xs font-medium text-gray-500 dark:text-[#94A3B8] hover:border-gray-300 dark:hover:border-gray-700 transition-colors focus:outline-none"
-                title="Abrir Command Palette (⌘K)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></svg>
-                <span>K</span>
-              </button>
-            </div>
+            {/* O trigger do Command Palette foi removido conforme solicitado */}
           </div>
 
           <div className="flex items-center ml-6 space-x-4">

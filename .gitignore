@@ -1,7 +1,23 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
 node_modules/
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
 dist/
+build/
+
+# ── Go binaries ───────────────────────────────────────────────────────────────
 *.exe
 *.exe~
 *.db
+
+# ── SECRETS — NEVER commit these ──────────────────────────────────────────────
+# All .env variants in every directory of this monorepo
 .env
+.env.*
+!.env.example
+*/.env
+*/.env.*
+!*/.env.example
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
 github/agents

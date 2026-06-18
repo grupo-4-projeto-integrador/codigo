@@ -48,7 +48,9 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'sua_senha' }}
+          # Vetor 5: senha vem exclusivamente do GitHub Secret — sem fallback hardcoded.
+          # Configure em: Settings → Secrets and variables → Actions → POSTGRES_PASSWORD
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: seguros_db
         ports:
           - 5432:5432
@@ -76,7 +78,8 @@ jobs:
           PG_HOST: localhost
           PG_PORT: 5432
           PG_USER: postgres
-          PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'sua_senha' }}
+          # Vetor 5: variável de ambiente injetada do secret — nunca do repositório.
+          PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           PG_DBNAME: seguros_db
           PG_SSLMODE: disable
         run: go run ./cmd/migrate -seed
@@ -87,10 +90,14 @@ jobs:
           PG_HOST: localhost
           PG_PORT: 5432
           PG_USER: postgres
-          PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD || 'sua_senha' }}
+          PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           PG_DBNAME: seguros_db
           PG_SSLMODE: disable
-          JWT_SECRET: ""
+          # Vetor 5: JWT_SECRET vem do secret — sem string vazia ou valor hardcoded.
+          # Use uma string aleatória de 32+ chars em: Settings → Secrets → JWT_SECRET
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          # GEMINI_API_KEY não é necessária nos testes de smoke (endpoint desabilitado com chave vazia).
+          # Se quiser testar com IA em CI, adicione o secret GEMINI_API_KEY no GitHub.
         run: |
           go run ./cmd/api &
           sleep 5
