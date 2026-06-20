@@ -1,6 +1,6 @@
-# 🏢 Sistema de Seguros - Arquitetura C4 Model
+#  Sistema de Seguros - Arquitetura C4 Model
 
-## 📖 Visão Geral
+##  Visão Geral
 
 O Sistema de Seguros é uma plataforma responsável pelo gerenciamento das apólices de seguros do shopping, centralizando informações relacionadas a contratos, documentos, auditorias, notificações e indicadores operacionais.
 
@@ -331,16 +331,8 @@ ApoliceRepository --> Database
 
 ---
 
-# 🎯 Conclusão
+# Fechamento
 
-A modelagem arquitetural utilizando o C4 Model permite compreender progressivamente o Sistema de Seguros, desde a visão de negócio até os detalhes de implementação.
+A modelagem arquitetural utilizando o C4 Model permite melhor compreensão em relação ao Sistema de Seguros.
 
-A documentação evidencia:
 
-- Os usuários da plataforma;
-- Os sistemas externos integrados;
-- Os containers da solução;
-- Os componentes internos da API;
-- O detalhamento do principal módulo de negócio.
-
-Essa abordagem facilita a comunicação entre equipes, manutenção e evolução da arquitetura.
