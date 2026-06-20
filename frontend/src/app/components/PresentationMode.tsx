@@ -106,11 +106,11 @@ export function PresentationMode({
       <style>{`
         .pres-dynamic-layout {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) clamp(260px, 22vw, 320px);
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr);
           grid-template-areas: 
-            "map risco"
-            "map acao";
+            "map map map risco"
+            "map map map acao";
         }
         @media (max-height: 800px) {
           .pres-main-grid {
@@ -118,10 +118,10 @@ export function PresentationMode({
             gap: 12px !important;
           }
           .pres-dynamic-layout {
-            grid-template-columns: minmax(0, 1fr) clamp(200px, 22vw, 260px) clamp(220px, 26vw, 300px);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             grid-template-rows: minmax(0, 1fr);
             grid-template-areas: 
-              "map risco acao";
+              "map map risco acao";
           }
         }
         .pres-side-panel, .pres-side-panel * {

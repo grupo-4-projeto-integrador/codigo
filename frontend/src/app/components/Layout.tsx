@@ -35,6 +35,8 @@ import { CommandPalette } from "./CommandPalette";
 import { setSidebarCollapsed } from '../store';
 import { FullscreenTable } from "./FullscreenTable";
 import { GraphView } from "./GraphView";
+import { PitchOverlay } from "./PitchMode/PitchOverlay";
+import { usePitchShortcuts } from "../hooks/usePitchShortcuts";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
@@ -150,6 +152,11 @@ export function Layout() {
   useEffect(() => {
     setSidebarCollapsed(isSidebarCollapsed);
   }, [isSidebarCollapsed]);
+
+  const isFullscreenTableOpen = window.location.pathname.includes('/seguros') &&
+    new URLSearchParams(window.location.search).get('fullscreen') === 'true';
+
+  usePitchShortcuts();
 
   useEffect(() => {
     // Sync header search with URL params when on seguros page
@@ -906,7 +913,7 @@ export function Layout() {
                   </div>
 
                   <div className="flex justify-between items-center p-2.5 bg-gray-50 dark:bg-[#0a0a0a] border-t border-gray-200 dark:border-[#222222]">
-                    <button onClick={handleArchiveRead} className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors">
+                    <button id="notificacoes-arquivar-lidas" onClick={handleArchiveRead} className="text-[10px] text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 font-medium transition-colors">
                       Arquivar lidas
                     </button>
                   </div>
@@ -990,6 +997,9 @@ export function Layout() {
             </UserProfileProvider>
           </div>
         </main>
+
+        {/* Global Presentation Overlay */}
+        <PitchOverlay />
       </div>
     </div>
   );

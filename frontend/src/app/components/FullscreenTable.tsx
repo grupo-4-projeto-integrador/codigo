@@ -411,7 +411,7 @@ export function FullscreenTable() {
             />
           </div>
 
-          <span className="text-[11px] text-gray-500 dark:text-white/30 flex items-center gap-1">
+          <span id="fs-table-shortcuts" className="text-[11px] text-gray-500 dark:text-white/30 flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 rounded bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-white/50 font-mono text-[10px]">Esc</kbd>
             para fechar
           </span>
@@ -431,9 +431,9 @@ export function FullscreenTable() {
           </div>
         ) : (
           <table className="w-full text-[12px]">
-            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-[#0f0f14]">
+            <thead id="fs-table-header" className="sticky top-0 z-10 bg-gray-50 dark:bg-[#0f0f14]">
               <tr>
-                <th className="w-10 px-4 py-3 border-b border-gray-200 dark:border-white/10">
+                <th id="fs-table-checkbox" className="w-10 px-4 py-3 border-b border-gray-200 dark:border-white/10">
                   <Checkbox
                     checked={isAllPageSelected}
                     onCheckedChange={handleSelectAll}

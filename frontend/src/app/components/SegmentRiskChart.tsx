@@ -361,7 +361,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
             <div className="h-full flex items-center justify-center text-[12px] text-gray-500">Nenhum risco.</div>
           ) : (
             <div className="space-y-[14px]">
-              {data.slice(0, 5).map((item, index) => {
+              {data.slice(0, 8).map((item, index) => {
                 const w = Math.max((item.vencidas / maxVencidas) * 100, item.vencidas > 0 ? 12 : 0);
                 const c = SEGMENT_BAR_COLORS[index % SEGMENT_BAR_COLORS.length];
                 return (

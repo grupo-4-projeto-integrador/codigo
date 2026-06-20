@@ -116,7 +116,7 @@ export function PresentationGrid({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getSidebarCollapsed());
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [gridConfig, setGridConfig] = useState({ cols: 13, rows: 6, itemsPerPage: 78 });
+  const [gridConfig, setGridConfig] = useState({ cols: 13, rows: 6, itemsPerPage: 78, cellSize: 0 });
   const [timeOffsetIdx, setTimeOffsetIdx] = useState(0);
 
   useEffect(() => {
@@ -222,7 +222,7 @@ export function PresentationGrid({
         }
       }
 
-      setGridConfig({ cols: bestCols, rows: bestRows, itemsPerPage: N });
+      setGridConfig({ cols: bestCols, rows: bestRows, itemsPerPage: N, cellSize: Math.floor(maxS) });
     };
 
     updateGrid();
@@ -383,7 +383,7 @@ export function PresentationGrid({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                  className="map-grid-container p-1" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: '4px', alignContent: 'center', justifyContent: 'center', width: '100%' }}
+                  className="map-grid-container p-1" style={{ display: 'grid', gridTemplateColumns: gridConfig.cellSize > 0 ? `repeat(${cols}, ${gridConfig.cellSize}px)` : `repeat(${cols}, minmax(0, 1fr))`, gap: '4px', alignContent: 'center', justifyContent: 'center', width: '100%' }}
                 >
               {paginatedLucs.map((luc: string, index: number) => {
               const policy = policyByLuc.get(luc);
