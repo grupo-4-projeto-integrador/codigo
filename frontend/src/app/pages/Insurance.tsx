@@ -61,6 +61,7 @@ type CoverageHistoryResponse = {
   pago: number[];
 };
 
+
 type AtividadeRecente = {
   id: string;
   luc: string;
@@ -148,6 +149,7 @@ export function Insurance() {
   // Advanced filter states
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showMobileTable, setShowMobileTable] = useState(false);
   const [tipoFilter, setTipoFilter] = useState("todos");
   const [seguradoraFilter, setSeguradoraFilter] = useState("todas");
   const [vigenciaFilter, setVigenciaFilter] = useState("");
@@ -222,13 +224,7 @@ export function Insurance() {
 
 
 
-  useEffect(() => {
-    // Sync search query with URL params
-    const urlSearch = searchParams.get("search");
-    if (urlSearch) {
-      setSearchQuery(urlSearch);
-    }
-  }, [searchParams]);
+  // removed aggressive search query sync to avoid typing revert bug
 
   useEffect(() => {
     // Close filter panel when clicking outside
@@ -464,7 +460,7 @@ export function Insurance() {
 
   useEffect(() => {
     fetchPolicies();
-    
+
     const handleRefresh = () => fetchPolicies();
     window.addEventListener('refresh-policies', handleRefresh);
     return () => window.removeEventListener('refresh-policies', handleRefresh);
@@ -573,7 +569,7 @@ export function Insurance() {
     try {
       const policy = allPolicies.find(p => p.id === luc || p.luc === luc);
       const actualLuc = policy ? (policy.luc || policy.id) : luc;
-      
+
       const data = await request<any[]>(`/apolices/${actualLuc}/historico`);
       setLocalActivities((data || []).map(h => {
         const acaoLower = (h.descricao || '').toLowerCase();
@@ -641,6 +637,7 @@ export function Insurance() {
     setStatusFilter("todas");
   };
 
+
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -649,10 +646,19 @@ export function Insurance() {
   // Handle search query change
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
-    if (query.trim()) {
-      setSearchParams({ search: query });
-    } else {
-      setSearchParams({});
+    if (query === "") {
+      // Quando limpa a busca, soltamos qualquer seleção do mapa
+      setSelectedMapLuc(null);
+      setSelectedLuc(null);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const searchInput = document.getElementById("insurance-search-input");
+      if (searchInput) {
+        searchInput.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   };
 
@@ -662,14 +668,26 @@ export function Insurance() {
     return new Date(year, month - 1, day);
   };
 
+  const normalizeText = (text: string) => {
+    return String(text || '')
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents
+      .toLowerCase();
+  };
+
+  const normalizeForSearch = (text: string) => {
+    return normalizeText(text).replace(/[^a-z0-9]/g, ""); // Remove spaces and special chars
+  };
+
   const filteredPolicies = allPolicies.filter(policy => {
-    const searchLower = searchQuery.toLowerCase();
+    const searchLower = normalizeForSearch(searchQuery);
     const matchesSearch =
-      String(policy.lojista || '').toLowerCase().includes(searchLower) ||
-      String(policy.tipo || '').toLowerCase().includes(searchLower) ||
-      String(policy.id || '').toLowerCase().includes(searchLower) ||
-      String(policy.seguradora || '').toLowerCase().includes(searchLower) ||
-      String(policy.status || '').toLowerCase().includes(searchLower);
+      searchLower === "" ||
+      normalizeForSearch(policy.lojista).includes(searchLower) ||
+      normalizeForSearch(policy.tipo).includes(searchLower) ||
+      normalizeForSearch(policy.id).includes(searchLower) ||
+      normalizeForSearch(policy.seguradora).includes(searchLower) ||
+      normalizeForSearch(policy.status).includes(searchLower);
     const matchesStatus = statusFilter === "todas" ||
       String(policy.status || '').toLowerCase() === statusFilter.toLowerCase();
     const matchesTipo = tipoFilter === "todos" || policy.tipo === tipoFilter;
@@ -681,6 +699,23 @@ export function Insurance() {
 
     return matchesSearch && matchesStatus && matchesTipo && matchesSeguradora && matchesVigencia && matchesVencimento;
   });
+
+  // Auto-selecionar no mapa se a busca retornar exatamente 1 resultado
+  useEffect(() => {
+    if (searchQuery.trim() !== "") {
+      if (filteredPolicies.length === 1) {
+        if (selectedMapLuc !== filteredPolicies[0].id) {
+          setSelectedMapLuc(filteredPolicies[0].id);
+          setSelectedLuc(filteredPolicies[0].id);
+        }
+      } else {
+        if (selectedMapLuc !== null) {
+          setSelectedMapLuc(null);
+          setSelectedLuc(null);
+        }
+      }
+    }
+  }, [searchQuery, filteredPolicies.length, selectedMapLuc]);
 
   const filteredByMap = selectedLuc
     ? filteredPolicies.filter((policy) => String(policy.id || '').toLowerCase() === String(selectedLuc || '').toLowerCase())
@@ -934,7 +969,7 @@ export function Insurance() {
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       const file = files[0];
-      const tiposPermitidos = ['application/pdf','image/jpeg','image/jpg','image/png'];
+      const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
       if (!tiposPermitidos.includes(file.type)) {
         toast.error(`Formato não suportado: ${file.type}. Use PDF, JPG ou PNG.`);
         return;
@@ -947,7 +982,7 @@ export function Insurance() {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      const tiposPermitidos = ['application/pdf','image/jpeg','image/jpg','image/png'];
+      const tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
       if (!tiposPermitidos.includes(file.type)) {
         toast.error(`Formato não suportado: ${file.type}. Use PDF, JPG ou PNG.`);
         return;
@@ -1224,7 +1259,7 @@ export function Insurance() {
     if (mapped === 'vencida') cls += ' bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
     else if (mapped === 'a vencer') cls += ' bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
     else cls += ' bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-    
+
     return (
       <span className={cls}>
         {mapped || '-'}
@@ -1325,7 +1360,7 @@ export function Insurance() {
               <div className="hidden lg:flex items-center gap-4 pl-6 border-l border-gray-200 dark:border-[#222222] health-score-block">
                 <div className="flex flex-col">
                   <span className="text-[9px] uppercase tracking-wider text-gray-400 dark:text-[#64748B] font-bold mb-0.5" style={{ letterSpacing: '0.12em' }}>Health Score</span>
-                  <div className="flex items-baseline gap-2.5">
+                  <div className="flex items-center gap-2.5">
                     <span className="text-[length:var(--font-kpi)] font-light tracking-[-0.02em] text-[#0F172A] dark:text-white leading-none tabular-nums health-score-value" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>
                       {healthScore.score}
                     </span>
@@ -1347,7 +1382,7 @@ export function Insurance() {
           {activeTab === 'visao-geral' && (
             <div className="flex items-center justify-end flex-1 w-full gap-2 lg:gap-2.5 filter-row min-w-0" id="filtros-tour">
               {/* ACTION BAR: Busca, Filtros, Download, Snapshot, Nova Apólice (Ancorada à Direita) */}
-              <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap justify-end">
+              <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap justify-center md:justify-end">
                 <div className="relative w-full search-bar-dynamic flex-shrink-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
                   <input
@@ -1356,12 +1391,14 @@ export function Insurance() {
                     placeholder="Buscar loja, LUC ou segmento..."
                     value={searchQuery}
                     onChange={(e) => handleSearchChange(e.target.value)}
+                    onClick={(e) => e.currentTarget.select()}
+                    onKeyDown={handleSearchKeyDown}
                     className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] text-[#9F1239] dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
                   />
                 </div>
 
-                {/* Popover Filtros Agrupado (Aparece no laptop c/ sidebar aberta) */}
-                <div className="flex lg:hidden show-on-laptop">
+                {/* Popover Filtros Agrupado (Todas as Resoluções) */}
+                <div className="flex">
                   <Popover>
                     <PopoverTrigger asChild>
                       <button className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
@@ -1377,7 +1414,7 @@ export function Insurance() {
                         <div className="text-[13px] font-bold text-[#9F1239] dark:text-[#E23B44] border-b border-gray-100 dark:border-[#222222] pb-2">
                           Filtros de Apólice
                         </div>
-                        
+
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Seguradora</label>
                           <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
@@ -1420,7 +1457,7 @@ export function Insurance() {
                         </div>
 
                         {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
-                          <button 
+                          <button
                             onClick={() => { setSeguradoraFilter('todas'); setTipoFilter('todos'); setStatusFilter('todas'); }}
                             className="mt-2 text-[12px] font-medium text-[#c4151f] hover:underline text-center"
                           >
@@ -1432,189 +1469,127 @@ export function Insurance() {
                   </Popover>
                 </div>
 
-              {/* Filtros Individuais Desktop */}
-              <div className="relative hidden lg:flex items-center hide-on-laptop">
-                <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
-                  <SelectTrigger
-                    className={`h-9 w-[175px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${seguradoraFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
-                  >
-                    <SelectValue placeholder="Seguradora" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#222222] z-[100] bg-white dark:bg-[#151515]">
-                    <SelectItem value="todas" className="text-[13px] font-medium cursor-pointer">Todas Seguradoras</SelectItem>
-                    {uniqueSeguradoras.map(seguradora => (
-                      <SelectItem key={seguradora} value={seguradora} className="text-[13px] font-medium cursor-pointer">{seguradora}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {seguradoraFilter !== 'todas' && (
-                  <button onClick={(e) => { e.stopPropagation(); setSeguradoraFilter('todas'); }} className="absolute right-8 text-white/80 hover:text-white z-10 p-1">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              <div className="relative hidden lg:flex items-center hide-on-laptop">
-                <Select value={tipoFilter} onValueChange={setTipoFilter}>
-                  <SelectTrigger
-                    className={`h-9 w-[150px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${tipoFilter !== 'todos' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
-                  >
-                    <SelectValue placeholder="Segmento" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#222222] z-[100] bg-white dark:bg-[#151515]">
-                    <SelectItem value="todos" className="text-[13px] font-medium cursor-pointer">Todos Segmentos</SelectItem>
-                    {uniqueTipos.map(tipo => (
-                      <SelectItem key={tipo} value={tipo} className="text-[13px] font-medium cursor-pointer">{tipo}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {tipoFilter !== 'todos' && (
-                  <button onClick={(e) => { e.stopPropagation(); setTipoFilter('todos'); }} className="absolute right-8 text-white/80 hover:text-white z-10 p-1">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              <div className="relative hidden lg:flex items-center hide-on-laptop">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger
-                    className={`h-9 w-[140px] border rounded-lg text-[13px] font-medium transition-colors outline-none focus:ring-1 focus:ring-[#9F1239] shadow-sm filter-dropdown ${statusFilter !== 'todas' ? 'border-[#c4151f] text-white bg-[#9F1239] hover:bg-[#880d2f]' : 'bg-white dark:bg-[#151515] border-gray-200 dark:border-[#222222] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a]'}`}
-                  >
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl shadow-lg border-gray-100 dark:border-[#222222] z-[100] bg-white dark:bg-[#151515]">
-                    <SelectItem value="todas" className="text-[13px] font-medium cursor-pointer">Todos Status</SelectItem>
-                    <SelectItem value="ativa" className="text-[13px] font-medium cursor-pointer">Ativa</SelectItem>
-                    <SelectItem value="a vencer" className="text-[13px] font-medium cursor-pointer">A Vencer</SelectItem>
-                    <SelectItem value="vencida" className="text-[13px] font-medium cursor-pointer">Vencida</SelectItem>
-                  </SelectContent>
-                </Select>
-                {statusFilter !== 'todas' && (
-                  <button onClick={(e) => { e.stopPropagation(); setStatusFilter('todas'); }} className="absolute right-8 text-white/80 hover:text-white z-10 p-1">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
 
 
 
 
-              <DropdownMenu>
-                <TooltipProvider>
-                  <ShadcnTooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
-                          <IconDownload size={18} stroke={1.5} />
-                        </button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p>Exportar filtro atual</p>
-                    </TooltipContent>
-                  </ShadcnTooltip>
-                </TooltipProvider>
-                <DropdownMenuContent align="end" className="w-40 z-50">
-                  <DropdownMenuItem onClick={() => {
-                    const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
-                    const dateStr = new Date().toISOString().split('T')[0];
-                    exportToPDF(sortedPolicies, `apolices-${statusName}-${dateStr}.pdf`);
-                  }}>
-                    Baixar PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => {
-                    const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
-                    const dateStr = new Date().toISOString().split('T')[0];
-                    exportToXLSX(sortedPolicies, `apolices-${statusName}-${dateStr}.xlsx`);
-                  }}>
-                    Baixar XLSX
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
 
-              <button
-                id="snapshot-tour"
-                onClick={() => window.dispatchEvent(new CustomEvent("trigger-snapshot"))}
-                className="flex items-center justify-center flex-shrink-0 h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm"
-                title="Capturar snapshot em PNG"
-              >
-                <Camera className="w-4 h-4" />
-                <span className="text-[13px] font-medium hidden xl:inline">Snapshot</span>
-              </button>
+                <DropdownMenu>
+                  <TooltipProvider>
+                    <ShadcnTooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
+                            <IconDownload size={18} stroke={1.5} />
+                          </button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>Exportar filtro atual</p>
+                      </TooltipContent>
+                    </ShadcnTooltip>
+                  </TooltipProvider>
+                  <DropdownMenuContent align="end" className="w-40 z-50">
+                    <DropdownMenuItem onClick={() => {
+                      const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
+                      const dateStr = new Date().toISOString().split('T')[0];
+                      exportToPDF(sortedPolicies, `apolices-${statusName}-${dateStr}.pdf`);
+                    }}>
+                      Baixar PDF
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => {
+                      const statusName = statusFilter === 'todas' ? 'todas' : statusFilter.replace(/\s+/g, '-');
+                      const dateStr = new Date().toISOString().split('T')[0];
+                      exportToXLSX(sortedPolicies, `apolices-${statusName}-${dateStr}.xlsx`);
+                    }}>
+                      Baixar XLSX
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              {/* Botão Relatório IA */}
-              <RequireRole roles={['admin', 'gestor']}>
-                <TooltipProvider>
-                  <ShadcnTooltip>
-                    <TooltipTrigger asChild>
-                      <motion.button
-                        id="relatorio-ia-btn"
-                        onClick={handleGerarRelatorio}
-                        disabled={loadingRelatorio}
-                        className="flex items-center justify-center flex-shrink-0 h-9 px-3 gap-2 rounded-lg border-none text-[13px] font-semibold transition-colors shadow-sm whitespace-nowrap relative overflow-hidden group btn-shimmer-brand"
-                        whileHover={{ scale: 1.02, boxShadow: '0 4px 16px rgba(159,18,57,0.3)' }}
-                        whileTap={{ scale: 0.97 }}
-                        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                      >
-                        <span className="relative z-10 flex items-center gap-1.5 text-[#f9e4a0]">
-                          {loadingRelatorio ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
-                              <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                              <path d="M2 17l10 5 10-5" />
-                              <path d="M2 12l10 5 10-5" />
-                            </svg>
-                          )}
-                          <span className="hidden xl:inline">Relatório IA</span>
-                        </span>
-                        <motion.div
-                          className="absolute inset-y-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] w-[60%] pointer-events-none"
-                          animate={{ left: ["-100%", "200%", "-100%"] }}
-                          transition={{
-                            repeat: Infinity,
-                            duration: 6,
-                            ease: "linear",
-                          }}
-                        />
-                      </motion.button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">
-                      <p>Gerar relatório executivo com IA</p>
-                    </TooltipContent>
-                  </ShadcnTooltip>
-                </TooltipProvider>
-              </RequireRole>
-
-              <RequireRole roles={['admin', 'gestor']}>
-                <motion.button
-                  onClick={handleNovaApolice}
-                  className="btn-nova-apolice hidden md:flex flex-shrink-0 relative overflow-hidden px-4 py-2 rounded-lg border-none text-[13px] font-semibold items-center justify-center shadow-sm whitespace-nowrap group btn-shimmer-brand"
-                  whileHover={{ scale: 1.02, boxShadow: "0 4px 16px rgba(159, 18, 57, 0.3)" }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                <button
+                  id="snapshot-tour"
+                  onClick={() => window.dispatchEvent(new CustomEvent("trigger-snapshot"))}
+                  className="flex items-center justify-center flex-shrink-0 h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm"
+                  title="Capturar snapshot em PNG"
                 >
-                  <span className="relative z-10 flex items-center gap-1.5 text-[#f9e4a0]">
-                    <Plus className="w-4 h-4" /> Nova Apólice
-                  </span>
+                  <Camera className="w-4 h-4" />
+                  <span className="text-[13px] font-medium hidden xl:inline">Snapshot</span>
+                </button>
 
-                  <motion.div
-                    className="absolute inset-y-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] w-[60%] pointer-events-none"
-                    animate={{ left: ["-100%", "200%", "-100%"] }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 6,
-                      ease: "linear"
-                    }}
-                  />
-                </motion.button>
-              </RequireRole>
+                {/* Botão Relatório IA */}
+                <RequireRole roles={['admin', 'gestor']}>
+                  <TooltipProvider>
+                    <ShadcnTooltip>
+                      <TooltipTrigger asChild>
+                        <motion.button
+                          id="relatorio-ia-btn"
+                          onClick={handleGerarRelatorio}
+                          disabled={loadingRelatorio}
+                          className="flex items-center justify-center flex-shrink-0 h-9 px-3 gap-2 rounded-lg border-none text-[13px] font-semibold transition-colors shadow-sm whitespace-nowrap relative overflow-hidden group btn-shimmer-brand"
+                          whileHover={{ scale: 1.02, boxShadow: '0 4px 16px rgba(159,18,57,0.3)' }}
+                          whileTap={{ scale: 0.97 }}
+                          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                        >
+                          <span className="relative z-10 flex items-center gap-1.5 text-[#f9e4a0]">
+                            {loadingRelatorio ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                                <path d="M2 17l10 5 10-5" />
+                                <path d="M2 12l10 5 10-5" />
+                              </svg>
+                            )}
+                            <span className="hidden xl:inline">Relatório IA</span>
+                          </span>
+                          <motion.div
+                            className="absolute inset-y-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] w-[60%] pointer-events-none"
+                            animate={{ left: ["-100%", "200%", "-100%"] }}
+                            transition={{
+                              repeat: Infinity,
+                              duration: 6,
+                              ease: "linear",
+                            }}
+                          />
+                        </motion.button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        <p>Gerar relatório executivo com IA</p>
+                      </TooltipContent>
+                    </ShadcnTooltip>
+                  </TooltipProvider>
+                </RequireRole>
+
+                <RequireRole roles={['admin', 'gestor']}>
+                  <motion.button
+                    onClick={handleNovaApolice}
+                    className="btn-nova-apolice hidden md:flex flex-shrink-0 relative overflow-hidden px-4 py-2 rounded-lg border-none text-[13px] font-semibold items-center justify-center shadow-sm whitespace-nowrap group btn-shimmer-brand"
+                    whileHover={{ scale: 1.02, boxShadow: "0 4px 16px rgba(159, 18, 57, 0.3)" }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  >
+                    <span className="relative z-10 flex items-center gap-1.5 text-[#f9e4a0]">
+                      <Plus className="w-4 h-4" /> Nova Apólice
+                    </span>
+
+                    <motion.div
+                      className="absolute inset-y-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] w-[60%] pointer-events-none"
+                      animate={{ left: ["-100%", "200%", "-100%"] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 6,
+                        ease: "linear"
+                      }}
+                    />
+                  </motion.button>
+                </RequireRole>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Tabs */}
+        {/* Tabs */}
         <div className={`flex items-center gap-6 border-b border-gray-200 dark:border-[#222222] transition-all duration-300 ${isFocusMode ? 'mb-2 px-6' : 'mb-4'}`}>
           <button
             onClick={() => setActiveTab('visao-geral')}
@@ -1652,7 +1627,7 @@ export function Insurance() {
         <>
           {/* Mobile Health Score */}
           {healthScore && (
-            <div className="md:hidden flex items-center justify-between p-4 mx-6 mt-4 mb-2 bg-[#151515] rounded-[14px]">
+            <div className="md:hidden flex items-center justify-between p-4 mx-6 mt-4 mb-2 bg-white dark:bg-[#151515] rounded-[14px] border border-gray-100 dark:border-[#222222] shadow-sm">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-[#94A3B8]">Health Score</span>
                 <span className="text-[length:var(--font-kpi)] font-light text-[#0F172A] dark:text-white leading-none mt-1">{healthScore.score}</span>
@@ -1672,7 +1647,7 @@ export function Insurance() {
           <div className={`grid grid-cols-1 ${isFocusMode ? 'lg:grid-cols-1' : 'lg:grid-cols-[minmax(0,1fr)_350px]'} flex-1 gap-x-6 gap-y-3 md:gap-y-4 lg:gap-y-6 min-h-0 px-6 pb-4 items-stretch`}>
 
             {/* Metric Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 order-1 md:order-none kpi-grid self-start" id="kpis-tour">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 order-1 md:order-none kpi-grid" id="kpis-tour">
               {isLoading ? (
                 <>
                   <SkeletonCard />
@@ -1927,7 +1902,13 @@ export function Insurance() {
 
             {/* ActionQueuePanel aligned with Metric Cards */}
             <div className={`w-full transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'block'} order-3 md:order-none`}>
-              <ActionQueuePanel onSelectLuc={setSelectedMapLuc} />
+              <ActionQueuePanel onSelectLuc={(luc) => {
+                if (window.innerWidth <= 640) {
+                  navigate(`/seguros/apolice/${encodeURIComponent(luc)}`);
+                } else {
+                  setSelectedMapLuc(luc);
+                }
+              }} />
             </div>
 
             <div
@@ -1941,12 +1922,23 @@ export function Insurance() {
                   <ComplianceMapV2
                     selectedLuc={selectedMapLuc}
                     onSelectLuc={setSelectedMapLuc}
+                    onShowMobileTable={() => {
+                      if (showMobileTable) {
+                        setShowMobileTable(false);
+                      } else {
+                        setShowMobileTable(true);
+                        setTimeout(() => {
+                          document.getElementById('tabela-tour')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 150);
+                      }
+                    }}
+                    isMobileTableOpen={showMobileTable}
                   />
                 )}
               </div>
               {!isFocusMode && (
-                <div className="relative min-h-[400px] md:min-h-0 md:h-full">
-                  <div className="md:absolute md:inset-0 h-full">
+                <div className="relative min-h-0 h-full">
+                  <div className="absolute inset-0">
                     <SegmentRiskChart />
                   </div>
                 </div>
@@ -1968,18 +1960,33 @@ export function Insurance() {
 
             {/* Data Table — Hidden in Focus Mode */}
             {!isFocusMode && (
-              <div className="order-4 md:order-none">
-                {isLoading ? (
-              <SkeletonTable />
-            ) : (
-              <motion.div
-                ref={tableSectionRef}
-                id="tabela-tour"
-                className="bg-white dark:bg-[#151515] rounded-xl border overflow-hidden relative"
-                style={{ borderColor: colors.cardBorder, boxShadow: `0 1px 4px ${colors.brandMaroon}0F` }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                <style>{`
+              <div className={`order-4 md:order-none transition-all duration-300 ${!showMobileTable ? 'hidden md:block' : 'block w-full mt-4 bg-white dark:bg-[#151515] rounded-xl overflow-hidden'}`}>
+                {showMobileTable && (
+                  <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222]">
+                    <h2 className="font-bold text-gray-900 dark:text-white flex items-center gap-2 text-sm">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="M7 8h12" /><path d="M7 12h12" /><path d="M7 16h12" /></svg>
+                      Visualização da Tabela
+                    </h2>
+                    <button onClick={() => {
+                      setShowMobileTable(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }} className="p-1.5 bg-gray-100 dark:bg-[#222] rounded-md text-gray-600 dark:text-gray-300">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                    </button>
+                  </div>
+                )}
+                <div className={`${showMobileTable ? 'p-4 flex-1' : ''}`}>
+                  {isLoading ? (
+                    <SkeletonTable />
+                  ) : (
+                    <motion.div
+                      ref={tableSectionRef}
+                      id="tabela-tour"
+                      className={`bg-white dark:bg-[#151515] rounded-xl border overflow-hidden relative ${showMobileTable ? 'shadow-sm md:shadow-[0_1px_4px_rgba(159,18,57,0.05)]' : ''}`}
+                      style={{ borderColor: colors.cardBorder, boxShadow: showMobileTable ? 'none' : `0 1px 4px ${colors.brandMaroon}0F` }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                    >
+                      <style>{`
                   .table-container {
                     overflow-x: auto;
                     -webkit-overflow-scrolling: touch;
@@ -2001,9 +2008,29 @@ export function Insurance() {
                     background: linear-gradient(to left, #151515, transparent);
                   }
                   @media (max-width: 640px) {
-                    .hide-on-mobile { display: none !important; }
-                    .responsive-table { min-width: 100% !important; }
-                    .col-loja { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                    .hide-on-mobile, .hide-on-laptop-sidebar-open { display: table-cell !important; }
+                    .responsive-table {
+                      table-layout: auto !important;
+                      min-width: max-content !important;
+                    }
+                    .responsive-table th, .responsive-table td {
+                      width: auto !important;
+                      white-space: nowrap !important;
+                    }
+                    .sticky-col-luc {
+                      position: sticky !important;
+                      left: 0 !important;
+                      z-index: 20 !important;
+                      background-color: #fff !important;
+                      border-right: 1px solid #f3f4f6 !important;
+                      box-shadow: 2px 0 5px rgba(0,0,0,0.05) !important;
+                    }
+                    .dark .sticky-col-luc {
+                      background-color: #151515 !important;
+                      border-right-color: #222 !important;
+                      box-shadow: 2px 0 5px rgba(0,0,0,0.2) !important;
+                    }
+                    .table-wrapper-outer::after { display: none !important; }
                     .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
                     .modal-content { border-radius: 20px 20px 0 0 !important; max-height: 90vh !important; width: 100% !important; animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
                   }
@@ -2016,138 +2043,138 @@ export function Insurance() {
                     .table-wrapper-outer::after { display: none; }
                   }
                 `}</style>
-                {/* Table wrapper */}
-                <div className="table-wrapper-outer">
-                <div className="table-container">
-                  <table className="w-full min-w-[800px] lg:min-w-0 xl:min-w-[800px] text-left border-collapse responsive-table table-fixed">
-                    <thead className="bg-[#F7F8FA] dark:bg-[#0a0a0a]">
-                      <tr>
-                        <th className="px-4 py-3 text-left w-[8%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                          <div className="flex items-center gap-1.5">
-                            LUC
-                            <TooltipProvider>
-                              <ShadcnTooltip>
-                                <TooltipTrigger className="info-laptop-only cursor-help">
-                                  <Info className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-[250px] text-center">
-                                  <p>Algumas colunas ocultas nesta resolução. Use a Tabela Completa (Alt+T) para ver todas.</p>
-                                </TooltipContent>
-                              </ShadcnTooltip>
-                            </TooltipProvider>
-                          </div>
-                        </th>
-                        <th className="px-4 py-3 text-left w-[21%] col-loja" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile w-[9%] col-segmento" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile w-[15%] col-seguradora" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile w-[10%] col-vigencia" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile hide-on-laptop-sidebar-open w-[10%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
+                      {/* Table wrapper */}
+                      <div className="table-wrapper-outer">
+                        <div className="table-container">
+                          <table className="w-full min-w-[800px] lg:min-w-0 xl:min-w-[800px] text-left border-collapse responsive-table table-fixed">
+                            <thead className="bg-[#F7F8FA] dark:bg-[#0a0a0a]">
+                              <tr>
+                                <th className="px-4 py-3 text-left w-[8%] sticky-col-luc" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                                  <div className="flex items-center gap-1.5">
+                                    LUC
+                                    <TooltipProvider>
+                                      <ShadcnTooltip>
+                                        <TooltipTrigger className="info-laptop-only cursor-help">
+                                          <Info className="w-3.5 h-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="max-w-[250px] text-center">
+                                          <p>Algumas colunas ocultas nesta resolução. Use a Tabela Completa (Alt+T) para ver todas.</p>
+                                        </TooltipContent>
+                                      </ShadcnTooltip>
+                                    </TooltipProvider>
+                                  </div>
+                                </th>
+                                <th className="px-4 py-3 text-left w-[21%] col-loja" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Loja</th>
+                                <th className="px-4 py-3 text-left hide-on-mobile w-[9%] col-segmento" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Segmento</th>
+                                <th className="px-4 py-3 text-left hide-on-mobile w-[15%] col-seguradora" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Seguradora</th>
+                                <th className="px-4 py-3 text-left hide-on-mobile w-[10%] col-vigencia" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vigência</th>
+                                <th className="px-4 py-3 text-left hide-on-mobile hide-on-laptop-sidebar-open w-[10%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Vencimento</th>
 
-                        <th className="px-4 py-3 text-left w-[12%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
-                        <th className="px-4 py-3 text-left hide-on-mobile hide-on-laptop-sidebar-open w-[14%] col-cobertura" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
-                        <th className="px-4 py-3 text-left w-[9%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {paginatedPolicies.length === 0
-                        ? renderEmptyState()
-                        : paginatedPolicies.map((policy, index) => (
-                          <React.Fragment key={index}>
-                            <tr
-                              onClick={() => handleVerApolice(policy.id)}
-                              onMouseEnter={() => setHoveredPolicyId(policy.id)}
-                              onMouseLeave={() => setHoveredPolicyId(null)}
-                              className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
-                              style={{ borderColor: colors.cardBorder }}
+                                <th className="px-4 py-3 text-left w-[12%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', minWidth: '110px' }}>Status</th>
+                                <th className="px-4 py-3 text-left hide-on-mobile hide-on-laptop-sidebar-open w-[14%] col-cobertura" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Cobertura</th>
+                                <th className="px-4 py-3 text-left w-[9%]" style={{ color: 'var(--color-text-secondary)', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Dias rest.</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {paginatedPolicies.length === 0
+                                ? renderEmptyState()
+                                : paginatedPolicies.map((policy, index) => (
+                                  <React.Fragment key={index}>
+                                    <tr
+                                      onClick={() => handleVerApolice(policy.id)}
+                                      onMouseEnter={() => setHoveredPolicyId(policy.id)}
+                                      onMouseLeave={() => setHoveredPolicyId(null)}
+                                      className="border-b h-12 hover:bg-[#F8FAFC] dark:hover:bg-[#1E2435] transition-all cursor-pointer relative hover:z-10 hover:shadow-md"
+                                      style={{ borderColor: colors.cardBorder }}
+                                    >
+                                      <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number truncate sticky-col-luc">{policy.id}</td>
+                                      <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 col-loja truncate" title={policy.lojista}>{policy.lojista}</td>
+                                      <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-segmento truncate" title={policy.tipo}>{policy.tipo}</td>
+                                      <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-seguradora truncate" title={policy.seguradora}>{policy.seguradora}</td>
+                                      <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile col-vigencia truncate">{policy.vigencia}</td>
+                                      <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile hide-on-laptop-sidebar-open truncate">{policy.vencimento}</td>
+                                      <td className="px-4 py-3 truncate" style={{ minWidth: '110px' }}>
+                                        {renderStatusBadge(policy.status)}
+                                      </td>
+                                      <td className="px-4 py-3 text-[13px] font-medium text-gray-900 dark:font-normal dark:text-gray-100 table-number hide-on-mobile hide-on-laptop-sidebar-open col-cobertura truncate" title={formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}>
+                                        {formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}
+                                      </td>
+                                      <td className="px-4 py-3 text-[13px] table-number">
+                                        <span className={`font-semibold ${(policy.dias_restantes ?? 0) < 0 ? 'text-red-600 dark:text-red-400' :
+                                            (policy.dias_restantes ?? 0) <= 30 ? 'text-orange-600 dark:text-orange-400' :
+                                              'text-green-600 dark:text-green-400'
+                                          }`}>
+                                          {policy.dias_restantes !== undefined ? `${policy.dias_restantes}d` : '-'}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                    {/* Removed mobile expanded row */}
+                                  </React.Fragment>
+                                ))
+                              }
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Pagination */}
+                      <div className="px-4 md:px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px]" style={{ backgroundColor: colors.pageBg, color: colors.brandMaroon }}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 font-medium">Linhas por página:</span>
+                          <select
+                            value={itemsPerPage}
+                            onChange={(e) => {
+                              setItemsPerPage(Number(e.target.value));
+                              setCurrentPage(1); // Resetar para a primeira página ao mudar
+                            }}
+                            className="border rounded px-2 py-1 bg-white dark:bg-[#0a0a0a] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
+                            style={{ borderColor: colors.cardBorder }}
+                          >
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                          </select>
+                        </div>
+                        <div className="flex gap-1 flex-wrap justify-center items-center">
+                          <button
+                            onClick={handlePreviousPage}
+                            disabled={currentPage === 1}
+                            className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+                          >
+                            <ChevronLeft className="w-4 h-4" strokeWidth={2} />
+                          </button>
+
+                          {getPageNumbers().map((page, index) => (
+                            <button
+                              key={index}
+                              onClick={() => typeof page === 'number' && handlePageClick(page)}
+                              disabled={typeof page !== 'number'}
+                              className={`w-7 h-7 rounded flex items-center justify-center text-[12px] font-medium transition-all outline-none ${page === currentPage
+                                ? 'bg-[#c4151f]/10 text-[#c4151f] border border-[#c4151f] dark:bg-[#c4151f]/20 dark:text-[#E23B44] dark:border-[#E23B44]'
+                                : typeof page === 'number'
+                                  ? 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#151515] border border-transparent'
+                                  : 'bg-transparent text-gray-400 cursor-default border border-transparent'
+                                }`}
                             >
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number truncate">{policy.id}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 col-loja truncate" title={policy.lojista}>{policy.lojista}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-segmento truncate" title={policy.tipo}>{policy.tipo}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 hide-on-mobile col-seguradora truncate" title={policy.seguradora}>{policy.seguradora}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile col-vigencia truncate">{policy.vigencia}</td>
-                              <td className="px-4 py-3 text-[13px] font-normal text-gray-900 dark:text-gray-100 table-number hide-on-mobile hide-on-laptop-sidebar-open truncate">{policy.vencimento}</td>
-                              <td className="px-4 py-3 truncate" style={{ minWidth: '110px' }}>
-                                {renderStatusBadge(policy.status)}
-                              </td>
-                              <td className="px-4 py-3 text-[13px] font-medium text-gray-900 dark:font-normal dark:text-gray-100 table-number hide-on-mobile hide-on-laptop-sidebar-open col-cobertura truncate" title={formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}>
-                                {formatCurrency(policy.cobertura || generateCoverageValue(policy.id))}
-                              </td>
-                              <td className="px-4 py-3 text-[13px] table-number">
-                                <span className={`font-semibold ${
-                                  (policy.dias_restantes ?? 0) < 0 ? 'text-red-600 dark:text-red-400' :
-                                  (policy.dias_restantes ?? 0) <= 30 ? 'text-orange-600 dark:text-orange-400' :
-                                  'text-green-600 dark:text-green-400'
-                                }`}>
-                                  {policy.dias_restantes !== undefined ? `${policy.dias_restantes}d` : '-'}
-                                </span>
-                              </td>
-                            </tr>
-                            {/* Removed mobile expanded row */}
-                          </React.Fragment>
-                        ))
-                      }
-                    </tbody>
-                  </table>
-                </div>
-                </div>
+                              {page}
+                            </button>
+                          ))}
 
-                {/* Pagination */}
-                <div className="px-4 md:px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3 text-[11px]" style={{ backgroundColor: colors.pageBg, color: colors.brandMaroon }}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-500 font-medium">Linhas por página:</span>
-                    <select
-                      value={itemsPerPage}
-                      onChange={(e) => {
-                        setItemsPerPage(Number(e.target.value));
-                        setCurrentPage(1); // Resetar para a primeira página ao mudar
-                      }}
-                      className="border rounded px-2 py-1 bg-white dark:bg-[#0a0a0a] text-gray-700 dark:text-gray-300 outline-none cursor-pointer"
-                      style={{ borderColor: colors.cardBorder }}
-                    >
-                      <option value={5}>5</option>
-                      <option value={10}>10</option>
-                      <option value={20}>20</option>
-                      <option value={50}>50</option>
-                    </select>
-                  </div>
-                  <div className="flex gap-1 flex-wrap justify-center items-center">
-                    <button
-                      onClick={handlePreviousPage}
-                      disabled={currentPage === 1}
-                      className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
-                    >
-                      <ChevronLeft className="w-4 h-4" strokeWidth={2} />
-                    </button>
-
-                    {getPageNumbers().map((page, index) => (
-                      <button
-                        key={index}
-                        onClick={() => typeof page === 'number' && handlePageClick(page)}
-                        disabled={typeof page !== 'number'}
-                        className={`w-7 h-7 rounded flex items-center justify-center text-[12px] font-medium transition-all outline-none ${page === currentPage
-                          ? 'bg-[#c4151f]/10 text-[#c4151f] border border-[#c4151f] dark:bg-[#c4151f]/20 dark:text-[#E23B44] dark:border-[#E23B44]'
-                          : typeof page === 'number'
-                            ? 'bg-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#151515] border border-transparent'
-                            : 'bg-transparent text-gray-400 cursor-default border border-transparent'
-                          }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-
-                    <button
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalFilteredPages}
-                      className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
-                    >
-                      <ChevronRight className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  </div>
+                          <button
+                            onClick={handleNextPage}
+                            disabled={currentPage === totalFilteredPages}
+                            className="p-1.5 rounded text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+                          >
+                            <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
-              </motion.div>
+              </div>
             )}
-          </div>
-        )}
 
             {/* Atividade Recente aligned with Table */}
             <div className={`w-full flex-col min-h-[250px] transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : 'flex'} order-5 md:order-none`}>
@@ -2209,11 +2236,11 @@ export function Insurance() {
                           renovada: 'renovou', excluida: 'excluiu',
                           observacoes: 'atualizou as observações d'
                         };
-                        
-                        const timeAgo = atividade.timestamp 
-                          ? formatDistanceToNow(parseISO(String(atividade.timestamp)), { locale: ptBR, addSuffix: true }) 
+
+                        const timeAgo = atividade.timestamp
+                          ? formatDistanceToNow(parseISO(String(atividade.timestamp)), { locale: ptBR, addSuffix: true })
                           : 'data não disponível';
-                        
+
                         const actionWord = acaoLabel[atividade.acao] ?? 'editou';
                         const isObs = atividade.acao === 'observacoes';
 
@@ -2362,14 +2389,14 @@ export function Insurance() {
           )}
 
           <PolicyRenewalWizard
-             open={isRenewalWizardOpen}
-             onOpenChange={setIsRenewalWizardOpen}
-             apoliceId={renewalApoliceId}
-             onSuccess={() => {
-                setIsRenewalWizardOpen(false);
-                fetchPolicies();
-                fetchAtividadesGlobais();
-             }}
+            open={isRenewalWizardOpen}
+            onOpenChange={setIsRenewalWizardOpen}
+            apoliceId={renewalApoliceId}
+            onSuccess={() => {
+              setIsRenewalWizardOpen(false);
+              fetchPolicies();
+              fetchAtividadesGlobais();
+            }}
           />
 
           {/* Modal Conformidade das Lojas */}
@@ -2830,12 +2857,12 @@ export function Insurance() {
           <button
             onClick={handleNovaApolice}
             className="md:hidden fixed z-[50] flex items-center justify-center gap-2 transition-transform active:scale-95 btn-shimmer-brand"
-            style={{ 
-              bottom: '20px', 
-              right: '16px', 
-              borderRadius: '50px', 
-              padding: '12px 20px', 
-              fontSize: '13px', 
+            style={{
+              bottom: '20px',
+              right: '16px',
+              borderRadius: '50px',
+              padding: '12px 20px',
+              fontSize: '13px',
               fontWeight: '600',
               boxShadow: '0 4px 16px rgba(196,21,31,0.4)'
             }}
@@ -2844,87 +2871,87 @@ export function Insurance() {
           </button>
         </RequireRole>
       )}
-          <AnimatePresence>
-            {showMobileFilters && (
-              <>
-                <motion.div
-                  className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm lg:hidden"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+      <AnimatePresence>
+        {showMobileFilters && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm lg:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileFilters(false)}
+            />
+            <motion.div
+              className="fixed bottom-0 left-0 right-0 z-[120] bg-white dark:bg-[#151515] rounded-t-2xl shadow-xl flex flex-col lg:hidden"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <div className="p-4 border-b border-gray-100 dark:border-[#222] flex justify-between items-center">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Settings2 className="w-5 h-5" /> Filtros
+                </h3>
+                <button onClick={() => setShowMobileFilters(false)} className="p-2 bg-gray-100 dark:bg-[#222] rounded-full text-gray-600 dark:text-gray-300">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-5 flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Seguradora</label>
+                  <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
+                    <SelectTrigger className="h-12 w-full text-[14px]">
+                      <SelectValue placeholder="Todas Seguradoras" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[130] bg-white dark:bg-[#151515]">
+                      <SelectItem value="todas">Todas Seguradoras</SelectItem>
+                      {uniqueSeguradoras.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Segmento</label>
+                  <Select value={tipoFilter} onValueChange={setTipoFilter}>
+                    <SelectTrigger className="h-12 w-full text-[14px]">
+                      <SelectValue placeholder="Todos Segmentos" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[130] bg-white dark:bg-[#151515]">
+                      <SelectItem value="todos">Todos Segmentos</SelectItem>
+                      {uniqueTipos.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Status</label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="h-12 w-full text-[14px]">
+                      <SelectValue placeholder="Todos Status" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[130] bg-white dark:bg-[#151515]">
+                      <SelectItem value="todas">Todos Status</SelectItem>
+                      <SelectItem value="ativa">Ativa</SelectItem>
+                      <SelectItem value="a vencer">A Vencer</SelectItem>
+                      <SelectItem value="vencida">Vencida</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <button
                   onClick={() => setShowMobileFilters(false)}
-                />
-                <motion.div
-                  className="fixed bottom-0 left-0 right-0 z-[120] bg-white dark:bg-[#151515] rounded-t-2xl shadow-xl flex flex-col lg:hidden"
-                  initial={{ y: "100%" }}
-                  animate={{ y: 0 }}
-                  exit={{ y: "100%" }}
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="mt-2 w-full py-3 bg-[#9F1239] text-white rounded-xl font-bold text-[14px]"
                 >
-                  <div className="p-4 border-b border-gray-100 dark:border-[#222] flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      <Settings2 className="w-5 h-5" /> Filtros
-                    </h3>
-                    <button onClick={() => setShowMobileFilters(false)} className="p-2 bg-gray-100 dark:bg-[#222] rounded-full text-gray-600 dark:text-gray-300">
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                  <div className="p-5 flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Seguradora</label>
-                      <Select value={seguradoraFilter} onValueChange={setSeguradoraFilter}>
-                        <SelectTrigger className="h-12 w-full text-[14px]">
-                          <SelectValue placeholder="Todas Seguradoras" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[130] bg-white dark:bg-[#151515]">
-                          <SelectItem value="todas">Todas Seguradoras</SelectItem>
-                          {uniqueSeguradoras.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Segmento</label>
-                      <Select value={tipoFilter} onValueChange={setTipoFilter}>
-                        <SelectTrigger className="h-12 w-full text-[14px]">
-                          <SelectValue placeholder="Todos Segmentos" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[130] bg-white dark:bg-[#151515]">
-                          <SelectItem value="todos">Todos Segmentos</SelectItem>
-                          {uniqueTipos.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Status</label>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="h-12 w-full text-[14px]">
-                          <SelectValue placeholder="Todos Status" />
-                        </SelectTrigger>
-                        <SelectContent className="z-[130] bg-white dark:bg-[#151515]">
-                          <SelectItem value="todas">Todos Status</SelectItem>
-                          <SelectItem value="ativa">Ativa</SelectItem>
-                          <SelectItem value="a vencer">A Vencer</SelectItem>
-                          <SelectItem value="vencida">Vencida</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <button
-                      onClick={() => setShowMobileFilters(false)}
-                      className="mt-2 w-full py-3 bg-[#9F1239] text-white rounded-xl font-bold text-[14px]"
-                    >
-                      Aplicar Filtros
-                    </button>
-                  </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-      <PolicyCreationWizard 
-        open={isWizardOpen} 
-        onOpenChange={setIsWizardOpen} 
+                  Aplicar Filtros
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      <PolicyCreationWizard
+        open={isWizardOpen}
+        onOpenChange={setIsWizardOpen}
         onSuccess={() => {
           fetchPolicies(); // Refresh the list
         }}
@@ -3093,8 +3120,8 @@ export function Insurance() {
   );
 }
 
-const MemoSingleSparkline = memo(({ 
-  values, area, line, gradientId, color, ariaLabel 
+const MemoSingleSparkline = memo(({
+  values, area, line, gradientId, color, ariaLabel
 }: any) => {
   return (
     <svg width="100%" height="44" viewBox="0 0 280 44" preserveAspectRatio="none" className="block overflow-hidden" aria-label={ariaLabel}>
@@ -3124,8 +3151,8 @@ const MemoSingleSparkline = memo(({
   );
 }, (prev, next) => JSON.stringify(prev.values) === JSON.stringify(next.values));
 
-const MemoDoubleSparkline = memo(({ 
-  values1, values2, area1, area2, line1, line2, gradientId1, gradientId2, color1, color2, globalMax, ariaLabel 
+const MemoDoubleSparkline = memo(({
+  values1, values2, area1, area2, line1, line2, gradientId1, gradientId2, color1, color2, globalMax, ariaLabel
 }: any) => {
   return (
     <svg width="100%" height="44" viewBox="0 0 280 44" preserveAspectRatio="none" className="block overflow-hidden" aria-label={ariaLabel}>

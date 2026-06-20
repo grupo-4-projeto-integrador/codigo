@@ -65,9 +65,8 @@ export function DatePicker({ value, onChange, placeholder = "DD/MM/AAAA", classN
   return (
     <div ref={containerRef} className={`relative ${className || ""}`}>
       <div 
-        className={`flex items-center gap-2 w-full h-9 rounded-md border border-input bg-background px-3 py-2 text-sm text-left
-          focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2
-          dark:bg-[#0a0a0a] dark:border-input dark:focus-within:ring-offset-[#0a0a0a]`}
+        className={`flex items-center gap-2 w-full h-9 rounded-md border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#0a0a0a] px-3 py-2 text-[13px] text-gray-900 dark:text-white text-left
+          focus-within:border-gray-400 dark:focus-within:border-gray-500 transition-colors`}
       >
         <CalendarIcon 
           className="h-4 w-4 shrink-0 opacity-50 cursor-pointer" 

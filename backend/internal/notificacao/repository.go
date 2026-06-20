@@ -67,7 +67,7 @@ func (r *PostgresRepository) GetNotificacoes(usuarioID int) ([]Notificacao, erro
 			n.tipo, 
 			n.lida, 
 			COALESCE(s.loja, n.apolice_luc) AS loja,
-			COALESCE(s.segmento, s.tipo, 'Geral') AS cobertura,
+			COALESCE(s.segmento, 'Geral') AS cobertura,
 			s.vencimento - CURRENT_DATE AS dias
 		FROM notificacoes n
 		LEFT JOIN seguros s ON s.luc = n.apolice_luc

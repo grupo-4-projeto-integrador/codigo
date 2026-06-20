@@ -411,7 +411,11 @@ func calculateHealthScore(items []Apolice, at time.Time) int {
 	}
 
 	total := len(items)
-	rawScore := (float64(conformes) * 1.0) + (float64(aVencer) * 0.4) - (float64(vencidas) * 1.5)
+	// Pesos calibrados:
+	// Conformes: 100% do valor
+	// A Vencer: 70% do valor (penalização leve)
+	// Vencidas: 10% do valor (piso mínimo para evitar o colapso rápido para zero)
+	rawScore := (float64(conformes) * 1.0) + (float64(aVencer) * 0.7) + (float64(vencidas) * 0.1)
 
 	percentage := (rawScore / float64(total)) * 100
 	return int(math.Round(math.Max(0, math.Min(100, percentage))))

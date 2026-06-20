@@ -241,7 +241,7 @@ export function PolicyEdit() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300">LUC</label>
-                <Input {...register("luc")} className="dark:bg-[#0a0a0a]" />
+                <Input {...register("luc")} className="dark:bg-[#0a0a0a] dark:border-transparent" />
               </div>
 
               <div className="space-y-2">
@@ -249,7 +249,7 @@ export function PolicyEdit() {
                 <Input 
                   {...register("loja")}
                   placeholder="Nome da loja" 
-                  className="dark:bg-[#0a0a0a]"
+                  className="dark:bg-[#0a0a0a] dark:border-transparent"
                 />
               </div>
 
@@ -258,7 +258,7 @@ export function PolicyEdit() {
                 <Input 
                   {...register("cnpj", { required: true })}
                   placeholder="00.000.000/0000-00"
-                  className="dark:bg-[#0a0a0a]"
+                  className="dark:bg-[#0a0a0a] dark:border-transparent"
                 />
               </div>
 
@@ -284,7 +284,7 @@ export function PolicyEdit() {
                   {...register("seguradora")}
                   placeholder="Ex: Porto Seguro"
                   autoComplete="off"
-                  className="dark:bg-[#0a0a0a]"
+                  className="dark:bg-[#0a0a0a] dark:border-transparent"
                 />
               </div>
 
@@ -341,7 +341,7 @@ export function PolicyEdit() {
                     }
                   }}
                   placeholder="0.00" 
-                  className="dark:bg-[#0a0a0a]"
+                  className="dark:bg-[#0a0a0a] dark:border-transparent"
                 />
               </div>
 
@@ -352,7 +352,7 @@ export function PolicyEdit() {
                   placeholder="Nome do responsável" 
                   autoComplete="off"
                   list="usuarios-list"
-                  className="dark:bg-[#0a0a0a]"
+                  className="dark:bg-[#0a0a0a] dark:border-transparent"
                 />
                 <datalist id="usuarios-list">
                   {usuarios.map(u => (

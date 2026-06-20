@@ -313,9 +313,9 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
               return (
                 <div key={s} className="relative z-10 flex flex-col items-center gap-2">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                    isCompleted ? 'bg-[#639922] text-white ring-4 ring-white dark:ring-[#0a0a0a]' : 
-                    isCurrent ? 'bg-[#c4151f] text-white ring-4 ring-white dark:ring-[#0a0a0a]' : 
-                    'bg-gray-200 text-gray-500 dark:bg-white/10 dark:text-white/40 ring-4 ring-white dark:ring-[#0a0a0a]'
+                    isCompleted ? 'bg-[#639922] text-white' : 
+                    isCurrent ? 'bg-[#c4151f] text-white' : 
+                    'bg-gray-200 text-gray-500 dark:bg-white/10 dark:text-white/40'
                   }`}>
                     {isCompleted ? <Check className="w-4 h-4" /> : s}
                   </div>
@@ -348,7 +348,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                       onChange={e => updateField('luc', e.target.value)}
                       onBlur={e => handleLucChange(e.target.value, false)}
                       placeholder="Ex: AE-03"
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                   </div>
 
@@ -359,7 +359,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                       onChange={e => updateField('loja', e.target.value)}
                       readOnly={lojaIsReadOnly}
                       placeholder="Nome da loja" 
-                      className={lojaIsReadOnly ? "bg-gray-50 dark:bg-[#111] text-gray-500" : "dark:bg-[#151515]"}
+                      className={lojaIsReadOnly ? "bg-gray-50 dark:bg-[#111] text-gray-500 dark:border-transparent" : "dark:bg-[#151515] dark:border-transparent"}
                     />
                   </div>
 
@@ -369,7 +369,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                       value={formData.cnpj}
                       onChange={e => updateField('cnpj', applyCnpjMask(e.target.value))}
                       placeholder="00.000.000/0000-00"
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                       maxLength={18}
                     />
                   </div>
@@ -402,7 +402,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                       value={formData.seguradora}
                       onChange={e => updateField('seguradora', e.target.value)}
                       placeholder="Ex: Porto Seguro"
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                   </div>
 
@@ -413,7 +413,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                       value={formData.cobertura}
                       onChange={e => updateField('cobertura', e.target.value)}
                       placeholder="0.00" 
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                   </div>
 
@@ -424,7 +424,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                       onChange={e => updateField('responsavel', e.target.value)}
                       placeholder="Nome do responsável" 
                       list="usuarios-list"
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                     <datalist id="usuarios-list">
                       {usuarios.map(u => <option key={u.id} value={u.nome || u.id} />)}
@@ -437,7 +437,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                       value={formData.observacoes}
                       onChange={e => updateField('observacoes', e.target.value)}
                       placeholder="Alguma nota adicional?" 
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                   </div>
                 </div>

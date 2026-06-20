@@ -9,11 +9,12 @@ import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
-import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2, Map as MapIcon } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2, Map as MapIcon, Play, Pause } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, getMapFilters, subscribeMapFilters, getSidebarCollapsed, subscribeSidebarCollapsed } from '../store';
 import { useNavigate } from "react-router";
+import { TIME_OFFSETS, WEEKS_PAST, getStatusAtDate, parseTooltipDate } from "../utils/timeline";
 
 type MapLayoutItem = {
   luc: string;
@@ -38,28 +39,7 @@ const COLORS = {
   semApolice: { bg: "#E5E7EB", text: "#374151", label: "Sem apólice" },
 };
 
-const TIME_OFFSETS = [
-  { label: 'Hoje', days: 0 },
-  { label: '7d atrás', days: 7 },
-  { label: '15d atrás', days: 15 },
-  { label: '30d atrás', days: 30 },
-];
-
-function getStatusAtDate(vencimento: string | undefined, daysBack: number) {
-  if (!vencimento) return undefined;
-  const venc = parseTooltipDate(vencimento);
-  if (!venc) return undefined;
-  const refDate = new Date();
-  refDate.setDate(refDate.getDate() - daysBack);
-  const ref = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate());
-  const due = new Date(venc.getFullYear(), venc.getMonth(), venc.getDate());
-  const diff = Math.floor((due.getTime() - ref.getTime()) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return 'Vencida';
-  if (diff <= 15) return 'A Vencer';
-  return 'Ativa';
-}
-
-function getStatusDetails(status?: string) {
+export function getStatusDetails(status?: string) {
   if (!status) return COLORS.semApolice;
   const s = status.toLowerCase().trim();
   if (s === "ativa" || s === "conforme") return COLORS.conforme;
@@ -68,26 +48,7 @@ function getStatusDetails(status?: string) {
   return COLORS.semApolice;
 }
 
-function parseTooltipDate(value?: string) {
-  if (!value) {
-    return null;
-  }
 
-  const isoMatch = /^\d{4}-\d{2}-\d{2}$/.test(value);
-  if (isoMatch) {
-    const [year, month, day] = value.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  const brMatch = /^\d{2}\/\d{2}\/\d{4}$/.test(value);
-  if (brMatch) {
-    const [day, month, year] = value.split("/").map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
 
 function getDaysDifference(from: Date, to: Date) {
   const fromStart = new Date(from.getFullYear(), from.getMonth(), from.getDate());
@@ -98,20 +59,24 @@ function getDaysDifference(from: Date, to: Date) {
 export interface ComplianceMapV2Props {
   selectedLuc: string | null;
   onSelectLuc: (luc: string | null) => void;
+  hideHeader?: boolean;
+  onShowMobileTable?: () => void;
+  isMobileTableOpen?: boolean;
   tileWidth?: string;
   tileHeight?: string;
   gap?: string;
-  hideHeader?: boolean;
   itemsPerPage?: number;
 }
 
 export function ComplianceMapV2({ 
   selectedLuc, 
   onSelectLuc,
+  hideHeader = false,
+  onShowMobileTable,
+  isMobileTableOpen = false,
   tileWidth = '43px',
   tileHeight = '38px',
   gap = '5px',
-  hideHeader = false,
   itemsPerPage
 }: ComplianceMapV2Props) {
   const navigate = useNavigate();
@@ -120,7 +85,24 @@ export function ComplianceMapV2({
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [mapFilters, setMapFiltersState] = useState(getMapFilters);
-  const [timeOffsetIdx, setTimeOffsetIdx] = useState(0);
+  const [timeOffsetIdx, setTimeOffsetIdx] = useState(WEEKS_PAST);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    let interval: number;
+    if (isPlaying) {
+      interval = window.setInterval(() => {
+        setTimeOffsetIdx((prev) => {
+          if (prev >= TIME_OFFSETS.length - 1) {
+            setIsPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 150);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getSidebarCollapsed());
   const [showMapModal, setShowMapModal] = useState(false);
 
@@ -388,29 +370,48 @@ export function ComplianceMapV2({
           <div className="text-[12px] font-normal" style={{ color: 'var(--color-text-secondary)' }}>
             <span className="font-medium">{totalLucs}</span> lojas mapeadas &middot; {percentualVencidas}% com apólice vencida
           </div>
-          {/* Temporal Slider */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-[#1f1f1f] rounded-full p-0.5 temporal-filters">
-            {TIME_OFFSETS.map((t, i) => (
+          {/* Temporal Slider / Playback */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-[#1f1f1f] rounded-full px-2 py-1">
               <button
-                key={t.days}
-                onClick={() => setTimeOffsetIdx(i)}
-                className={`temporal-filter-btn relative px-3 py-1 rounded-full text-[11px] font-semibold transition-all duration-200 ${
-                  timeOffsetIdx === i
-                    ? 'text-white'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                }`}
+                onClick={() => {
+                  if (!isPlaying && timeOffsetIdx >= TIME_OFFSETS.length - 1) {
+                    setTimeOffsetIdx(0);
+                    setIsPlaying(true);
+                  } else {
+                    setIsPlaying(!isPlaying);
+                  }
+                }}
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-white dark:bg-[#2a2a2a] shadow-[0_1px_3px_rgba(0,0,0,0.1)] text-[#a0191e] hover:bg-gray-50 dark:hover:bg-[#333] transition-colors"
+                title={isPlaying ? "Pausar" : "Reproduzir evolução (1 ano)"}
               >
-                {timeOffsetIdx === i && (
-                  <motion.span
-                    layoutId="time-pill"
-                    className="absolute inset-0 rounded-full"
-                    style={{ backgroundColor: '#a0191e' }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10">{t.label}</span>
+                {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
               </button>
-            ))}
+              
+              <div className="flex flex-col mx-2 w-[160px]">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                    {timeOffsetIdx === WEEKS_PAST ? "Estado Atual" : timeOffsetIdx > WEEKS_PAST ? "Projeção" : "Histórico"}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#a0191e] dark:text-[#fca5a5]">
+                    {TIME_OFFSETS[timeOffsetIdx].label}
+                  </span>
+                </div>
+                
+                <input 
+                  type="range" 
+                  min="0" 
+                  max={TIME_OFFSETS.length - 1} 
+                  value={timeOffsetIdx} 
+                  onChange={(e) => {
+                    setIsPlaying(false);
+                    setTimeOffsetIdx(parseInt(e.target.value));
+                  }}
+                  className="w-full h-1.5 bg-gray-200 dark:bg-[#333] rounded-lg appearance-none cursor-pointer accent-[#a0191e]"
+                  style={{ direction: 'ltr' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -661,11 +662,24 @@ export function ComplianceMapV2({
         }
       `}</style>
 
-      {/* Mobile Summary */}
-      <div className="mobile-summary-wrapper w-full">
-        <div className="mobile-summary">
-          <button className="ms-btn flex items-center justify-center gap-2" onClick={() => navigate('/graph')}>
-            <MapIcon className="w-4 h-4" /> Visualização em Gráfico
+      {/* Mobile Summary / Segmented Control */}
+      <div className="mobile-summary-wrapper w-full mb-2 mt-4 px-4 md:px-0">
+        <div className="bg-gray-100/80 dark:bg-[#0a0a0a] p-1 rounded-xl border border-gray-200 dark:border-[#222] shadow-inner flex items-center w-full max-w-[400px] mx-auto">
+          <button 
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-[13px] transition-all duration-300 ${!isMobileTableOpen ? 'bg-white dark:bg-[#151515] text-[#8B1A1A] dark:text-[#E04444] shadow-sm border border-gray-200 dark:border-[#333]' : 'bg-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-transparent'}`}
+            onClick={() => {
+              if (isMobileTableOpen) onShowMobileTable && onShowMobileTable(); // This acts as a toggle in Insurance.tsx if we handle it
+              navigate('/graph');
+            }}
+          >
+            <MapIcon className="w-4 h-4" /> Ver no Mapa
+          </button>
+          <button 
+            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-[13px] transition-all duration-300 ${isMobileTableOpen ? 'bg-white dark:bg-[#151515] text-[#8B1A1A] dark:text-[#E04444] shadow-sm border border-gray-200 dark:border-[#333]' : 'bg-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-transparent'}`}
+            onClick={() => onShowMobileTable && onShowMobileTable()}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 8h12"/><path d="M7 12h12"/><path d="M7 16h12"/></svg>
+            Ver Tabela
           </button>
         </div>
       </div>

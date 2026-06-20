@@ -136,7 +136,6 @@
 @media (min-width: 1024px) and (max-width: 1366px) {
   .info-laptop-only { display: inline-block; }
   .hide-on-laptop { display: none !important; }
-  .show-on-laptop { display: flex !important; }
   
   .sidebar-open .hide-on-laptop-sidebar-open { display: none !important; }
   

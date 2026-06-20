@@ -271,9 +271,9 @@ export function PolicyRenewalWizard({ open, onOpenChange, apoliceId, onSuccess }
               return (
                 <div key={s} className="relative z-10 flex flex-col items-center gap-2">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                    isCompleted ? 'bg-[#639922] text-white ring-4 ring-white dark:ring-[#0a0a0a]' : 
-                    isCurrent ? 'bg-[#c4151f] text-white ring-4 ring-white dark:ring-[#0a0a0a]' : 
-                    'bg-gray-200 text-gray-500 dark:bg-white/10 dark:text-white/40 ring-4 ring-white dark:ring-[#0a0a0a]'
+                    isCompleted ? 'bg-[#639922] text-white' : 
+                    isCurrent ? 'bg-[#c4151f] text-white' : 
+                    'bg-gray-200 text-gray-500 dark:bg-white/10 dark:text-white/40'
                   }`}>
                     {isCompleted ? <Check className="w-4 h-4" /> : s}
                   </div>
@@ -366,7 +366,7 @@ export function PolicyRenewalWizard({ open, onOpenChange, apoliceId, onSuccess }
                       value={formData.novaSeguradora}
                       onChange={e => updateField('novaSeguradora', e.target.value)}
                       placeholder="Ex: Porto Seguro"
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                   </div>
 
@@ -389,7 +389,7 @@ export function PolicyRenewalWizard({ open, onOpenChange, apoliceId, onSuccess }
                       type="number" step="0.1"
                       value={formData.reajustePercentual}
                       onChange={e => handleReajusteChange(e.target.value)}
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                   </div>
 
@@ -399,7 +399,7 @@ export function PolicyRenewalWizard({ open, onOpenChange, apoliceId, onSuccess }
                       type="number" step="0.01" min="0"
                       value={formData.novoValor}
                       onChange={e => handleNovoValorChange(e.target.value)}
-                      className="dark:bg-[#151515]"
+                      className="dark:bg-[#151515] dark:border-transparent"
                     />
                     {currentPolicy && (
                       <p className="text-[10px] text-gray-500 mt-1">Valor anterior: {formatCurrency(currentPolicy.cobertura)}</p>

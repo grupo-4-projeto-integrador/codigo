@@ -193,6 +193,7 @@ PG_SSLMODE=disable
 		tipo VARCHAR(50) NOT NULL,
 		lida BOOLEAN DEFAULT FALSE,
 		arquivada BOOLEAN DEFAULT FALSE,
+		link VARCHAR(255) DEFAULT '',
 		created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW()
 	);`)
 	if err != nil {
@@ -201,6 +202,7 @@ PG_SSLMODE=disable
 		fmt.Println("✅ Tabela notificacoes configurada com sucesso.")
 	}
 	_, _ = db.Exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_notificacoes_active ON notificacoes(usuario_id, apolice_luc, tipo) WHERE arquivada = FALSE;")
+	_, _ = db.Exec("ALTER TABLE notificacoes ADD COLUMN IF NOT EXISTS link VARCHAR(255) DEFAULT '';")
 
 	fmt.Println("\n🎉 Tudo pronto! O banco de dados está 100% configurado.")
 	fmt.Println("👉 Agora você pode iniciar o servidor rodando:")

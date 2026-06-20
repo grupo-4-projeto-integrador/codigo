@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS notificacoes (
     tipo VARCHAR(50) NOT NULL,
     lida BOOLEAN DEFAULT FALSE,
     arquivada BOOLEAN DEFAULT FALSE,
+    link VARCHAR(255) DEFAULT '',
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -105,6 +105,13 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
   const [originalItems, setOriginalItems] = useState<ApoliceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const cssStyles = (
     <style>{`
@@ -184,13 +191,15 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
   });
   const showWarning = isManualOrderActive && hasInversion;
 
+  const displayItems = items.slice(0, isDesktop ? 3 : 4);
+
   if (isPresentationMode) {
     return (
       <div className="flex flex-col gap-3 h-full">
         {loading ? (
           <div className="animate-pulse h-full bg-gray-100 dark:bg-white/5 rounded-lg" />
         ) : (
-          items.map((item) => {
+          displayItems.map((item) => {
             const isVencida = item.dias_restantes !== undefined && item.dias_restantes < 0;
             const daysText = isVencida 
               ? `Vencida há ${Math.abs(item.dias_restantes!)} dias` 
@@ -234,7 +243,7 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
         <div className="flex items-center gap-1.5">
           <h3 className="font-bold text-gray-900 dark:text-white text-[13px]">Fila de ação</h3>
           <span className="bg-[#8B1A1A] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-            {items.length}
+            {displayItems.length}
           </span>
           <button
             onClick={showWarning ? handleRestore : undefined}
@@ -258,20 +267,23 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
           </div>
         ) : (
           <>
-
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={items.map(i => i.id || i.luc)} strategy={verticalListSortingStrategy}>
-                {items.map((item, index) => (
-                  <SortableQueueItem 
-                    key={item.id || item.luc} 
-                    item={item} 
-                    index={index} 
-                    isLast={index === items.length - 1} 
-                    onSelectLuc={onSelectLuc} 
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
+            <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={displayItems.map(i => i.id || i.luc)} strategy={verticalListSortingStrategy}>
+              {displayItems.map((item, index) => (
+                <SortableQueueItem 
+                  key={item.id || item.luc} 
+                  item={item} 
+                  index={index} 
+                  isLast={index === displayItems.length - 1} 
+                  onSelectLuc={onSelectLuc} 
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           </>
         )}
       </div>

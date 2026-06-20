@@ -35,6 +35,7 @@ import { CommandPalette } from "./CommandPalette";
 import { setSidebarCollapsed } from '../store';
 import { FullscreenTable } from "./FullscreenTable";
 import { GraphView } from "./GraphView";
+import { IconLayoutSidebarLeftCollapse, IconLayoutSidebarLeftExpand } from "@tabler/icons-react";
 
 const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px', height: '32px' } }: any) => {
   const [error, setError] = useState(false);
@@ -341,7 +342,6 @@ export function Layout() {
           }
         `}</style>
         <nav className="nav-items relative" style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}>
-          <div className="absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10" style={{ background: 'linear-gradient(to left, #6e150e 0%, transparent 100%)' }} />
           <div className="flex px-3 py-2.5 min-w-max" style={{ gap: '4px' }}>
             {(() => {
               const navLinks = [
@@ -593,25 +593,25 @@ export function Layout() {
           width: isSidebarCollapsed ? '80px' : '256px'
         }}
       >
-        <div className={`flex ${isSidebarCollapsed ? 'flex-col items-center gap-3' : 'items-center justify-between'} pt-5 px-4 pb-4 mb-2 border-b`} style={{ borderColor: '#a0191e50' }}>
+        <div className={`flex ${isSidebarCollapsed ? 'flex-col items-center gap-3' : 'items-center justify-between'} pt-5 px-4 pb-4 mb-2 border-b relative`} style={{ borderColor: '#a0191e50' }}>
           {!isSidebarCollapsed && (
             <div className="flex items-center cursor-pointer flex-1" onClick={() => navigate('/seguros')}>
-              <img src={logo} alt="Logo" className="w-9 h-9 aspect-square mr-3 sidebar-logo" />
+              <img src={logo} alt="Logo" className="w-11 h-11 aspect-square mr-3 sidebar-logo drop-shadow-md" />
               <div className="flex flex-col justify-center">
-                <span className="font-semibold text-[14px] text-white leading-tight">Flamboyant</span>
-                <span className="font-normal text-[12px] text-white opacity-70 leading-tight">Shopping</span>
+                <span className="font-extrabold text-[15px] text-white leading-tight tracking-wide drop-shadow-sm">FLAMBOYANT</span>
+                <span className="font-semibold text-[13px] text-white/70 leading-tight tracking-widest uppercase">Shopping</span>
               </div>
             </div>
           )}
           {isSidebarCollapsed && (
-            <img src={logo} alt="Logo" className="w-9 h-9 aspect-square cursor-pointer sidebar-logo" onClick={() => navigate('/seguros')} />
+            <img src={logo} alt="Logo" className="w-10 h-10 aspect-square cursor-pointer sidebar-logo mt-3 drop-shadow-md" onClick={() => navigate('/seguros')} />
           )}
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-2 text-white/80 hover:text-white hover:bg-[#a0191e50] rounded-lg transition-colors flex-shrink-0"
+            className="transition-colors z-10 p-1.5 hover:bg-white/10 rounded-md flex-shrink-0 opacity-60 hover:opacity-100"
             title={isSidebarCollapsed ? "Expandir menu" : "Recolher menu"}
           >
-            {isSidebarCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+            {isSidebarCollapsed ? <IconLayoutSidebarLeftExpand size={22} /> : <IconLayoutSidebarLeftCollapse size={24} />}
           </button>
         </div>
         <nav className="flex-1 pb-6 px-4 space-y-1 overflow-hidden min-h-0 flex flex-col justify-start mt-4">

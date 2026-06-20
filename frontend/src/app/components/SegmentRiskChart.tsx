@@ -343,7 +343,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
   }, [data]);
 
   // Slice according to mode and showAll state
-  const limit   = mode === "ultra" ? 6 : undefined;
+  const limit   = mode === "ultra" ? 6 : 5;
   const visible = showAll || !limit ? data : data.slice(0, limit);
   const hasMore = limit !== undefined && data.length > limit;
 
@@ -394,7 +394,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
   return (
     <section
       ref={containerRef as React.RefObject<HTMLElement>}
-      className="h-auto md:h-full rounded-xl bg-white dark:bg-[#151515] shadow-sm border border-gray-100 dark:border-[#222222] flex flex-col relative overflow-hidden"
+      className="h-full rounded-xl bg-white dark:bg-[#151515] shadow-sm border border-gray-100 dark:border-[#222222] flex flex-col relative overflow-hidden"
       style={{ minWidth: 0 }}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
