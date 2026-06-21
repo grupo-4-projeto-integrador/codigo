@@ -8,6 +8,7 @@ import { Sheet, SheetContent } from "../ui/sheet";
 import { Input } from "../ui/input";
 import { DatePicker } from "../ui/date-picker";
 import { request } from "../../../api/client";
+import { reverterUltimaAcao } from "../../../api/audit";
 import { formatCurrency } from "../../utils/currency";
 
 export interface PolicyRenewalWizardProps {
@@ -198,7 +199,20 @@ export function PolicyRenewalWizard({ open, onOpenChange, apoliceId, onSuccess }
         await uploadFiles();
       }
 
-      toast.success("Apólice renovada com sucesso!");
+      toast.success("Apólice renovada com sucesso!", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await reverterUltimaAcao({ entidade: "apolice", entidade_id: apoliceId, acao: "renovar" });
+              toast.success("Renovação revertida com sucesso");
+              if (onSuccess) onSuccess(); // para atualizar os dados da tela
+            } catch (err) {
+              toast.error("Erro ao reverter renovação");
+            }
+          }
+        }
+      });
       localStorage.removeItem(storageKey);
       
       onOpenChange(false);

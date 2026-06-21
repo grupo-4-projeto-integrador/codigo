@@ -19,8 +19,9 @@ import {
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { listAuditLogs, type AuditLog, type AuditFilter } from "../../api/audit";
+import { listAuditLogs, reverterAcaoPorId, type AuditLog, type AuditFilter } from "../../api/audit";
 import { format, parseISO } from "date-fns";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -163,6 +164,27 @@ function LogDetailDrawer({ log, onClose }: { log: AuditLog; onClose: () => void 
           </div>
         )}
       </div>
+      
+      {log.entidade === "apolice" && ["editar", "excluir", "renovar"].includes(log.acao) && (
+        <div className="p-4 border-t border-gray-100 dark:border-[#222222]">
+          <button
+            onClick={async () => {
+              try {
+                await reverterAcaoPorId(log.id);
+                toast.success("Ação revertida com sucesso");
+                onClose();
+                window.location.reload();
+              } catch (e: any) {
+                toast.error(e?.message || "Erro ao reverter ação");
+              }
+            }}
+            className="w-full bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-[#c4151f] dark:text-[#E23B44] font-medium text-[13px] py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reverter Ação
+          </button>
+        </div>
+      )}
       </motion.div>
     </div>
   );

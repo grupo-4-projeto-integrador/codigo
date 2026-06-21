@@ -57,3 +57,22 @@ export async function logAuditAction(payload: {
     body: JSON.stringify(payload),
   });
 }
+
+export interface ReverterUltimaPayload {
+  entidade: string;
+  entidade_id: string;
+  acao: string;
+}
+
+export async function reverterUltimaAcao(payload: ReverterUltimaPayload) {
+  return request('/admin/audit/reverter-ultima', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function reverterAcaoPorId(auditId: number) {
+  return request(`/admin/audit/${auditId}/reverter`, {
+    method: 'POST',
+  });
+}

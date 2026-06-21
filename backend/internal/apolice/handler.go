@@ -763,13 +763,17 @@ func (h *Handler) RenovarApolice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// snapshot antes de renovar
+	anterior, _ := h.service.Get(itemID)
+	anteriorJSON := toJSON(anterior)
+
 	if err := h.service.Renovar(itemID, payload.NovaVigencia, payload.NovoValor, payload.Seguradora, "João Carlos"); err != nil {
 		h.writeError(w, requestID, err)
 		return
 	}
 
 	detalhes := fmt.Sprintf(`{"nova_vigencia":%q,"novo_valor":%f,"seguradora":%q}`, payload.NovaVigencia, payload.NovoValor, payload.Seguradora)
-	h.logAuditWithPayloads(r, "renovar", "apolice", itemID, nil, &detalhes)
+	h.logAuditWithPayloads(r, "renovar", "apolice", itemID, &anteriorJSON, &detalhes)
 	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Apólice renovada com sucesso"}, requestID)
 }
 

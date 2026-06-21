@@ -106,3 +106,56 @@ func (h *Handler) LogAction(w http.ResponseWriter, r *http.Request) {
 	h.service.LogFromRequest(r, payload.Acao, payload.Entidade, payload.EntidadeID, nil, payload.Detalhe)
 	_ = response.Success(w, http.StatusCreated, map[string]string{"message": "registrado"}, requestID)
 }
+
+// ReverterUltima reverte a última ação ocorrida para uma dada entidade e acao.
+// POST /api/admin/audit/reverter-ultima
+func (h *Handler) ReverterUltima(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodPost {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	var payload struct {
+		Acao       string `json:"acao"`
+		Entidade   string `json:"entidade"`
+		EntidadeID string `json:"entidade_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, "JSON inválido", requestID, nil)
+		return
+	}
+
+	if err := h.service.ReverterUltimaAcao(r.Context(), payload.Entidade, payload.EntidadeID, payload.Acao); err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, err.Error(), requestID, nil)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Ação revertida com sucesso"}, requestID)
+}
+
+// ReverterPorID reverte uma ação específica baseada no ID do audit log.
+// POST /api/admin/audit/{id}/reverter
+func (h *Handler) ReverterPorID(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if r.Method != http.MethodPost {
+		_ = response.Fail(w, http.StatusMethodNotAllowed, "Método não permitido", requestID, nil)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	auditID, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil || auditID <= 0 {
+		_ = response.Fail(w, http.StatusBadRequest, "ID inválido", requestID, nil)
+		return
+	}
+
+	if err := h.service.ReverterPorID(r.Context(), auditID); err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, err.Error(), requestID, nil)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, map[string]string{"message": "Ação revertida com sucesso"}, requestID)
+}

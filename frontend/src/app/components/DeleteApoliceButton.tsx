@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { request } from "../../api/client";
+import { reverterUltimaAcao } from "../../api/audit";
 import { 
   AlertDialog, 
   AlertDialogTrigger, 
@@ -29,7 +30,21 @@ export function DeleteApoliceButton({ id }: DeleteApoliceButtonProps) {
       await request(`/apolices/${id}`, {
         method: "DELETE"
       });
-      toast.success("Apólice excluída");
+      toast.success("Apólice excluída", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await reverterUltimaAcao({ entidade: "apolice", entidade_id: id, acao: "excluir" });
+              toast.success("Apólice restaurada com sucesso");
+              // Refresh na página atual para recarregar as apólices
+              window.location.reload();
+            } catch (err) {
+              toast.error("Erro ao reverter exclusão");
+            }
+          }
+        }
+      });
       navigate("/seguros");
     } catch (err) {
       console.error(err);
@@ -50,7 +65,7 @@ export function DeleteApoliceButton({ id }: DeleteApoliceButtonProps) {
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir Apólice?</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta ação não pode ser desfeita. A apólice e todo o seu histórico serão removidos permanentemente.
+            Tem certeza que deseja excluir esta apólice? Você poderá desfazer esta ação logo em seguida ou pelo Painel de Auditoria.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

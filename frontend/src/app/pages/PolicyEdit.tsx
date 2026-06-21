@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { DeleteApoliceButton } from "../components/DeleteApoliceButton";
 import { useUserProfile } from "../contexts/UserProfileContext";
+import { reverterUltimaAcao } from "../../api/audit";
 
 interface PolicyEditFormInputs {
   luc: string;
@@ -170,7 +171,20 @@ export function PolicyEdit() {
         body: JSON.stringify(payload)
       });
       
-      toast.success("Apólice atualizada com sucesso!");
+      toast.success("Apólice atualizada com sucesso!", {
+        action: {
+          label: "Desfazer",
+          onClick: async () => {
+            try {
+              await reverterUltimaAcao({ entidade: "apolice", entidade_id: id, acao: "editar" });
+              toast.success("Edição revertida com sucesso");
+              window.location.reload();
+            } catch (err) {
+              toast.error("Erro ao reverter edição");
+            }
+          }
+        }
+      });
       navigate(`/seguros/apolice/${payload.luc}`);
     } catch (err) {
       console.error(err);
