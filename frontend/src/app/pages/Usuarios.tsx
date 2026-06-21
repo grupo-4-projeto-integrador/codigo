@@ -183,7 +183,7 @@ export function Usuarios() {
             <thead className="bg-gray-50 dark:bg-[#0a0a0a] text-xs uppercase font-semibold text-gray-500 dark:text-[#64748B] border-b border-gray-200 dark:border-[#222222] sticky top-0 z-10">
               <tr>
                 <th className="px-6 py-4">Usuário</th>
-                <th className="px-6 py-4">Role</th>
+                <th id="usuarios-role-tour" className="px-6 py-4">Role</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Ações</th>
               </tr>

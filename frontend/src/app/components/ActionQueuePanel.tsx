@@ -217,7 +217,7 @@ export function ActionQueuePanel({ onSelectLuc, isPresentationMode = false }: Ac
               <div key={item.id || item.luc} className="flex items-center justify-between">
                 <div>
                   <div className="text-gray-900 dark:text-white font-bold text-[14px]">{lojaStr}</div>
-                  <div className="text-gray-500 dark:text-white/40 text-[11px] uppercase tracking-wider">{item.id || item.luc} • {daysText}</div>
+                  <div className="text-gray-500 dark:text-white/40 text-[11px] font-medium">{item.id || item.luc} • {daysText}</div>
                 </div>
                 <div className="text-[#D92D20] font-bold text-[14px]">{formattedVal}</div>
               </div>

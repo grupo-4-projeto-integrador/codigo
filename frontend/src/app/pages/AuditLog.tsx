@@ -273,7 +273,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
       )}
 
       {/* Filter Bar */}
-      <div className="bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#222222] p-4">
+      <div id="audit-filtros-tour" className="bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#222222] p-4">
         <div className="flex flex-wrap gap-3 items-end">
           {/* Ação */}
           <div className="flex flex-col gap-1 w-full md:w-[160px]">
@@ -363,7 +363,7 @@ export function AuditLog({ isTab = false }: { isTab?: boolean }) {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#222222] overflow-hidden">
+      <div id="audit-feed-tour" className="bg-white dark:bg-[#151515] rounded-xl border border-gray-100 dark:border-[#222222] overflow-hidden">
         {error ? (
           <div className="flex flex-col items-center justify-center py-16 gap-4">
             <AlertCircle className="w-10 h-10 text-red-400" />

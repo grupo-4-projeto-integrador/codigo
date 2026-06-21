@@ -18,3 +18,121 @@
   50%  { background-position: 100% center; }
   100% { background-position: 0% center; }
 }
+
+/* ─── Driver.js Tour — Identidade Visual Flamboyant ─────────────────── */
+.driver-popover {
+  background: #1a0a08 !important;
+  border: 1px solid #6e150e !important;
+  border-radius: 14px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(196,21,31,0.25) !important;
+  padding: 20px 22px 18px !important;
+  max-width: 340px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.driver-popover-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #f9e4a0 !important;
+  margin-bottom: 8px !important;
+  letter-spacing: -0.01em !important;
+}
+
+.driver-popover-description {
+  font-size: 13px !important;
+  color: #c8b89a !important;
+  line-height: 1.6 !important;
+}
+
+.driver-popover-description b {
+  color: #f9e4a0 !important;
+}
+
+.driver-popover-progress-text {
+  font-size: 11px !important;
+  color: #bc9b7c !important;
+  font-weight: 500 !important;
+}
+
+.driver-popover-footer {
+  margin-top: 16px !important;
+  gap: 8px !important;
+}
+
+.driver-popover-prev-btn,
+.driver-popover-next-btn,
+.driver-popover-done-btn {
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+}
+
+.driver-popover-prev-btn {
+  background: transparent !important;
+  color: #bc9b7c !important;
+  border: 1px solid #6e150e !important;
+}
+
+.driver-popover-prev-btn:hover {
+  background: rgba(110,21,14,0.4) !important;
+  color: #f9e4a0 !important;
+}
+
+.driver-popover-next-btn,
+.driver-popover-done-btn {
+  background: linear-gradient(135deg, #9F1239 0%, #c4151f 50%, #9F1239 100%) !important;
+  background-size: 200% auto !important;
+  color: #f9e4a0 !important;
+  animation: shimmer-brand 4s ease-in-out infinite !important;
+}
+
+.driver-popover-next-btn:hover,
+.driver-popover-done-btn:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(196,21,31,0.4) !important;
+}
+
+.driver-popover-close-btn {
+  color: #bc9b7c !important;
+  font-size: 16px !important;
+}
+
+.driver-popover-close-btn:hover {
+  color: #f9e4a0 !important;
+}
+
+.driver-popover-arrow-side-top.driver-popover-arrow {
+  border-top-color: #6e150e !important;
+}
+.driver-popover-arrow-side-bottom.driver-popover-arrow {
+  border-bottom-color: #6e150e !important;
+}
+.driver-popover-arrow-side-left.driver-popover-arrow {
+  border-left-color: #6e150e !important;
+}
+.driver-popover-arrow-side-right.driver-popover-arrow {
+  border-right-color: #6e150e !important;
+}
+
+#driver-dummy-element {
+  display: none !important;
+}
+
+/* ─── Driver.js — fixes overlay e z-index em qualquer resolução ─── */
+.driver-overlay {
+  position: fixed !important;
+}
+
+.driver-popover {
+  z-index: 100000 !important;
+}
+
+/* Garante que o highlight recorte corretamente em telas menores */
+.driver-active-element {
+  z-index: 99999 !important;
+}

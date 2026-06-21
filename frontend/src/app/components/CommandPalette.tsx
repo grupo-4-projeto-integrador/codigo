@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Command } from 'cmdk';
-import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2, Share2 as TopologyStar3 } from 'lucide-react';
+import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2, Share2 as TopologyStar3, Clapperboard, Tv2, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { searchApolices, deleteApolice, listApolices } from '../../api/apolice';
 import { toast } from 'sonner';
+
 import {
   setFullscreenTableOpen,
   setFullscreenTableFilter,
@@ -46,8 +47,18 @@ export function CommandPalette() {
         setOpen((open) => !open);
       }
     };
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
+    const handleCustomOpen = () => setOpen(true);
+    const handleCustomClose = () => setOpen(false);
+    
+    document.addEventListener('keydown', down, { capture: true });
+    window.addEventListener('open-command-palette', handleCustomOpen);
+    window.addEventListener('close-command-palette', handleCustomClose);
+    
+    return () => {
+      document.removeEventListener('keydown', down, { capture: true });
+      window.removeEventListener('open-command-palette', handleCustomOpen);
+      window.removeEventListener('close-command-palette', handleCustomClose);
+    };
   }, []);
 
   useEffect(() => {
@@ -437,6 +448,8 @@ export function CommandPalette() {
                   </Command.Item>
                 </Command.Group>
               )}
+
+
 
               <Command.Group heading="Ações / Tema" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                 <Command.Item 
