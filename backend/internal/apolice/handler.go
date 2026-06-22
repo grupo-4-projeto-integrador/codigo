@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"grupo4/seguros/internal/ai"
 	"grupo4/seguros/internal/audit"
 	"grupo4/seguros/internal/middleware"
 	"grupo4/seguros/pkg/response"
@@ -24,6 +25,7 @@ import (
 type Handler struct {
 	service  *Service
 	auditSvc *audit.Service // nullable — auditoria opcional
+	aiSvc    *ai.Service    // nullable
 }
 
 type MapLayoutItem struct {
@@ -70,8 +72,8 @@ type AtividadeRecenteResponse struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func NewHandler(service *Service, auditSvc *audit.Service) *Handler {
-	return &Handler{service: service, auditSvc: auditSvc}
+func NewHandler(service *Service, auditSvc *audit.Service, aiSvc *ai.Service) *Handler {
+	return &Handler{service: service, auditSvc: auditSvc, aiSvc: aiSvc}
 }
 
 // logAudit envia registro de auditoria de forma segura (nunca bloqueia/falha).
@@ -861,11 +863,84 @@ func (h *Handler) DownloadDocumento(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", doc.Nome))
-	http.ServeFile(w, r, safePath)
+	if _, err := os.Stat(safePath); os.IsNotExist(err) {
+		response.Fail(w, http.StatusNotFound, "Arquivo físico não encontrado no servidor", middleware.RequestIDFromContext(r.Context()), nil)
+		return
+	}
+
+	// Tentar detectar content-type (básico)
+	contentType := "application/pdf"
+	ext := strings.ToLower(filepath.Ext(safePath))
+	if ext == ".png" {
+		contentType = "image/png"
+	} else if ext == ".jpg" || ext == ".jpeg" {
+		contentType = "image/jpeg"
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", doc.Nome))
+	w.Header().Set("Content-Type", contentType)
+
+	file, err := os.Open(safePath)
+	if err != nil {
+		response.Fail(w, http.StatusInternalServerError, "Erro ao abrir arquivo", middleware.RequestIDFromContext(r.Context()), nil)
+		return
+	}
+	defer file.Close()
+
+	if _, err := io.Copy(w, file); err != nil {
+		log.Printf("Erro ao enviar arquivo para o cliente: %v", err)
+	}
 
 	arquivoJSON := fmt.Sprintf(`{"filename": %q}`, doc.Nome)
 	h.logAuditWithPayloads(r, "download", "documento", id, nil, &arquivoJSON)
+}
+
+func (h *Handler) ExtrairDeDocumento(w http.ResponseWriter, r *http.Request) {
+	requestID := middleware.RequestIDFromContext(r.Context())
+
+	if h.aiSvc == nil {
+		_ = response.Fail(w, http.StatusNotImplemented, "Serviço de IA não está configurado neste servidor", requestID, nil)
+		return
+	}
+
+	// 5 MB limit para o upload da memória
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, "Arquivo excede o tamanho permitido (5MB) ou a requisição é inválida", requestID, nil)
+		return
+	}
+
+	file, handler, err := r.FormFile("documento")
+	if err != nil {
+		_ = response.Fail(w, http.StatusBadRequest, "Arquivo 'documento' não encontrado no form", requestID, nil)
+		return
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		_ = response.Fail(w, http.StatusInternalServerError, "Erro ao ler arquivo", requestID, nil)
+		return
+	}
+
+	mimeType := "application/pdf"
+	ext := strings.ToLower(filepath.Ext(handler.Filename))
+	if ext == ".png" {
+		mimeType = "image/png"
+	} else if ext == ".jpg" || ext == ".jpeg" {
+		mimeType = "image/jpeg"
+	} else if ext != ".pdf" {
+		_ = response.Fail(w, http.StatusBadRequest, "Formato não suportado. Envie um PDF, PNG ou JPG.", requestID, nil)
+		return
+	}
+
+	extractedData, err := h.aiSvc.ExtrairDadosApolice(r.Context(), fileBytes, mimeType)
+	if err != nil {
+		log.Printf("Erro na extração IA: %v", err)
+		_ = response.Fail(w, http.StatusInternalServerError, fmt.Sprintf("Erro do Gemini: %v", err), requestID, nil)
+		return
+	}
+
+	_ = response.Success(w, http.StatusOK, extractedData, requestID)
 }
 
 func (h *Handler) GetDocumentos(w http.ResponseWriter, r *http.Request) {

@@ -4,20 +4,21 @@ import (
 	"database/sql"
 	"net/http"
 
+	"grupo4/seguros/internal/ai"
 	"grupo4/seguros/internal/audit"
 	"grupo4/seguros/internal/auth"
 )
 
 // RegisterRoutes mantém compatibilidade retroativa (sem auditoria/auth).
 func RegisterRoutes(mux *http.ServeMux, db *sql.DB) {
-	RegisterRoutesWithAudit(mux, db, nil, "")
+	RegisterRoutesWithAudit(mux, db, nil, nil, "")
 }
 
 // RegisterRoutesWithAudit registra rotas com auditoria e autenticação JWT injetados.
-func RegisterRoutesWithAudit(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Service, jwtSecret string) {
+func RegisterRoutesWithAudit(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Service, aiSvc *ai.Service, jwtSecret string) {
 	repo := NewRepository(db)
 	service := NewService(repo)
-	handler := NewHandler(service, auditSvc)
+	handler := NewHandler(service, auditSvc, aiSvc)
 
 	// Helper: exige apenas token válido (todos os roles)
 	onlyAuth := func(h http.Handler) http.Handler {
@@ -68,6 +69,7 @@ func RegisterRoutesWithAudit(mux *http.ServeMux, db *sql.DB, auditSvc *audit.Ser
 	mux.Handle("PATCH /api/apolices/{id}/responsavel", requireRole(http.HandlerFunc(handler.UpdateApoliceResponsavel), "admin", "gestor"))
 	mux.Handle("POST /api/apolices/{id}/renovar", requireRole(http.HandlerFunc(handler.RenovarApolice), "admin", "gestor"))
 	mux.Handle("POST /api/apolices/{id}/documentos", requireRole(http.HandlerFunc(handler.UploadDocumento), "admin", "gestor"))
+	mux.Handle("POST /api/apolices/extract-ai", requireRole(http.HandlerFunc(handler.ExtrairDeDocumento), "admin", "gestor"))
 
 	// ── Exclusão — somente admin ────────────────────────────────────────────────
 	mux.Handle("DELETE /api/apolices/{id}", requireRole(http.HandlerFunc(handler.Item("/api/apolices")), "admin"))

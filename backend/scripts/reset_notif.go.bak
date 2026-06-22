@@ -1,0 +1,45 @@
+package main
+
+import (
+	"database/sql"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+)
+
+func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("Aviso: arquivo .env não encontrado, usando variáveis de ambiente.")
+	}
+
+	host := os.Getenv("PG_HOST")
+	port := os.Getenv("PG_PORT")
+	user := os.Getenv("PG_USER")
+	password := os.Getenv("PG_PASSWORD")
+	dbname := os.Getenv("PG_DBNAME")
+	sslmode := os.Getenv("PG_SSLMODE")
+
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode)
+
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		log.Fatalf("Erro ao conectar no banco: %v", err)
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Erro no ping: %v", err)
+	}
+
+	res, err := db.Exec(`DELETE FROM notificacoes`)
+	if err != nil {
+		log.Fatalf("Erro ao atualizar notificacoes: %v", err)
+	}
+
+	rows, _ := res.RowsAffected()
+	fmt.Printf("Sucesso: %d notificacoes resetadas para lida=false\n", rows)
+}

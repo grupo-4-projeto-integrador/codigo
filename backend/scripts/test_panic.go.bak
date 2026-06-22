@@ -1,0 +1,37 @@
+package main
+
+import (
+	"bytes"
+	"context"
+	"mime/multipart"
+	"net/http/httptest"
+	"github.com/joho/godotenv"
+
+	"grupo4/seguros/internal/ai"
+	"grupo4/seguros/internal/apolice"
+)
+
+func main() {
+	godotenv.Load(".env")
+	aiSvc, err := ai.NewService(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	handler := apolice.NewHandler(nil, nil, aiSvc)
+
+	// Create a dummy multipart request
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	part, _ := writer.CreateFormFile("documento", "test.png")
+	part.Write([]byte("fake image data"))
+	writer.Close()
+
+	req := httptest.NewRequest("POST", "/api/apolices/extract-ai", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	w := httptest.NewRecorder()
+	
+	// This will panic if there's a nil pointer
+	handler.ExtrairDeDocumento(w, req)
+}

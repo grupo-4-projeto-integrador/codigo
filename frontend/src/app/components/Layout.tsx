@@ -258,9 +258,11 @@ export function Layout() {
   }, []);
 
   const unreadCount = notifications.filter(n => !n.lida).length;
-  const vencidas = notifications.filter(n => n.type === 'vencida').sort((a, b) => b.dias - a.dias);
-  const aVencer = notifications.filter(n => n.type === 'a_vencer').sort((a, b) => a.dias - b.dias);
-  const equipe = notifications.filter(n => n.type === 'equipe');
+  // Ocultar notificações lidas do dropdown para criar a sensação de "inbox zero" e evitar confusão
+  const unreadOnly = notifications.filter(n => !n.lida);
+  const vencidas = unreadOnly.filter(n => n.type === 'vencida').sort((a, b) => b.dias - a.dias);
+  const aVencer = unreadOnly.filter(n => n.type === 'a_vencer').sort((a, b) => a.dias - b.dias);
+  const equipe = unreadOnly.filter(n => n.type === 'equipe');
 
   const [bellAnimate, setBellAnimate] = useState(false);
   const prevUnreadRef = useRef(unreadCount);
@@ -761,7 +763,7 @@ export function Layout() {
                     </div>
                     {unreadCount > 0 && (
                       <button onClick={handleMarkAllRead} className="text-[10px] font-medium text-[#c4151f] hover:underline">
-                        Marcar todas como lidas
+                        Limpar todas
                       </button>
                     )}
                   </div>

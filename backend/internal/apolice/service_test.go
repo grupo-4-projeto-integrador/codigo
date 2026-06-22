@@ -52,6 +52,10 @@ func (m *MockRepository) Delete(luc string) error {
 	return m.Err
 }
 
+func (m *MockRepository) DeleteDocumento(id string) error {
+	return m.Err
+}
+
 func (m *MockRepository) GetCoberturas(luc string) ([]Cobertura, error) {
 	return nil, m.Err
 }

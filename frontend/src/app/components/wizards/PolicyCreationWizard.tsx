@@ -11,6 +11,8 @@ import { MultiSelect } from "../ui/multi-select";
 import { DatePicker } from "../ui/date-picker";
 import { request } from "../../../api/client";
 import { createApolice, getLojas } from "../../../api/apolice";
+import { extractDataFromDocument } from "../../../api/ai";
+import { Sparkles } from "lucide-react";
 
 const STORAGE_KEY = "policy_creation_draft";
 
@@ -29,6 +31,7 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
   const [tiposCobertura, setTiposCobertura] = useState<{label: string, value: string}[]>([]);
   const [lojaIsReadOnly, setLojaIsReadOnly] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [draftToRestore, setDraftToRestore] = useState<any>(null);
 
   // Form State
@@ -131,6 +134,48 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
       setSelectedFiles(prev => [...prev, ...newFiles]);
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleAIUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    
+    setIsExtracting(true);
+    toast.info("A IA está analisando sua apólice...", { id: "ai-extract" });
+    
+    try {
+      const extracted = await extractDataFromDocument(file);
+      
+      const parseDateStr = (d: string) => {
+        if (!d) return undefined;
+        const parts = d.split('/');
+        if (parts.length === 3) {
+          return new Date(`${parts[2]}-${parts[1]}-${parts[0]}T12:00:00`);
+        }
+        return undefined;
+      };
+
+      setFormData(prev => ({
+        ...prev,
+        luc: extracted.luc || prev.luc,
+        loja: extracted.lojista || prev.loja,
+        tipos_cobertura: extracted.segmento ? [extracted.segmento] : prev.tipos_cobertura,
+        seguradora: extracted.seguradora || prev.seguradora,
+        vigencia: parseDateStr(extracted.vigencia) || prev.vigencia,
+        vencimento: parseDateStr(extracted.vencimento) || prev.vencimento,
+        cobertura: extracted.cobertura ? extracted.cobertura.toString() : prev.cobertura,
+      }));
+
+      toast.success("Dados extraídos com sucesso! Revise os campos preenchidos.", { id: "ai-extract" });
+      if (extracted.luc) {
+        handleLucChange(extracted.luc, false);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Falha ao extrair dados", { id: "ai-extract" });
+    } finally {
+      setIsExtracting(false);
+      e.target.value = '';
+    }
   };
 
   const applyCnpjMask = (value: string) => {
@@ -339,6 +384,45 @@ export function PolicyCreationWizard({ open, onOpenChange, onSuccess }: PolicyCr
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Identificação da Loja</h3>
                   <p className="text-sm text-gray-500 dark:text-[#94A3B8]">Insira o LUC para preencher automaticamente os dados da loja caso existam.</p>
                 </div>
+                
+                {/* AI Dropzone Temporariamente Desativado (Decisão do Grupo) 
+                <div className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+                  isExtracting 
+                    ? 'border-[#c4151f]/50 bg-[#c4151f]/5 dark:bg-[#c4151f]/10' 
+                    : 'border-gray-200 dark:border-[#333] hover:border-[#c4151f]/50 hover:bg-gray-50 dark:hover:bg-[#151515]'
+                }`}>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                    onChange={handleAIUpload}
+                    disabled={isExtracting}
+                  />
+                  <div className="flex flex-col items-center gap-3">
+                    {isExtracting ? (
+                      <div className="w-10 h-10 border-4 border-[#c4151f] border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#c4151f]/10 to-[#1c3d32]/10 flex items-center justify-center">
+                        <Sparkles className="w-6 h-6 text-[#c4151f] dark:text-[#E23B44]" />
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {isExtracting ? "A IA está lendo o documento..." : "Preenchimento Mágico com IA"}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-[#94A3B8] mt-1">
+                        Arraste uma foto ou PDF da apólice aqui para autopreencher
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 py-2">
+                  <div className="h-px bg-gray-200 dark:bg-[#333] flex-1"></div>
+                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">ou digite manualmente</span>
+                  <div className="h-px bg-gray-200 dark:bg-[#333] flex-1"></div>
+                </div>
+                */}
                 
                 <div className="space-y-4">
                   <div className="space-y-2">

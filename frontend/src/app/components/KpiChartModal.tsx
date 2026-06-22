@@ -176,29 +176,31 @@ export function KpiChartModal({ isOpen, onClose, metrica, historyValues, svgPath
                 const barHeight = pico > 0 ? Math.max((val / pico) * 100, 4) : 4;
                 const isPico = val === pico;
                 return (
-                  <div key={idx} className={`flex flex-col items-center justify-end group relative ${presentationMode ? 'h-[100px]' : 'h-24'}`}>
+                  <div key={idx} className={`flex flex-col items-center justify-end group relative ${presentationMode ? 'h-[110px]' : 'h-[96px]'}`}>
                     {presentationMode && isPico && (
-                      <span className="absolute -top-4 text-[9px] text-white whitespace-nowrap">↑ pico</span>
+                      <span className="absolute top-0 text-[9px] text-white whitespace-nowrap">↑ pico</span>
                     )}
-                    <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mb-1 font-medium">
-                      {formatValue(metrica, val)}
-                    </span>
-                    <motion.div 
-                      className="w-full max-w-[20px] rounded-t-sm" 
-                      initial={{ height: "0%" }}
-                      animate={{ height: `${barHeight}%` }}
-                      transition={{ 
-                        duration: presentationMode ? 1.5 : 0.5, 
-                        delay: presentationMode ? 0.2 + (idx * 0.1) : idx * 0.05,
-                        ease: [0.22, 1, 0.36, 1]
-                      }}
-                      style={{ 
-                        backgroundColor: color, 
-                        opacity: presentationMode ? (idx === values.length - 1 ? 1 : 0.45) : (idx === values.length - 1 ? 1 : 0.4),
-                        borderTop: presentationMode && isPico ? '2px solid rgba(255,255,255,0.4)' : undefined
-                      }} 
-                    />
-                    <span className="text-[9px] text-gray-400 mt-2 truncate w-full text-center">
+                    <div className="w-full flex-1 flex flex-col justify-end items-center mt-4">
+                      <span className="text-[10px] text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity mb-1 font-medium">
+                        {formatValue(metrica, val)}
+                      </span>
+                      <motion.div 
+                        className="w-full max-w-[20px] rounded-t-sm" 
+                        initial={{ height: "0%" }}
+                        animate={{ height: `${barHeight}%` }}
+                        transition={{ 
+                          duration: presentationMode ? 1.5 : 0.5, 
+                          delay: presentationMode ? 0.2 + (idx * 0.1) : idx * 0.05,
+                          ease: [0.22, 1, 0.36, 1]
+                        }}
+                        style={{ 
+                          backgroundColor: color, 
+                          opacity: presentationMode ? (idx === values.length - 1 ? 1 : 0.45) : (idx === values.length - 1 ? 1 : 0.4),
+                          borderTop: presentationMode && isPico ? '2px solid rgba(255,255,255,0.4)' : undefined
+                        }} 
+                      />
+                    </div>
+                    <span className="text-[9px] text-gray-400 mt-2 mb-1 truncate w-full text-center shrink-0">
                       {labels[idx]}
                     </span>
                   </div>

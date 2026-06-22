@@ -1,0 +1,15 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"os"
+
+	"grupo4/seguros/internal/ai"
+)
+
+func main() {
+	// Carrega env dummy
+	os.Setenv("GEMINI_API_KEY", "dummy_if_not_set") // I don't know the actual key, so I will just call NewService to see if it loads the .env. Wait, I shouldn't overwrite the real one. Let me read .env instead.
+}

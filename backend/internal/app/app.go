@@ -1,11 +1,12 @@
 package app
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
 	"strings"
-
+	"grupo4/seguros/internal/ai"
 	"grupo4/seguros/internal/apolice"
 	"grupo4/seguros/internal/audit"
 	"grupo4/seguros/internal/auth"
@@ -29,12 +30,12 @@ func Run() error {
 	}
 	defer db.Close()
 
-	handler := buildHandler(db, cfg)
+	handler := buildHandler(context.Background(), db, cfg)
 	log.Printf("Servidor rodando em http://%s", cfg.Addr())
 	return http.ListenAndServe(cfg.Addr(), handler)
 }
 
-func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
+func buildHandler(ctx context.Context, db *sql.DB, cfg config.Config) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +73,13 @@ func buildHandler(db *sql.DB, cfg config.Config) http.Handler {
 
 	notificacao.RegisterRoutes(mux, db, cfg.JWTSecret)
 
-	apolice.RegisterRoutesWithAudit(mux, db, auditSvc, cfg.JWTSecret)
+	// AI
+	aiSvc, err := ai.NewService(context.Background())
+	if err != nil {
+		log.Printf("Aviso: serviço de IA desabilitado. Motivo: %v", err)
+	}
+
+	apolice.RegisterRoutesWithAudit(mux, db, auditSvc, aiSvc, cfg.JWTSecret)
 	relatorio.RegisterRoutes(mux, cfg.JWTSecret, cfg.GeminiAPIKey)
 	registerStaticFiles(mux, cfg.Frontend.Dir)
 
