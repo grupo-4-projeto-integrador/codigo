@@ -343,7 +343,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
   }, [data]);
 
   // Slice according to mode and showAll state
-  const limit   = mode === "ultra" ? 6 : 5;
+  const limit   = mode === "ultra" ? 6 : undefined;
   const visible = showAll || !limit ? data : data.slice(0, limit);
   const hasMore = limit !== undefined && data.length > limit;
 

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"grupo4/seguros/internal/ai"
 	"grupo4/seguros/internal/apolice"
@@ -87,41 +89,32 @@ func buildHandler(ctx context.Context, db *sql.DB, cfg config.Config) http.Handl
 		middleware.RequestID,
 		middleware.Logger,
 		middleware.Recover,
-		middleware.CORS,
+		middleware.CORS(cfg.AllowedOrigins),
 	)
 }
 
 func registerStaticFiles(mux *http.ServeMux, staticPath string) {
+	fs := http.FileServer(http.Dir(staticPath))
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// As rotas de API continuam respondendo com 404 em vez de carregar a UI
 		if strings.HasPrefix(r.URL.Path, "/api/") {
 			response.Fail(w, http.StatusNotFound, "Rota não encontrada", middleware.RequestIDFromContext(r.Context()), nil)
 			return
 		}
 
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`<!doctype html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>API de Seguros</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f172a; color: #e2e8f0; }
-    main { max-width: 720px; padding: 32px; }
-    h1 { margin: 0 0 12px; font-size: 2rem; }
-    p { line-height: 1.6; margin: 0 0 12px; }
-    a { color: #38bdf8; }
-    code { background: rgba(148, 163, 184, 0.15); padding: 2px 6px; border-radius: 4px; }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>API de Seguros online</h1>
-    <p>O backend está funcionando corretamente.</p>
-    <p>Acesse o frontend via ambiente de desenvolvimento (pnpm dev).</p>
-  </main>
-</body>
-</html>`))
+		// Para rotas do frontend, tentamos ler o arquivo.
+		// Se não existir, retornamos index.html para o React Router assumir.
+		path := filepath.Join(staticPath, r.URL.Path)
+		info, err := os.Stat(path)
+
+		if os.IsNotExist(err) || info.IsDir() {
+			// Arquivo não existe ou é diretório (ex: /seguros), manda o index.html
+			http.ServeFile(w, r, filepath.Join(staticPath, "index.html"))
+			return
+		}
+
+		// Se o arquivo existe (ex: .js, .css, .png), deixa o FileServer servir
+		fs.ServeHTTP(w, r)
 	})
 }

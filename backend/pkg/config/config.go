@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -16,6 +17,7 @@ type Config struct {
 	JWTSecret          string
 	JWTExpirationHours int
 	GeminiAPIKey       string // loaded from GEMINI_API_KEY; never logged or exposed
+	AllowedOrigins     []string
 }
 
 type HTTPConfig struct {
@@ -56,6 +58,13 @@ func Load() (Config, error) {
 		JWTSecret:          getEnv("JWT_SECRET", ""),
 		JWTExpirationHours: getEnvAsInt("JWT_EXPIRATION_HOURS", 8),
 		GeminiAPIKey:       os.Getenv("GEMINI_API_KEY"),
+	}
+
+	originsStr := getEnv("ALLOWED_ORIGINS", "")
+	if originsStr != "" {
+		for _, o := range strings.Split(originsStr, ",") {
+			cfg.AllowedOrigins = append(cfg.AllowedOrigins, strings.TrimSpace(o))
+		}
 	}
 
 	if len(cfg.JWTSecret) < 32 {
