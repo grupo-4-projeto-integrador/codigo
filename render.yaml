@@ -12,10 +12,10 @@ services:
       - key: ALLOWED_ORIGINS
         value: "" # Ex: https://flamboyant-frontend.vercel.app
       - key: DATABASE_URL
-        value: "" # Substitua no dashboard do Render pela sua connection string
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRATION_HOURS
         value: 24
       - key: GEMINI_API_KEY
-        value: "" # Substitua no dashboard do Render
+        sync: false
