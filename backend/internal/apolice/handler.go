@@ -144,8 +144,8 @@ func (h *Handler) GetKPIHistory(w http.ResponseWriter, r *http.Request) {
 	if metric == "" {
 		metric = "conformes"
 	}
-	if metric != "conformes" && metric != "vencidas" {
-		_ = response.Fail(w, http.StatusBadRequest, "MÃƒÂ©trica nÃƒÂ£o suportada", requestID, nil)
+	if metric != "conformes" && metric != "vencidas" && metric != "a-vencer" {
+		_ = response.Fail(w, http.StatusBadRequest, "Métrica não suportada", requestID, nil)
 		return
 	}
 
@@ -438,6 +438,8 @@ func buildKPIHistoryPoints(items []Apolice, weeks int, metric string) []KPIHisto
 		switch metric {
 		case "vencidas":
 			value = countVencidasAt(items, snapshot)
+		case "a-vencer":
+			value = countAVencerAt(items, snapshot)
 		default:
 			value = countConformesAt(items, snapshot)
 		}
@@ -486,6 +488,31 @@ func countVencidasAt(items []Apolice, at time.Time) int {
 
 		vencimento := time.Date(item.Vencimento.Year(), item.Vencimento.Month(), item.Vencimento.Day(), 0, 0, 0, 0, at.Location())
 		if vencimento.Before(snapshot) {
+			count++
+		}
+	}
+
+	return count
+}
+
+func countAVencerAt(items []Apolice, at time.Time) int {
+	count := 0
+	snapshot := time.Date(at.Year(), at.Month(), at.Day(), 0, 0, 0, 0, at.Location())
+
+	for _, item := range items {
+		if item.Vigencia.IsZero() || item.Vencimento.IsZero() {
+			continue
+		}
+
+		vigencia := time.Date(item.Vigencia.Year(), item.Vigencia.Month(), item.Vigencia.Day(), 0, 0, 0, 0, at.Location())
+		vencimento := time.Date(item.Vencimento.Year(), item.Vencimento.Month(), item.Vencimento.Day(), 0, 0, 0, 0, at.Location())
+
+		if snapshot.Before(vigencia) {
+			continue
+		}
+
+		daysRemaining := int(vencimento.Sub(snapshot).Hours() / 24)
+		if daysRemaining >= 0 && daysRemaining <= 30 {
 			count++
 		}
 	}

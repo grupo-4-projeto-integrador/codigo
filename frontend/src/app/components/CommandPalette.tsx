@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { Command } from 'cmdk';
-import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2, Share2 as TopologyStar3, Clapperboard, Tv2, RotateCcw } from 'lucide-react';
+import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2, Share2 as TopologyStar3, Clapperboard, Tv2, RotateCcw, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useIsMobile } from './ui/use-mobile';
 import { searchApolices, deleteApolice, listApolices } from '../../api/apolice';
@@ -193,6 +193,7 @@ export function CommandPalette() {
 
               <Command.Group heading="Navegar" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2">
                 <Command.Item 
+                  value="ir para visao geral dashboard home inicio painel kpis"
                   onSelect={() => handleSelect(() => {
                     navigate('/seguros');
                     setTimeout(() => window.dispatchEvent(new CustomEvent('go-visao-geral')), 100);
@@ -203,6 +204,7 @@ export function CommandPalette() {
                   <span>Ir para Visão Geral</span>
                 </Command.Item>
                 <Command.Item 
+                  value="ir para audit log auditoria historico acoes logs registros"
                   onSelect={() => handleSelect(() => {
                     navigate('/seguros');
                     setTimeout(() => window.dispatchEvent(new CustomEvent('open-audit-log')), 100);
@@ -213,6 +215,18 @@ export function CommandPalette() {
                   <span>Ir para Audit Log</span>
                 </Command.Item>
                 <Command.Item 
+                  value="ir para gestao de usuarios administracao permissoes acessos"
+                  onSelect={() => handleSelect(() => {
+                    navigate('/seguros');
+                    setTimeout(() => window.dispatchEvent(new CustomEvent('go-usuarios')), 100);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <Users className="w-4 h-4 opacity-70" />
+                  <span>Ir para Gestão de Usuários</span>
+                </Command.Item>
+                <Command.Item 
+                  value="ir para tabela completa com todas as apolices lista grid"
                   onSelect={() => handleSelect(() => {
                     navigate('/seguros');
                     setTimeout(() => window.dispatchEvent(new CustomEvent('go-visao-geral')), 100);
@@ -223,6 +237,7 @@ export function CommandPalette() {
                   <span>Ir para Tabela com todas as apólices</span>
                 </Command.Item>
                 <Command.Item 
+                  value="ir para nova apolice criar adicionar cadastro"
                   onSelect={() => handleSelect(() => navigate('/seguros/apolice/nova'))}
                   className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
                 >
@@ -230,6 +245,7 @@ export function CommandPalette() {
                   <span>Ir para Nova Apólice</span>
                 </Command.Item>
                 <Command.Item 
+                  value="graph view visualizacao por segmento grafico topologia arvore"
                   onSelect={() => {
                     navigate('/graph');
                     setOpen(false);
@@ -240,6 +256,7 @@ export function CommandPalette() {
                   <span>Graph View · Visualização por segmento</span>
                 </Command.Item>
                 <Command.Item 
+                  value="notificacoes alertas avisos mensagens"
                   onSelect={() => handleSelect(() => {
                     window.dispatchEvent(new CustomEvent('abrir-notificacoes'));
                   })}
@@ -252,6 +269,7 @@ export function CommandPalette() {
 
               <Command.Group heading="Tabela em Tela Cheia" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                 <Command.Item
+                  value="tabela completa todas as apolices cheia tela cheia fullscreen"
                   onSelect={() => handleSelect(() => { 
                     if (isMobile) {
                       navigate('/seguros/tabela?filter=Todas');
@@ -268,6 +286,7 @@ export function CommandPalette() {
                   <span className="text-[10px] text-gray-400 dark:text-[#64748B]">{counts.all} registros</span>
                 </Command.Item>
                 <Command.Item
+                  value="tabela completa vencidas cheia tela cheia fullscreen vermelho"
                   onSelect={() => handleSelect(() => { 
                     if (isMobile) {
                       navigate('/seguros/tabela?filter=Vencidas');
@@ -284,6 +303,7 @@ export function CommandPalette() {
                   <span className="text-[10px] text-red-400/70">{counts.vencida} vencidas</span>
                 </Command.Item>
                 <Command.Item
+                  value="tabela completa a vencer cheia tela cheia fullscreen laranja"
                   onSelect={() => handleSelect(() => { 
                     if (isMobile) {
                       navigate('/seguros/tabela?filter=A%20Vencer');
@@ -300,6 +320,7 @@ export function CommandPalette() {
                   <span className="text-[10px] text-orange-400/70">{counts['a-vencer']} a vencer</span>
                 </Command.Item>
                 <Command.Item
+                  value="tabela completa conformes cheia tela cheia fullscreen verde"
                   onSelect={() => handleSelect(() => { 
                     if (isMobile) {
                       navigate('/seguros/tabela?filter=Conformes');
@@ -319,6 +340,7 @@ export function CommandPalette() {
 
               <Command.Group heading="Filtros rápidos" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                 <Command.Item 
+                  value="ver apenas vencidas filtro filtrar vermelho"
                   onSelect={() => handleSelect(() => {
                     navigate('/seguros');
                     setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-vencidas')), 100);
@@ -329,6 +351,7 @@ export function CommandPalette() {
                   <span>Ver apenas vencidas</span>
                 </Command.Item>
                 <Command.Item 
+                  value="ver apenas a vencer filtro filtrar laranja amarelo"
                   onSelect={() => handleSelect(() => {
                     navigate('/seguros');
                     setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-a-vencer')), 100);
@@ -339,6 +362,7 @@ export function CommandPalette() {
                   <span>Ver apenas a vencer</span>
                 </Command.Item>
                 <Command.Item 
+                  value="ver apenas conformes filtro filtrar verde ativas vigentes"
                   onSelect={() => handleSelect(() => {
                     navigate('/seguros');
                     setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-conformes')), 100);
@@ -349,6 +373,7 @@ export function CommandPalette() {
                   <span>Ver apenas conformes</span>
                 </Command.Item>
                 <Command.Item 
+                  value="limpar todos os filtros resetar remover"
                   onSelect={() => handleSelect(() => {
                     navigate('/seguros');
                     setTimeout(() => window.dispatchEvent(new CustomEvent('filtrar-todas')), 100);
@@ -410,16 +435,15 @@ export function CommandPalette() {
               )}
 
               {renovarLuc && (
-                <Command.Group heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
+                <Command.Group forceMount heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                   <Command.Item 
+                    forceMount
                     value={`renovar ${renovarLuc}`}
                     onSelect={() => handleSelect(() => {
                       if (window.location.pathname !== '/seguros') {
                         navigate('/seguros');
-                        setTimeout(() => window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: renovarLuc })), 100);
-                      } else {
-                        window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: renovarLuc }));
                       }
+                      setTimeout(() => window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: renovarLuc })), 100);
                     })}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-white bg-[#9F1239] cursor-pointer"
                   >
@@ -430,8 +454,9 @@ export function CommandPalette() {
               )}
 
               {excluirLuc && (
-                <Command.Group heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
+                <Command.Group forceMount heading="Comando Inteligente" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                   <Command.Item 
+                    forceMount
                     value={`excluir ${excluirLuc}`}
                     onSelect={() => setDeleteConfirmLuc(excluirLuc)}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-white bg-[#A32D2D] cursor-pointer"
@@ -451,7 +476,7 @@ export function CommandPalette() {
                         navigate('/seguros');
                         setTimeout(() => window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: luc })), 100);
                       } else {
-                        window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: luc }));
+                        setTimeout(() => window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: luc })), 100);
                       }
                     })}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"

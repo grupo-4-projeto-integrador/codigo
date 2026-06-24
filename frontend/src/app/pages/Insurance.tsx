@@ -328,6 +328,7 @@ export function Insurance() {
   const [isLoading, setIsLoading] = useState(true);
   const [conformesHistory, setConformesHistory] = useState<KPIHistoryResponse | null>(null);
   const [vencidasHistoryData, setVencidasHistoryData] = useState<KPIHistoryResponse | null>(null);
+  const [aVencerHistoryData, setAVencerHistoryData] = useState<KPIHistoryResponse | null>(null);
   const [coverageHistory, setCoverageHistory] = useState<CoverageHistoryResponse | null>(null);
   const [atividadesRecentes, setAtividadesRecentes] = useState<AtividadeRecente[]>([]);
   const [loadingAtividades, setLoadingAtividades] = useState(true);
@@ -401,9 +402,6 @@ export function Insurance() {
   const sparklineDataAtivas = [
     { value: Math.max(0, activePolicies - 15) }, { value: Math.max(0, activePolicies - 10) }, { value: Math.max(0, activePolicies - 12) }, { value: Math.max(0, activePolicies - 5) }, { value: Math.max(0, activePolicies - 2) }, { value: activePolicies }
   ];
-  const sparklineDataAVencer = [
-    { value: Math.max(0, expiringPolicies - 8) }, { value: Math.max(0, expiringPolicies - 3) }, { value: Math.max(0, expiringPolicies - 5) }, { value: Math.max(0, expiringPolicies + 2) }, { value: Math.max(0, expiringPolicies + 1) }, { value: expiringPolicies }
-  ];
   const sparklineDataVencidas = [
     { value: Math.max(0, expiredPolicies + 10) }, { value: Math.max(0, expiredPolicies + 5) }, { value: Math.max(0, expiredPolicies + 7) }, { value: Math.max(0, expiredPolicies - 2) }, { value: Math.max(0, expiredPolicies + 1) }, { value: expiredPolicies }
   ];
@@ -446,7 +444,9 @@ export function Insurance() {
   const sparklineValues = (conformesHistory?.points?.length)
     ? conformesHistory.points.map((point) => point.value)
     : Array.from({ length: 8 }, () => conformidadeCount);
-  const expiringSparklineValues = sparklineDataAVencer.map((point) => point.value);
+  const expiringSparklineValues = aVencerHistoryData?.points?.length
+    ? aVencerHistoryData.points.map((point) => point.value)
+    : Array.from({ length: 8 }, () => expiringPolicies);
   const vencidasHistory = vencidasHistoryData?.points?.length
     ? vencidasHistoryData.points.map((point) => point.value)
     : Array.from({ length: 8 }, () => expiredPolicies);
@@ -576,6 +576,29 @@ export function Insurance() {
       } catch {
         if (active) {
           setVencidasHistoryData(null);
+        }
+      }
+    };
+
+    fetchHistory();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchHistory = async () => {
+      try {
+        const data = await request<KPIHistoryResponse>('/kpis/history?metric=a-vencer&weeks=8');
+        if (active) {
+          setAVencerHistoryData(data);
+        }
+      } catch {
+        if (active) {
+          setAVencerHistoryData(null);
         }
       }
     };
@@ -798,12 +821,20 @@ export function Insurance() {
     };
 
     const handleOpenRenew = (e: any) => {
+      console.log("[Insurance.tsx] open-renew-dialog received", e.detail);
       const luc = e.detail;
-      const policy = sortedPolicies.find(p => p.luc === luc);
-      if (policy && canEdit) {
-        setRenewalApoliceId(policy.id);
-        setIsRenewalWizardOpen(true);
+      const policy = allPolicies.find(p => p.luc?.trim().toLowerCase() === luc?.trim().toLowerCase());
+      console.log("[Insurance.tsx] policy found?", !!policy, "canEdit?", canEdit);
+      if (!policy) {
+        toast.error(`Apólice ${luc} não encontrada (Buscado em ${allPolicies.length} apólices).`);
+        return;
       }
+      if (!canEdit) {
+        toast.error(`Você não tem permissão para editar/renovar apólices.`);
+        return;
+      }
+      setRenewalApoliceId(policy.id);
+      setIsRenewalWizardOpen(true);
     };
 
     const handleCloseModalsEvent = () => {
@@ -822,12 +853,17 @@ export function Insurance() {
       setActiveTab('visao-geral');
     };
 
+    const handleGoUsuarios = () => {
+      if (role === 'admin') setActiveTab('usuarios');
+    };
+
     window.addEventListener("export-filter", handleExport);
     window.addEventListener("focus-search", handleFocusSearch);
     window.addEventListener("open-audit-log", handleOpenAuditLog);
     window.addEventListener("open-renew-dialog", handleOpenRenew);
     window.addEventListener("close-modals", handleCloseModalsEvent);
     window.addEventListener("go-visao-geral", handleGoVisaoGeral);
+    window.addEventListener("go-usuarios", handleGoUsuarios);
 
     return () => {
       window.removeEventListener("export-filter", handleExport);
@@ -836,8 +872,9 @@ export function Insurance() {
       window.removeEventListener("open-renew-dialog", handleOpenRenew);
       window.removeEventListener("close-modals", handleCloseModalsEvent);
       window.removeEventListener("go-visao-geral", handleGoVisaoGeral);
+      window.removeEventListener("go-usuarios", handleGoUsuarios);
     };
-  }, [sortedPolicies, statusFilter, canEdit, can]);
+  }, [sortedPolicies, allPolicies, statusFilter, canEdit, can]);
 
   // Listen for custom events from CommandPalette
   useEffect(() => {
@@ -1340,7 +1377,7 @@ export function Insurance() {
       onTouchEnd={isMobile ? onTouchEndEvent : undefined}
     >
       {/* Page Header (Breadcrumb, Sync Status, Title & Filters) */}
-      <div className={`flex-shrink-0 mb-4 space-y-2 px-6 pt-4 transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : ''}`}>
+      <div className={`flex-shrink-0 mb-4 space-y-2 px-6 pt-4 transition-all duration-500 ${isFocusMode ? 'hidden' : ''}`}>
         <div className="hidden md:flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-[#94A3B8]">
             <span className="cursor-pointer hover:opacity-70 font-medium" style={{ color: '#9F1239' }} onClick={() => navigate('/')}>Flamboyant Shopping</span>
@@ -1395,7 +1432,7 @@ export function Insurance() {
           {activeTab === 'visao-geral' && (
             <div className="flex items-center justify-end flex-1 w-full gap-2 lg:gap-2.5 filter-row min-w-0" id="filtros-tour">
               {/* ACTION BAR: Filtros, Busca, Download, Snapshot, Nova Apólice (Ancorada à Direita) */}
-              <div className="flex items-center gap-2 flex-1 w-full min-w-0 flex-nowrap md:flex-wrap overflow-x-auto scrollbar-hide justify-between md:justify-end pb-1">
+              <div className="flex items-center gap-2 flex-1 w-full min-w-0 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible scrollbar-hide justify-between md:justify-end pb-1">
                 {/* Popover Filtros Agrupado (Todas as Resoluções) */}
                 <div className="flex flex-shrink-0">
                   <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
