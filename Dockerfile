@@ -2,14 +2,17 @@
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
+# Habilitar pnpm
+RUN corepack enable pnpm
+
 # Instalar dependências
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
 
 # Copiar código e compilar
 COPY frontend/ ./
 # A API vai estar na mesma URL, então a base URL pode ser configurada ou deixada como default (/api)
-RUN npm run build
+RUN pnpm run build
 
 # Estágio 2: Build do Backend (Go)
 FROM golang:1.22-alpine AS backend-builder
