@@ -1,7 +1,6 @@
 import { Shield, Bell, AlertTriangle, AlertCircle, Plus, Search, MoreVertical, Activity, FolderOpen, Clock, BarChart3, Calendar, FileText, Edit, ChevronRight, ChevronLeft, Upload, X, ChevronUp, ChevronDown, User, Filter, CheckCircle2, SlidersHorizontal, Info, ShoppingBag, ShieldCheck, ShieldAlert, FilePlus, FilePenLine, RefreshCw, Trash2, Camera, Loader2, Settings2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
-import { driver } from "driver.js";
-import "driver.js/dist/driver.css";
+
 import React, { useState, useEffect, useRef, useId, memo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useUserProfile } from "../contexts/UserProfileContext";
@@ -746,32 +745,7 @@ export function Insurance() {
     return 0;
   });
 
-  // Onboarding interactivo
-  useEffect(() => {
-    if (!localStorage.getItem("onboarding_completed") && !isLoading && sortedPolicies.length > 0 && activeTab === 'visao-geral') {
-      setTimeout(() => {
-        const driverObj = driver({
-          showProgress: true,
-          nextBtnText: 'Próximo',
-          prevBtnText: 'Anterior',
-          doneBtnText: 'Concluir',
-          allowClose: true,
-          steps: [
-            { popover: { title: 'Bem-vindo ao Compliance!', description: 'Vamos fazer um tour rápido para você conhecer a tela de Seguros.', side: "bottom", align: 'start' } },
-            { element: '#kpis-tour', popover: { title: 'Visão Geral', description: 'Acompanhe a saúde das apólices, taxa de conformidade e indicadores críticos.', side: "bottom", align: 'start' } },
-            { element: '#mapa-tour', popover: { title: 'Mapa de Conformidade', description: 'Este é o Mapa de Conformidade. Clique num tile (loja) para ver os detalhes da apólice.', side: "left", align: 'start' } },
-            { element: '#filtros-tour', popover: { title: 'Filtros Inteligentes', description: 'Busque ou filtre por seguradora, status e segmento rapidamente.', side: "bottom", align: 'start' } },
-            { element: '#tabela-tour', popover: { title: 'Lista de Apólices', description: 'Visualize todas as apólices em detalhes. Arraste arquivos aqui para envio rápido.', side: "top", align: 'start' } },
-            { element: '#snapshot-tour', popover: { title: 'Exportação em PNG', description: 'Exporte relatórios! Você também pode capturar a tela inteira pressionando Alt + P.', side: "bottom", align: 'end' } }
-          ],
-          onDestroyed: () => {
-            localStorage.setItem("onboarding_completed", "true");
-          }
-        });
-        driverObj.drive();
-      }, 1000);
-    }
-  }, [isLoading, sortedPolicies.length, activeTab]);
+
 
   // Listen for custom events from CommandPalette
   useEffect(() => {
