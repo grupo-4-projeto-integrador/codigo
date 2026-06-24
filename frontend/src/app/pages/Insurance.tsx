@@ -143,7 +143,40 @@ export function Insurance() {
   const dashboardRef = useRef<HTMLDivElement>(null);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<'visao-geral' | 'audit-log'>('visao-geral');
+  const [activeTab, setActiveTab] = useState<'visao-geral' | 'audit-log' | 'usuarios'>('visao-geral');
+
+  // Swipe logic
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 70;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+
+  const onTouchEndEvent = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe || isRightSwipe) {
+      const availableTabs = ['visao-geral'];
+      if (can && can('ver_audit')) availableTabs.push('audit-log');
+      if (role === 'admin') availableTabs.push('usuarios');
+      
+      const currentIndex = availableTabs.indexOf(activeTab);
+      if (isLeftSwipe && currentIndex < availableTabs.length - 1) {
+        setActiveTab(availableTabs[currentIndex + 1] as any);
+      }
+      if (isRightSwipe && currentIndex > 0) {
+        setActiveTab(availableTabs[currentIndex - 1] as any);
+      }
+    }
+  };
 
 
 
@@ -1302,6 +1335,9 @@ export function Insurance() {
         backgroundColor: colors.pageBg,
         fontSize: isFocusMode ? '115%' : undefined,
       }}
+      onTouchStart={isMobile ? onTouchStart : undefined}
+      onTouchMove={isMobile ? onTouchMove : undefined}
+      onTouchEnd={isMobile ? onTouchEndEvent : undefined}
     >
       {/* Page Header (Breadcrumb, Sync Status, Title & Filters) */}
       <div className={`flex-shrink-0 mb-4 space-y-2 px-6 pt-4 transition-all duration-500 overflow-hidden ${isFocusMode ? 'hidden' : ''}`}>
@@ -1359,7 +1395,7 @@ export function Insurance() {
           {activeTab === 'visao-geral' && (
             <div className="flex items-center justify-end flex-1 w-full gap-2 lg:gap-2.5 filter-row min-w-0" id="filtros-tour">
               {/* ACTION BAR: Filtros, Busca, Download, Snapshot, Nova Apólice (Ancorada à Direita) */}
-              <div className="flex items-center gap-2 flex-1 min-w-0 flex-nowrap md:flex-wrap overflow-x-auto scrollbar-hide justify-start md:justify-end pb-1">
+              <div className="flex items-center gap-2 flex-1 w-full min-w-0 flex-nowrap md:flex-wrap overflow-x-auto scrollbar-hide justify-between md:justify-end pb-1">
                 {/* Popover Filtros Agrupado (Todas as Resoluções) */}
                 <div className="flex flex-shrink-0">
                   <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>

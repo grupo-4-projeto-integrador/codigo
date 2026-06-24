@@ -414,7 +414,12 @@ export function CommandPalette() {
                   <Command.Item 
                     value={`renovar ${renovarLuc}`}
                     onSelect={() => handleSelect(() => {
-                      navigate(`/seguros/apolice/${encodeURIComponent(renovarLuc)}/editar`);
+                      if (window.location.pathname !== '/seguros') {
+                        navigate('/seguros');
+                        setTimeout(() => window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: renovarLuc })), 100);
+                      } else {
+                        window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: renovarLuc }));
+                      }
                     })}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-white bg-[#9F1239] cursor-pointer"
                   >
@@ -440,7 +445,15 @@ export function CommandPalette() {
               {window.location.pathname.startsWith('/seguros/apolice/') && window.location.pathname.split('/').length >= 4 && window.location.pathname.split('/')[3] !== 'nova' && (
                 <Command.Group heading="Apólice atual" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                   <Command.Item 
-                    onSelect={() => handleSelect(() => navigate(`/seguros/apolice/${window.location.pathname.split('/')[3]}/editar`))}
+                    onSelect={() => handleSelect(() => {
+                      const luc = decodeURIComponent(window.location.pathname.split('/')[3]);
+                      if (window.location.pathname !== '/seguros') {
+                        navigate('/seguros');
+                        setTimeout(() => window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: luc })), 100);
+                      } else {
+                        window.dispatchEvent(new CustomEvent('open-renew-dialog', { detail: luc }));
+                      }
+                    })}
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
                   >
                     <RefreshCw className="w-4 h-4 opacity-70" />

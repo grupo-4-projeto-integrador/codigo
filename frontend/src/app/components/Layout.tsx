@@ -385,7 +385,7 @@ export function Layout() {
     e.stopPropagation();
     try {
       await arquivarUnica(id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
+      setNotifications(prev => prev.filter(n => n.id.toString() !== id.toString()));
     } catch (e) { console.error(e); }
   };
   
