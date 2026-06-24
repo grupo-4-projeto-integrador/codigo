@@ -5,6 +5,7 @@ import { TIME_OFFSETS, WEEKS_PAST, getStatusAtDate } from "../utils/timeline";
 import { Share2, Plus, Users, Filter, X, Building2, Map as MapIcon, Siren, CircleDot, Play, Pause, MousePointer2, BoxSelect, Shield, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { AnimatePresence, motion } from 'motion/react';
+import { useIsMobile } from "./ui/use-mobile";
 
 const COLORS = {
   vencida: '#c4151f',
@@ -53,6 +54,7 @@ interface Link extends d3.SimulationLinkDatum<Node> {
 
 export function GraphView() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [data, setData] = useState<ApoliceRecord[]>([]);
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapperRef = useRef<SVGGElement>(null);
@@ -134,7 +136,17 @@ export function GraphView() {
         g.selectAll('text').style('opacity', event.transform.k < 0.8 ? 0 : 1);
       });
     zoomRef.current = zoom;
-    d3.select(svgRef.current).call(zoom);
+    
+    const svgSelection = d3.select(svgRef.current);
+    svgSelection.call(zoom);
+
+    if (isMobile) {
+      const initialScale = 0.5;
+      const initialTransform = d3.zoomIdentity
+        .translate(width / 2 * (1 - initialScale), height / 2 * (1 - initialScale))
+        .scale(initialScale);
+      svgSelection.call(zoom.transform, initialTransform);
+    }
 
     // Build Graph Data
     const nodes: Node[] = [];
@@ -145,7 +157,7 @@ export function GraphView() {
       id: 'hub',
       type: 'hub',
       label: 'Seguros',
-      radius: 10,
+      radius: isMobile ? 18 : 10,
       color: COLORS.hub,
       fx: width / 2,
       fy: height / 2
@@ -162,8 +174,10 @@ export function GraphView() {
     const minCount = Math.min(...counts, 1);
 
     const getSegmentRadius = (count: number) => {
-      if (maxCount === minCount) return 300;
-      return 250 + ((count - minCount) / (maxCount - minCount)) * 170;
+      const base = isMobile ? 450 : 250;
+      const extra = isMobile ? 300 : 170;
+      if (maxCount === minCount) return base + extra / 2;
+      return base + ((count - minCount) / (maxCount - minCount)) * extra;
     };
 
     const segments = Array.from(new Set(data.map(d => d.segmento || 'Outros')));
@@ -175,7 +189,7 @@ export function GraphView() {
         id: `seg-${seg}`,
         type: 'segment',
         label: seg,
-        radius: 7,
+        radius: isMobile ? 12 : 7,
         color: COLORS.segment,
         x: width / 2 + Math.cos(angle) * dist,
         y: height / 2 + Math.sin(angle) * dist,
@@ -197,7 +211,7 @@ export function GraphView() {
         id: d.luc,
         type: 'luc',
         label: d.luc,
-        radius: 6,
+        radius: isMobile ? 10 : 6,
         color: COLORS[statusKey] || COLORS.sem_status,
         data: { ...d }
       });
@@ -216,16 +230,16 @@ export function GraphView() {
         .id(d => d.id)
         .distance(d => {
           if (d.type === 'hub-segment') return (d.source as Node).data?.targetDistance || 350;
-          return 50;
+          return isMobile ? 130 : 50;
         })
         .strength(d => {
           if (d.type === 'hub-segment') return 1;
           return 0.5;
         })
       )
-      .force('charge', d3.forceManyBody().strength(-30).distanceMax(80))
+      .force('charge', d3.forceManyBody().strength(isMobile ? -150 : -30).distanceMax(isMobile ? 250 : 80))
       .force('collide', d3.forceCollide<Node>().radius(d => {
-        if (d.type === 'segment') return 30;
+        if (d.type === 'segment') return isMobile ? 35 : 30;
         return d.radius + 2;
       }).iterations(3))
       .force('cluster-spacing', (alpha: number) => {
@@ -237,7 +251,7 @@ export function GraphView() {
             const dx = a.x! - b.x!;
             const dy = a.y! - b.y!;
             const dist = Math.sqrt(dx * dx + dy * dy);
-            const minSpacing = 130;
+            const minSpacing = isMobile ? 220 : 130;
             if (dist > 0 && dist < minSpacing) {
               const f = (minSpacing - dist) * 0.5 * alpha;
               const fX = (dx / dist) * f;
@@ -258,8 +272,10 @@ export function GraphView() {
       d.data = d.data || {};
       d.data.targetX = d.x || width / 2;
       d.data.targetY = d.y || height / 2;
-      d.x = width / 2;
-      d.y = height / 2;
+      if (!isMobile) {
+        d.x = width / 2;
+        d.y = height / 2;
+      }
       
       if (d.type === 'hub') d.data.delay = 0;
       else if (d.type === 'segment') d.data.delay = 50;
@@ -342,9 +358,9 @@ export function GraphView() {
       .attr('y', d => d.radius + 14)
       .attr('text-anchor', 'middle')
       .attr('fill', textColor)
-      .attr('font-size', d => d.type === 'hub' ? '14px' : '12px')
+      .attr('font-size', d => d.type === 'hub' ? (isMobile ? '16px' : '14px') : (isMobile ? '14px' : '12px'))
       .attr('font-weight', d => d.type === 'hub' ? 'bold' : 'normal')
-      .style('opacity', 0)
+      .style('opacity', isMobile ? 1 : 0)
       .text(d => d.label.length > 20 ? d.label.substring(0, 20).trim() + '...' : d.label);
 
     nodeGroup.append('title')
@@ -506,8 +522,18 @@ export function GraphView() {
       }
     };
 
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(tickAnimation);
+    if (isMobile) {
+      animPhaseRef.current = 'idle';
+      setIsAnimating(false);
+      simulation.stop();
+      nodeGroup.attr('transform', (d: any) => `translate(${d.x || width/2}, ${d.y || height/2})`);
+      nodeGroup.select('.visual-circle').attr('r', (d: any) => d.radius || 0).style('opacity', 1).attr('fill', (d: any) => d.color);
+      linkElements.attr('x1', (d: any) => (d.source as Node).x!).attr('y1', (d: any) => (d.source as Node).y!).attr('x2', (d: any) => (d.target as Node).x!).attr('y2', (d: any) => (d.target as Node).y!).style('opacity', 1);
+      nodeGroup.select('text').style('opacity', 1);
+    } else {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(tickAnimation);
+    }
 
     return () => {
       simulation.stop();
@@ -884,7 +910,7 @@ export function GraphView() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className={`absolute top-24 right-8 z-50 p-5 rounded-2xl border shadow-2xl backdrop-blur-xl w-[320px] pointer-events-auto ${
+            className={`absolute bottom-[90px] md:bottom-auto md:top-24 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-8 z-50 p-4 md:p-5 rounded-2xl border shadow-2xl backdrop-blur-xl w-[calc(100%-32px)] sm:w-[320px] max-w-[320px] pointer-events-auto ${
               globalTheme === 'dark' ? 'bg-[#1a1a1a]/95 border-white/10 text-white' : 'bg-white/95 border-black/10 text-gray-900'
             }`}
           >

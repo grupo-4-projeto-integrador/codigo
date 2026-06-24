@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { Command } from 'cmdk';
 import { LayoutDashboard, ShieldPlus, Bell, FileText, Download, CheckCircle2, RefreshCw, Moon, AlertTriangle, Filter, Eye, Trash2, Edit, Table2, Share2 as TopologyStar3, Clapperboard, Tv2, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useIsMobile } from './ui/use-mobile';
 import { searchApolices, deleteApolice, listApolices } from '../../api/apolice';
 import { toast } from 'sonner';
 
@@ -21,6 +22,7 @@ export function CommandPalette() {
   const [allPolicies, setAllPolicies] = useState<any[]>([]);
   const [deleteConfirmLuc, setDeleteConfirmLuc] = useState<string | null>(null);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Pre-load policies for counts
   useEffect(() => {
@@ -101,7 +103,7 @@ export function CommandPalette() {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
+        <div className={`fixed inset-0 z-[9999] flex ${isMobile ? 'items-end' : 'items-center justify-center p-4 sm:p-6'}`}>
           {/* Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -112,11 +114,15 @@ export function CommandPalette() {
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 10 }}
+            initial={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.96, y: 10 }}
+            animate={isMobile ? { y: 0, opacity: 1, scale: 1 } : { opacity: 1, scale: 1, y: 0 }}
+            exit={isMobile ? { y: '100%' } : { opacity: 0, scale: 0.96, y: 10 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="relative w-full max-w-[540px] bg-white dark:bg-[#0a0a0a] rounded-xl shadow-2xl border border-gray-100 dark:border-[#222222] overflow-hidden flex flex-col z-10"
+            className={`relative w-full bg-white dark:bg-[#0a0a0a] shadow-2xl overflow-hidden flex flex-col z-10 ${
+              isMobile
+                ? 'h-[85vh] rounded-t-2xl border-t border-gray-100 dark:border-[#222222]'
+                : 'max-w-[540px] rounded-xl border border-gray-100 dark:border-[#222222]'
+            }`}
           >
             {deleteConfirmLuc ? (
               <div className="p-6 flex flex-col items-center text-center">
@@ -173,13 +179,14 @@ export function CommandPalette() {
             >
               <Command.Input 
                 autoFocus
+                inputMode="search"
                 value={inputValue}
                 onValueChange={setInputValue}
                 placeholder="Digite um comando ou busque (ex: renovar AE-03)..." 
                 className="w-full px-4 py-4 text-[14px] bg-transparent border-b border-gray-100 dark:border-[#222222] outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-[#64748B]"
               />
             
-            <Command.List className="max-h-[360px] overflow-y-auto p-2 scrollbar-hide">
+            <Command.List className={`${isMobile ? 'flex-1 max-h-none' : 'max-h-[360px]'} overflow-y-auto p-2 scrollbar-hide`}>
               <Command.Empty className="py-6 text-center text-[13px] text-gray-500 dark:text-[#94A3B8]">
                 Nenhum resultado encontrado.
               </Command.Empty>
@@ -245,7 +252,13 @@ export function CommandPalette() {
 
               <Command.Group heading="Tabela em Tela Cheia" className="text-[11px] font-medium text-gray-500 dark:text-[#64748B] uppercase tracking-wider px-2 py-2 mt-1 border-t border-gray-100 dark:border-[#222222]">
                 <Command.Item
-                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('all'); setFullscreenTableOpen(true); })}
+                  onSelect={() => handleSelect(() => { 
+                    if (isMobile) {
+                      navigate('/seguros/tabela?filter=Todas');
+                    } else {
+                      setFullscreenTableFilter('all'); setFullscreenTableOpen(true); 
+                    }
+                  })}
                   className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
@@ -255,7 +268,13 @@ export function CommandPalette() {
                   <span className="text-[10px] text-gray-400 dark:text-[#64748B]">{counts.all} registros</span>
                 </Command.Item>
                 <Command.Item
-                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('vencida'); setFullscreenTableOpen(true); })}
+                  onSelect={() => handleSelect(() => { 
+                    if (isMobile) {
+                      navigate('/seguros/tabela?filter=Vencidas');
+                    } else {
+                      setFullscreenTableFilter('vencida'); setFullscreenTableOpen(true); 
+                    }
+                  })}
                   className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-[#A32D2D] dark:text-[#E23B44] cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
@@ -265,7 +284,13 @@ export function CommandPalette() {
                   <span className="text-[10px] text-red-400/70">{counts.vencida} vencidas</span>
                 </Command.Item>
                 <Command.Item
-                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('a-vencer'); setFullscreenTableOpen(true); })}
+                  onSelect={() => handleSelect(() => { 
+                    if (isMobile) {
+                      navigate('/seguros/tabela?filter=A%20Vencer');
+                    } else {
+                      setFullscreenTableFilter('a-vencer'); setFullscreenTableOpen(true); 
+                    }
+                  })}
                   className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-orange-600 dark:text-orange-400 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">
@@ -275,7 +300,13 @@ export function CommandPalette() {
                   <span className="text-[10px] text-orange-400/70">{counts['a-vencer']} a vencer</span>
                 </Command.Item>
                 <Command.Item
-                  onSelect={() => handleSelect(() => { setFullscreenTableFilter('conforme'); setFullscreenTableOpen(true); })}
+                  onSelect={() => handleSelect(() => { 
+                    if (isMobile) {
+                      navigate('/seguros/tabela?filter=Conformes');
+                    } else {
+                      setFullscreenTableFilter('conforme'); setFullscreenTableOpen(true); 
+                    }
+                  })}
                   className="flex items-center justify-between px-3 py-2.5 rounded-lg text-[13px] text-green-600 dark:text-green-400 cursor-pointer"
                 >
                   <div className="flex items-center gap-2">

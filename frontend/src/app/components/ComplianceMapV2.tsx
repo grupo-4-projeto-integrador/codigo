@@ -8,8 +8,7 @@ import { formatCNPJ } from "../utils/formatCNPJ";
 import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
 import { listApolices } from "../../api/apolice";
-import type { ApoliceRecord } from "../../types/apolice";
-import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2, Map as MapIcon, Play, Pause } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, FileText, Shield, Calendar, AlertTriangle, CheckCircle2, Clock, MapPin, FilePlus2, PencilLine, RefreshCw, Download, History, Loader2, Map as MapIcon, Play, Pause, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { getSelectedApoliceLuc, subscribeSelectedApoliceLuc, getMapFilters, subscribeMapFilters, getSidebarCollapsed, subscribeSidebarCollapsed } from '../store';
@@ -666,20 +665,23 @@ export function ComplianceMapV2({
       <div className="mobile-summary-wrapper w-full mb-2 mt-4 px-4 md:px-0">
         <div className="bg-gray-100/80 dark:bg-[#0a0a0a] p-1 rounded-xl border border-gray-200 dark:border-[#222] shadow-inner flex items-center w-full max-w-[400px] mx-auto">
           <button 
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-[13px] transition-all duration-300 ${!isMobileTableOpen ? 'bg-white dark:bg-[#151515] text-[#8B1A1A] dark:text-[#E04444] shadow-sm border border-gray-200 dark:border-[#333]' : 'bg-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-transparent'}`}
-            onClick={() => {
-              if (isMobileTableOpen) onShowMobileTable && onShowMobileTable(); // This acts as a toggle in Insurance.tsx if we handle it
-              navigate('/graph');
-            }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg font-semibold text-[13px] transition-all duration-300 bg-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-transparent`}
+            onClick={() => navigate('/graph')}
           >
-            <MapIcon className="w-4 h-4" /> Ver no Mapa
+            <Share2 className="w-4 h-4" /> Grafo
           </button>
           <button 
-            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-[13px] transition-all duration-300 ${isMobileTableOpen ? 'bg-white dark:bg-[#151515] text-[#8B1A1A] dark:text-[#E04444] shadow-sm border border-gray-200 dark:border-[#333]' : 'bg-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-transparent'}`}
-            onClick={() => onShowMobileTable && onShowMobileTable()}
+            onClick={() => setShowMapModal(true)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg font-semibold text-[13px] transition-all duration-300 bg-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-transparent`}
+          >
+            <MapIcon className="w-4 h-4" /> Mapa
+          </button>
+          <button 
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg font-semibold text-[13px] transition-all duration-300 bg-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border border-transparent`}
+            onClick={() => navigate('/seguros/tabela')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 8h12"/><path d="M7 12h12"/><path d="M7 16h12"/></svg>
-            Ver Tabela
+            Tabela
           </button>
         </div>
       </div>

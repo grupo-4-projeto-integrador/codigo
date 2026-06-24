@@ -62,6 +62,88 @@ const UserAvatar = ({ profile, sizeClass = "w-8 h-8", sizeStyle = { width: '32px
   );
 };
 
+const SwipeableNotification = ({
+  id,
+  children,
+  onClick,
+  onArchive,
+  onDelete,
+  isFirst = false,
+}: {
+  id: string;
+  children: React.ReactNode;
+  onClick: () => void;
+  onArchive: (e: React.MouseEvent, id: string) => void;
+  onDelete: (e: React.MouseEvent, id: string) => void;
+  isFirst?: boolean;
+}) => {
+  const [x, setX] = useState(0);
+
+  useEffect(() => {
+    if (isFirst) {
+      const t1 = setTimeout(() => setX(-40), 600);
+      const t2 = setTimeout(() => setX(0), 1000);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [isFirst]);
+
+  return (
+    <div className="relative overflow-hidden border-b border-gray-50 dark:border-[#222222]/50">
+      <div className="absolute inset-y-0 right-0 flex items-center justify-end w-full">
+        <button
+          className="flex flex-col items-center justify-center text-white w-[80px] h-full bg-orange-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            onArchive(e, id);
+          }}
+        >
+          <Archive className="w-5 h-5 mb-1" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Arquivar</span>
+        </button>
+        <button
+          className="flex flex-col items-center justify-center text-white w-[80px] h-full bg-[#c4151f]"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(e, id);
+          }}
+        >
+          <XIcon className="w-5 h-5 mb-1" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Excluir</span>
+        </button>
+      </div>
+      
+      <motion.div
+        drag="x"
+        dragConstraints={{ left: -160, right: 0 }}
+        dragElastic={0.2}
+        onDragEnd={(e, info) => {
+          if (info.offset.x < -60) {
+            setX(-160);
+          } else {
+            setX(0);
+          }
+        }}
+        animate={{ x }}
+        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        className="relative bg-white dark:bg-[#151515] p-4 cursor-grab active:cursor-grabbing"
+        onClick={(e) => {
+          if (x < 0) {
+            setX(0);
+            e.stopPropagation();
+            return;
+          }
+          onClick();
+        }}
+      >
+        {children}
+      </motion.div>
+    </div>
+  );
+};
+
 export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,8 +155,10 @@ export function Layout() {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [headerSearchQuery, setHeaderSearchQuery] = useState("");
+  
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const mobileNotificationRef = useRef<HTMLDivElement>(null);
 
   // User profile management mapped from real AuthContext role
   const mappedProfileKey = role === 'admin' ? 'relacionamento' : role === 'gestor' ? 'marketing' : 'arquitetura';
@@ -187,7 +271,10 @@ export function Layout() {
   useEffect(() => {
     // Close notification panel when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+      const isOutsideDesktop = notificationRef.current && !notificationRef.current.contains(event.target as Node);
+      const isOutsideMobile = mobileNotificationRef.current && !mobileNotificationRef.current.contains(event.target as Node);
+      
+      if (isOutsideDesktop && isOutsideMobile) {
         setIsNotificationOpen(false);
       }
     };
@@ -264,6 +351,11 @@ export function Layout() {
   const aVencer = unreadOnly.filter(n => n.type === 'a_vencer').sort((a, b) => a.dias - b.dias);
   const equipe = unreadOnly.filter(n => n.type === 'equipe');
 
+  let firstItemDisplayedId: number | string | null = null;
+  if (vencidas.length > 0) firstItemDisplayedId = vencidas[0].id;
+  else if (aVencer.length > 0) firstItemDisplayedId = aVencer[0].id;
+  else if (equipe.length > 0) firstItemDisplayedId = equipe[0].id;
+
   const [bellAnimate, setBellAnimate] = useState(false);
   const prevUnreadRef = useRef(unreadCount);
 
@@ -306,9 +398,11 @@ export function Layout() {
         <div className="h-14 flex items-center justify-between px-4 border-b" style={{ borderColor: '#a0191e50' }}>
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/seguros')}>
             <img src={logo} alt="Logo" className="w-6 h-6 sidebar-logo" />
-            <span className="font-bold text-base tracking-wide text-white hover:text-gray-200 transition-colors">Shopping Flamboyant</span>
+            <span className="text-[13px] sm:text-[14px] uppercase tracking-[0.15em] text-white hover:text-gray-200 transition-colors drop-shadow-sm">
+              <span className="font-black">Flamboyant</span> <span className="font-light text-white/80">Shopping</span>
+            </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={toggleDarkMode}
               className="p-1.5 text-white/80 hover:text-white rounded-full transition-colors"
@@ -343,20 +437,13 @@ export function Layout() {
             .nav-item { font-size: 11px; padding: 8px 10px; white-space: nowrap; }
           }
         `}</style>
-        <nav className="nav-items relative" style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'smooth' }}>
-          <div className="flex px-3 py-2.5 min-w-max" style={{ gap: '4px' }}>
+        <nav className="nav-items relative w-full flex justify-center">
+          <div className="flex px-3 py-2.5 justify-center w-full max-w-[300px]" style={{ gap: '8px' }}>
             {(() => {
-              const navLinks = [
-                { id: 'dashboard', icon: Home, label: 'Dashboard', to: '#', disabled: true },
-                { id: 'sinistro', icon: ShieldAlert, label: 'Novo Sinistro', to: '#', disabled: true },
-                { id: 'historico', icon: FileText, label: 'Histórico', to: '#', disabled: true },
+              const visible = [
                 { id: 'seguros', icon: Shield, label: 'Seguros', to: '/seguros', disabled: false },
-                { id: 'lojistas', icon: Users, label: 'Lojistas', to: '#', disabled: true },
-                { id: 'relatorios', icon: BarChart3, label: 'Relatórios', to: '#', disabled: true },
               ];
-              const isMany = navLinks.length > 4;
-              const visible = isMany ? navLinks.slice(0, 4) : navLinks;
-              const overflow = isMany ? navLinks.slice(4) : [];
+              const isMany = true;
               return (
                 <>
                   {visible.map((item) => (
@@ -378,7 +465,6 @@ export function Layout() {
                 </>
               );
             })()}
-            <div className="w-4 flex-shrink-0" />
           </div>
         </nav>
 
@@ -395,6 +481,9 @@ export function Layout() {
                 <div className="flex flex-col p-2">
                   {(() => {
                     const overflow = [
+                      { id: 'dashboard', icon: Home, label: 'Dashboard', to: '#', disabled: true },
+                      { id: 'sinistro', icon: ShieldAlert, label: 'Novo Sinistro', to: '#', disabled: true },
+                      { id: 'historico', icon: FileText, label: 'Histórico', to: '#', disabled: true },
                       { id: 'lojistas', icon: Users, label: 'Lojistas', to: '#', disabled: true },
                       { id: 'relatorios', icon: BarChart3, label: 'Relatórios', to: '#', disabled: true },
                     ];
@@ -465,7 +554,7 @@ export function Layout() {
             />
 
             {/* Notification Panel */}
-            <div className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white dark:bg-[#151515] shadow-2xl z-50 overflow-y-auto">
+            <div ref={mobileNotificationRef} className="fixed top-0 right-0 bottom-0 w-full max-w-sm bg-white dark:bg-[#151515] shadow-2xl z-50 overflow-y-auto">
               <div className="sticky top-0 bg-white dark:bg-[#151515] border-b border-gray-200 dark:border-[#222222] p-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -490,25 +579,31 @@ export function Layout() {
                     <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices Vencidas ({vencidas.length})</h4>
                   </div>
                   {vencidas.map(n => (
-                    <div
+                    <SwipeableNotification
                       key={`mob-${n.id}`}
-                      className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
+                      id={n.id.toString()}
+                      isFirst={n.id === firstItemDisplayedId}
                       onClick={() => {
                         setIsNotificationOpen(false);
                         navigate(`/seguros?search=${n.luc}`);
                       }}
+                      onArchive={handleArchiveSingle}
+                      onDelete={handleArchiveSingle}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 pointer-events-none">
                         <div className="p-2.5 rounded-lg flex-shrink-0 bg-red-100 dark:bg-red-900/20">
                           <svg className="w-5 h-5 text-red-600 dark:text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.loja}</p>
-                          <p className="text-sm text-gray-600 dark:text-[#94A3B8] mt-1">{n.luc}</p>
-                          <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1.5">Vencida há {n.dias} dias</p>
+                          <p className="text-[13px] font-bold text-gray-900 dark:text-[#F1F5F9] truncate">
+                            {n.loja} <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">{n.luc}</span>
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-[#64748B] mt-0.5 truncate">
+                            {n.cobertura} • Vencida há <span className="text-[#c4151f] dark:text-red-400 font-bold">{n.dias} dias</span>
+                          </p>
                         </div>
                       </div>
-                    </div>
+                    </SwipeableNotification>
                   ))}
                 </div>
               )}
@@ -520,25 +615,31 @@ export function Layout() {
                     <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Apólices a Vencer ({aVencer.length})</h4>
                   </div>
                   {aVencer.map(n => (
-                    <div
+                    <SwipeableNotification
                       key={`mob-${n.id}`}
-                      className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
+                      id={n.id.toString()}
+                      isFirst={n.id === firstItemDisplayedId}
                       onClick={() => {
                         setIsNotificationOpen(false);
                         navigate(`/seguros?search=${n.luc}`);
                       }}
+                      onArchive={handleArchiveSingle}
+                      onDelete={handleArchiveSingle}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 pointer-events-none">
                         <div className="p-2.5 rounded-lg flex-shrink-0 bg-orange-100 dark:bg-orange-900/20">
                           <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.loja}</p>
-                          <p className="text-sm text-gray-600 dark:text-[#94A3B8] mt-1">{n.luc}</p>
-                          <p className="text-xs text-gray-500 dark:text-[#64748B] mt-1.5">Vence em {n.dias} dias</p>
+                          <p className="text-[13px] font-bold text-gray-900 dark:text-[#F1F5F9] truncate">
+                            {n.loja} <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">{n.luc}</span>
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-[#64748B] mt-0.5 truncate">
+                            {n.cobertura} • Vence em <span className="text-amber-600 dark:text-amber-500 font-bold">{n.dias} dias</span>
+                          </p>
                         </div>
                       </div>
-                    </div>
+                    </SwipeableNotification>
                   ))}
                 </div>
               )}
@@ -550,23 +651,27 @@ export function Layout() {
                     <h4 className="text-xs font-bold text-gray-700 dark:text-[#94A3B8]">Atividade da Equipe</h4>
                   </div>
                   {equipe.map(n => (
-                    <div
+                    <SwipeableNotification
                       key={`mob-${n.id}`}
-                      className="p-4 active:bg-gray-50 dark:active:bg-[#0a0a0a] transition-colors"
+                      id={n.id.toString()}
+                      isFirst={n.id === firstItemDisplayedId}
                       onClick={() => {
                         setIsNotificationOpen(false);
                         navigate(`/seguros?search=${n.luc}`);
                       }}
+                      onArchive={handleArchiveSingle}
+                      onDelete={handleArchiveSingle}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-3 pointer-events-none">
                         <div className="p-2.5 rounded-lg flex-shrink-0 bg-blue-100 dark:bg-blue-900/20">
                           <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-[#F1F5F9]">{n.mensagem}</p>
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-[#F1F5F9] leading-tight">{n.mensagem}</p>
+                          <p className="text-[11px] text-gray-500 dark:text-[#64748B] mt-1 truncate">{n.loja} • {n.luc}</p>
                         </div>
                       </div>
-                    </div>
+                    </SwipeableNotification>
                   ))}
                 </div>
               )}

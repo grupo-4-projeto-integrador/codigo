@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "../components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { MoreHorizontal } from "lucide-react";
 
 export function Usuarios() {
@@ -136,21 +137,21 @@ export function Usuarios() {
             <div className="text-center py-8 text-gray-500">Carregando...</div>
           ) : users.map(u => (
             <div key={u.id} className="user-card-mobile flex items-center justify-between p-4 bg-white dark:bg-[#151515] border border-gray-100 dark:border-[#222] rounded-xl shadow-sm">
-              <div className="flex items-center gap-3 overflow-hidden">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="avatar flex-shrink-0 w-[40px] h-[40px] rounded-full flex items-center justify-center font-bold text-[#c4151f] dark:text-[#e04444] bg-gray-200 dark:bg-[#2a2a2a] border-2 border-white dark:border-[#151515]">
                   {getInitials(u.nome)}
                 </div>
-                <div className="user-info min-w-0 pr-2">
+                <div className="user-info flex-1 min-w-0 pr-2">
                   <div className="user-name text-[14px] font-medium text-gray-900 dark:text-white truncate">{u.nome}</div>
                   <div className="user-email text-[12px] text-gray-500 dark:text-[#94A3B8] truncate">{u.email}</div>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div className={`role-badge px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider ${
-                  u.role === 'admin' ? 'bg-[#3e0000] text-[#c4151f]' :
-                  u.role === 'gestor' ? 'bg-[#2a1f00] text-[#f9e4a0]' :
-                  'bg-white/5 text-white/40'
-                }`} style={u.role === 'visualizador' ? { backgroundColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' } : {}}>
+                  u.role === 'admin' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
+                  u.role === 'gestor' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                  'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                }`}>
                   {u.role.toUpperCase()}
                 </div>
                 <DropdownMenu>
@@ -264,15 +265,16 @@ export function Usuarios() {
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium">Role Inicial</label>
-              <select 
-                value={inviteRole} 
-                onChange={e => setInviteRole(e.target.value as Role)}
-                className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="visualizador">Visualizador</option>
-                <option value="gestor">Gestor</option>
-                <option value="admin">Admin</option>
-              </select>
+              <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as Role)}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="Selecione um role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="visualizador">Visualizador</SelectItem>
+                  <SelectItem value="gestor">Gestor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>Cancelar</Button>
@@ -291,15 +293,16 @@ export function Usuarios() {
           <form onSubmit={handleEditRole} className="flex flex-col gap-4 py-4">
             <div className="space-y-1">
               <label className="text-sm font-medium">Novo Role</label>
-              <select 
-                value={editRole} 
-                onChange={e => setEditRole(e.target.value as Role)}
-                className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="visualizador">Visualizador</option>
-                <option value="gestor">Gestor</option>
-                <option value="admin">Admin</option>
-              </select>
+              <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="Selecione um role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="visualizador">Visualizador</SelectItem>
+                  <SelectItem value="gestor">Gestor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancelar</Button>

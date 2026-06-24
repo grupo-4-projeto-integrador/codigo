@@ -29,6 +29,7 @@ import { SkeletonCard } from "../components/ui/SkeletonCard";
 import { SkeletonTable } from "../components/ui/SkeletonTable";
 import { SkeletonMap } from "../components/ui/SkeletonMap";
 import { AuditLog } from "./AuditLog";
+import { useIsMobile } from "../components/ui/use-mobile";
 
 import { PresentationMode } from "../components/PresentationMode";
 import { Tooltip as ShadcnTooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
@@ -131,6 +132,7 @@ const CardPulseOverlay = ({ value, color = "rgba(16, 185, 129, 0.15)" }: { value
 
 export function Insurance() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState("todas");
@@ -148,6 +150,7 @@ export function Insurance() {
 
   // Advanced filter states
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showMobileTable, setShowMobileTable] = useState(false);
   const [tipoFilter, setTipoFilter] = useState("todos");
@@ -1381,25 +1384,11 @@ export function Insurance() {
 
           {activeTab === 'visao-geral' && (
             <div className="flex items-center justify-end flex-1 w-full gap-2 lg:gap-2.5 filter-row min-w-0" id="filtros-tour">
-              {/* ACTION BAR: Busca, Filtros, Download, Snapshot, Nova Apólice (Ancorada à Direita) */}
-              <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap justify-center md:justify-end">
-                <div className="relative w-full search-bar-dynamic flex-shrink-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
-                  <input
-                    id="insurance-search-input"
-                    type="text"
-                    placeholder="Buscar loja, LUC ou segmento..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    onClick={(e) => e.currentTarget.select()}
-                    onKeyDown={handleSearchKeyDown}
-                    className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] text-[#9F1239] dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
-                  />
-                </div>
-
+              {/* ACTION BAR: Filtros, Busca, Download, Snapshot, Nova Apólice (Ancorada à Direita) */}
+              <div className="flex items-center gap-2 flex-1 min-w-0 flex-nowrap md:flex-wrap overflow-x-auto scrollbar-hide justify-start md:justify-end pb-1">
                 {/* Popover Filtros Agrupado (Todas as Resoluções) */}
-                <div className="flex">
-                  <Popover>
+                <div className="flex flex-shrink-0">
+                  <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                     <PopoverTrigger asChild>
                       <button className="flex items-center justify-center h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
                         <Filter className="w-4 h-4" />
@@ -1456,17 +1445,62 @@ export function Insurance() {
                           </Select>
                         </div>
 
-                        {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
+                        <div className="flex flex-col gap-2 pt-2 border-t border-gray-100 dark:border-[#222222]">
                           <button
-                            onClick={() => { setSeguradoraFilter('todas'); setTipoFilter('todos'); setStatusFilter('todas'); }}
-                            className="mt-2 text-[12px] font-medium text-[#c4151f] hover:underline text-center"
+                            onClick={() => {
+                              setIsFilterOpen(false);
+                              if (isMobile) {
+                                const filterMap: Record<string, string> = {
+                                  'todas': 'Todas',
+                                  'ativa': 'Conformes',
+                                  'a vencer': 'A Vencer',
+                                  'vencida': 'Vencidas'
+                                };
+                                navigate(`/seguros/tabela?filter=${filterMap[statusFilter] || 'Todas'}&seguradora=${encodeURIComponent(seguradoraFilter)}&segmento=${encodeURIComponent(tipoFilter)}`);
+                              }
+                            }}
+                            className="w-full bg-[#c4151f] hover:bg-[#a0191e] text-white font-medium py-2 rounded-lg text-[13px] transition-colors"
                           >
-                            Limpar Filtros
+                            {isMobile ? `Ver ${sortedPolicies.length} resultados na tabela` : `Aplicar Filtros (${sortedPolicies.length})`}
                           </button>
-                        )}
+                          {(seguradoraFilter !== 'todas' || tipoFilter !== 'todos' || statusFilter !== 'todas') && (
+                            <button
+                              onClick={() => { setSeguradoraFilter('todas'); setTipoFilter('todos'); setStatusFilter('todas'); }}
+                              className="text-[12px] font-medium text-[#c4151f] hover:underline text-center"
+                            >
+                              Limpar Filtros
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </PopoverContent>
                   </Popover>
+                </div>
+
+                <div className={`relative ${isMobile ? 'w-auto' : 'w-full search-bar-dynamic'} flex-shrink-0`}>
+                  {isMobile ? (
+                    <button
+                      className="flex-shrink-0 flex items-center justify-center w-9 h-9 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm"
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+                      aria-label="Buscar"
+                    >
+                      <Search className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <>
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                      <input
+                        id="insurance-search-input"
+                        type="text"
+                        placeholder="Buscar loja, LUC ou segmento..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        onClick={(e) => e.currentTarget.select()}
+                        onKeyDown={handleSearchKeyDown}
+                        className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222222] rounded-lg text-[13px] text-[#9F1239] dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-[#9F1239] transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
+                      />
+                    </>
+                  )}
                 </div>
 
 
@@ -1479,7 +1513,7 @@ export function Insurance() {
                     <ShadcnTooltip>
                       <TooltipTrigger asChild>
                         <DropdownMenuTrigger asChild>
-                          <button className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
+                          <button className="flex flex-shrink-0 items-center justify-center w-9 h-9 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm">
                             <IconDownload size={18} stroke={1.5} />
                           </button>
                         </DropdownMenuTrigger>
@@ -1510,7 +1544,7 @@ export function Insurance() {
                 <button
                   id="snapshot-tour"
                   onClick={() => window.dispatchEvent(new CustomEvent("trigger-snapshot"))}
-                  className="flex items-center justify-center flex-shrink-0 h-9 px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm"
+                  className="flex flex-shrink-0 items-center justify-center w-9 h-9 md:w-auto md:px-3 gap-2 rounded-lg border border-gray-200 dark:border-[#222222] bg-white dark:bg-[#151515] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-[#0a0a0a] transition-colors shadow-sm"
                   title="Capturar snapshot em PNG"
                 >
                   <Camera className="w-4 h-4" />
@@ -1627,7 +1661,7 @@ export function Insurance() {
         <>
           {/* Mobile Health Score */}
           {healthScore && (
-            <div className="md:hidden flex items-center justify-between p-4 mx-6 mt-4 mb-2 bg-white dark:bg-[#151515] rounded-[14px] border border-gray-100 dark:border-[#222222] shadow-sm">
+            <div className="md:hidden flex items-center justify-between p-4 mx-6 mt-0 mb-3 bg-white dark:bg-[#151515] rounded-[14px] border border-gray-100 dark:border-[#222222] shadow-sm">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-[#94A3B8]">Health Score</span>
                 <span className="text-[length:var(--font-kpi)] font-light text-[#0F172A] dark:text-white leading-none mt-1">{healthScore.score}</span>
@@ -3014,8 +3048,7 @@ export function Insurance() {
                   </div>
                   <button
                     onClick={() => setShowRelatorioModal(false)}
-                    disabled={loadingRelatorio}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#bc9b7c] hover:text-white hover:bg-white/10 transition-colors disabled:opacity-40"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#bc9b7c] hover:text-white hover:bg-white/10 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -3076,36 +3109,38 @@ export function Insurance() {
 
                 {/* Footer */}
                 {!loadingRelatorio && relatorioTexto && (
-                  <div className="flex items-center justify-between px-6 py-4 flex-shrink-0" style={{ borderTop: '1px solid rgba(196,21,31,0.2)' }}>
-                    <p className="text-[11px] text-[#bc9b7c]">
+                  <div className="flex flex-col md:flex-row items-center justify-between px-4 sm:px-6 py-4 gap-3 flex-shrink-0" style={{ borderTop: '1px solid rgba(196,21,31,0.2)' }}>
+                    <p className="text-[11px] text-[#bc9b7c] w-full text-center md:text-left md:w-auto hidden sm:block">
                       {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2 w-full md:w-auto">
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(relatorioTexto);
                           toast.success('Relatório copiado para a área de transferência');
                         }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#bc9b7c] hover:text-white hover:bg-white/10 transition-colors"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 md:py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium text-[#bc9b7c] hover:text-white bg-white/5 md:bg-transparent hover:bg-white/10 transition-colors"
                       >
-                        <FileText className="w-3.5 h-3.5" />
-                        Copiar texto
+                        <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="hidden sm:inline">Copiar texto</span>
+                        <span className="sm:hidden">Copiar</span>
                       </button>
                       <button
                         onClick={() => {
                           exportRelatorioToPDF(relatorioTexto, "relatorio_executivo_flamboyant.pdf");
                           toast.success('Download do PDF iniciado');
                         }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-[#bc9b7c] hover:text-white hover:bg-white/10 transition-colors"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 md:py-1.5 rounded-lg text-[11px] sm:text-[12px] font-medium text-[#bc9b7c] hover:text-white bg-white/5 md:bg-transparent hover:bg-white/10 transition-colors"
                       >
-                        <IconDownload className="w-4 h-4" />
-                        Baixar PDF
+                        <IconDownload className="w-4 h-4 flex-shrink-0" />
+                        <span className="hidden sm:inline">Baixar PDF</span>
+                        <span className="sm:hidden">Baixar</span>
                       </button>
                       <button
                         onClick={handleGerarRelatorio}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors btn-shimmer-brand text-[#f9e4a0]"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-1.5 px-2 sm:px-3 py-2 md:py-1.5 rounded-lg text-[11px] sm:text-[12px] font-semibold transition-colors btn-shimmer-brand text-[#f9e4a0]"
                       >
-                        <RefreshCw className="w-3.5 h-3.5" />
+                        <RefreshCw className="w-3.5 h-3.5 flex-shrink-0" />
                         Regenerar
                       </button>
                     </div>

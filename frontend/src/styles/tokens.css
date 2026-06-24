@@ -219,4 +219,12 @@
     --font-page-title: clamp(18px, 5vw, 22px);
     --card-padding: 14px;
   }
+  
+  .kpi-card { padding: 12px 14px 0 !important; }
+  .kpi-sparkline { height: 36px !important; }
+  .kpi-value { font-size: 28px !important; }
+  .kpi-label { font-size: 8px !important; margin-bottom: 4px !important; }
+  .kpi-sub { font-size: 10px !important; margin-bottom: 6px !important; }
+  /* Ocultar rótulo da sparkline em mobile */
+  .kpi-sparkline-label { display: none !important; }
 }

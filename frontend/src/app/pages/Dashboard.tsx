@@ -13,6 +13,8 @@ import {
 import { listApolices } from "../../api/apolice";
 import type { ApoliceRecord } from "../../types/apolice";
 import { ComplianceMap } from "../components/ComplianceMap";
+import { useIsMobile } from "../components/ui/use-mobile";
+import { Map as MapIcon, Table as TableIcon } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -25,6 +27,7 @@ import {
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [apolices, setApolices] = useState<ApoliceRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -80,9 +83,20 @@ export function Dashboard() {
       {/* Main Grid: Mapa (dominante) + Sidebar KPIs — P4: minmax previne overflow */}
       <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,280px)] gap-5 items-start">
         {/* Compliance Map — Dominant Feature */}
-        <div className="min-w-0">
-          <ComplianceMap />
-        </div>
+        {isMobile ? (
+          <div className="flex gap-3 w-full">
+            <button onClick={() => navigate('/seguros')} className="flex-1 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222] py-4 rounded-xl flex flex-col items-center justify-center gap-2 text-[#8B1A1A] font-bold shadow-sm transition-all active:scale-95">
+              <MapIcon className="w-6 h-6" /> Ver no Mapa
+            </button>
+            <button onClick={() => navigate('/seguros/tabela')} className="flex-1 bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#222] py-4 rounded-xl flex flex-col items-center justify-center gap-2 text-[#8B1A1A] font-bold shadow-sm transition-all active:scale-95">
+              <TableIcon className="w-6 h-6" /> Ver Tabela
+            </button>
+          </div>
+        ) : (
+          <div className="min-w-0">
+            <ComplianceMap />
+          </div>
+        )}
 
         {/* KPI Sidebar */}
         <style>{`

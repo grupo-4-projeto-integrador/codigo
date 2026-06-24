@@ -12,7 +12,6 @@ html, body { height: 100%; overflow: hidden; }
 .sidebar {
   flex-shrink: 0;
   height: 100dvh;
-  overflow-y: auto;
 }
 
 .main-content {

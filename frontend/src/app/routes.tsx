@@ -13,6 +13,7 @@ import { PolicyEdit } from "./pages/PolicyEdit";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { PresentationMode } from "./components/PresentationMode";
 import { GraphView } from "./components/GraphView";
+import { MobileTablePage } from "./pages/MobileTablePage";
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
       { path: "sinistro/:id", Component: ClaimDetails },
       { path: "historico", Component: ClaimsHistory },
       { path: "seguros", Component: Insurance },
+      { path: "seguros/tabela", Component: MobileTablePage },
       { path: "seguros/apolice/:id", Component: PolicyDetail },
       { path: "seguros/apolice/:id/editar", Component: PolicyEdit },
       { path: "lojistas", Component: StoreDirectory },
