@@ -16,6 +16,7 @@ import { PolicyRenewalWizard } from "../components/wizards/PolicyRenewalWizard";
 import { RequireRole } from "../components/RequireRole";
 import { formatLargeCurrency } from "../utils/currency";
 import { useCountUp } from "../hooks/useCountUp";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "../components/ui/drawer";
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { request } from "../../api/client";
@@ -151,6 +152,12 @@ export function Insurance() {
   const minSwipeDistance = 70;
 
   const onTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.overflow-x-auto') || target.closest('table')) {
+      setTouchStart(null);
+      setTouchEnd(null);
+      return;
+    }
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
@@ -210,6 +217,7 @@ export function Insurance() {
   const [showRelatorioModal, setShowRelatorioModal] = useState(false);
   const [relatorioTexto, setRelatorioTexto] = useState("");
   const [loadingRelatorio, setLoadingRelatorio] = useState(false);
+  const [isRiskDrawerOpen, setIsRiskDrawerOpen] = useState(false);
 
   // Table sorting states
   const [kpiMetrics, setKpiMetrics] = useState<any | null>(null);
@@ -1393,16 +1401,38 @@ export function Insurance() {
               className="ml-1 p-1 hover:bg-gray-100 dark:hover:bg-[#222222] rounded-md transition-colors"
               title="Sincronizar agora"
             >
-              <Activity className="w-3 h-3" />
+              <RefreshCw className="w-3 h-3" />
             </button>
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4 page-header">
-          <div className="flex items-center gap-6">
-            <div>
+          <div className="flex items-center gap-6 w-full lg:w-auto">
+            <div className="w-full lg:w-auto">
               <h1 className="text-[length:var(--font-page-title)] font-bold text-gray-900 dark:text-white leading-tight page-title" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>Seguros</h1>
               <p className="text-[13px] text-gray-500 dark:text-[#94A3B8] mt-1 page-description">Gestão de apólices, mapa de lucs e auditoria de ações.</p>
+              
+              {/* Mobile Sync Indicator */}
+              <div className="flex md:hidden items-center justify-between w-full mt-2.5 text-[11px] text-gray-500 dark:text-[#94A3B8] font-medium">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></div>
+                  <SyncFeedback lastSync={lastSyncTime} />
+                  <button
+                    onClick={() => setLastSyncTime(new Date())}
+                    className="p-1 hover:bg-gray-100 dark:hover:bg-[#222222] rounded-md transition-colors"
+                    title="Sincronizar agora"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                  </button>
+                </div>
+                <button
+                   className="ml-auto flex flex-shrink-0 items-center justify-center h-7 px-2.5 gap-1.5 rounded-md border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 text-[#9F1239] dark:text-[#E23B44] hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors shadow-sm font-medium"
+                   onClick={() => setIsRiskDrawerOpen(true)}
+                >
+                   <BarChart3 className="w-3.5 h-3.5" />
+                   Ver Risco
+                </button>
+              </div>
             </div>
 
             {/* Health Score Widget */}
@@ -2018,7 +2048,7 @@ export function Insurance() {
                 )}
               </div>
               {!isFocusMode && (
-                <div className="relative min-h-0 h-full">
+                <div className="hidden md:block relative min-h-0 h-full w-full">
                   <div className="absolute inset-0">
                     <SegmentRiskChart />
                   </div>
@@ -2937,7 +2967,8 @@ export function Insurance() {
         <RequireRole roles={['admin', 'gestor']}>
           <button
             onClick={handleNovaApolice}
-            className="md:hidden fixed z-[50] flex items-center justify-center gap-2 transition-transform active:scale-95 btn-shimmer-brand"
+            id="fab-nova-apolice"
+            className="md:hidden fixed z-[50] flex items-center justify-center gap-2 transition-transform active:scale-95 btn-shimmer-brand snapshot-ignore"
             style={{
               bottom: '20px',
               right: '16px',
@@ -3198,6 +3229,23 @@ export function Insurance() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Risk Analysis Drawer (Mobile only) */}
+      <Drawer open={isRiskDrawerOpen} onOpenChange={setIsRiskDrawerOpen}>
+        <DrawerContent className="h-[85vh] bg-[#F7F4EF] dark:bg-[#0F1117] border-t border-gray-200 dark:border-[#222222]">
+          <div className="mx-auto mt-4 h-1.5 w-[50px] rounded-full bg-gray-300 dark:bg-gray-700" />
+          <DrawerHeader className="px-6 pb-2 text-left flex justify-between items-center">
+            <DrawerTitle className="text-xl font-bold text-gray-900 dark:text-white" style={{ fontFamily: '"Playfair Display", Georgia, serif' }}>Análise de Risco</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-6 min-h-0 relative">
+            <div className="h-full relative min-h-[400px]">
+              <div className="absolute inset-0">
+                <SegmentRiskChart />
+              </div>
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

@@ -342,17 +342,16 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
     return Math.max(Math.ceil(Math.max(...data.map((i) => i.vencidas)) / 10) * 10 + 10, 50);
   }, [data]);
 
-  // Slice according to mode and showAll state
-  const limit   = mode === "ultra" ? 6 : undefined;
-  const visible = showAll || !limit ? data : data.slice(0, limit);
-  const hasMore = limit !== undefined && data.length > limit;
+  // Sempre mostrar todos os setores
+  const visible = data;
+  const hasMore = false;
 
   // ── Presentation Mode (unchanged behaviour) ──────────────────────────────
 
   if (isPresentationMode) {
     return (
       <div className="h-auto md:h-full flex flex-col pt-1">
-        <div className="flex-1 overflow-y-auto pr-1" style={{ scrollbarWidth: "none" }}>
+        <div className="flex-1 overflow-y-auto pr-1">
           {loading ? (
             <div className="h-full flex items-center justify-center animate-pulse bg-white/5 rounded-lg" />
           ) : error ? (
@@ -361,7 +360,7 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
             <div className="h-full flex items-center justify-center text-[12px] text-gray-500">Nenhum risco.</div>
           ) : (
             <div className="space-y-[14px]">
-              {data.slice(0, 8).map((item, index) => {
+              {data.map((item, index) => {
                 const w = Math.max((item.vencidas / maxVencidas) * 100, item.vencidas > 0 ? 12 : 0);
                 const c = SEGMENT_BAR_COLORS[index % SEGMENT_BAR_COLORS.length];
                 return (
@@ -387,8 +386,8 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
 
   const modeLabel: Record<DisplayMode, string> = {
     normal: "",
-    compact: `Top ${limit}`,
-    ultra: `RISCO · TOP ${limit}`,
+    compact: "Risco por Segmento",
+    ultra: "RISCO",
   };
 
   return (
@@ -450,8 +449,8 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
 
       {/* ── Body ───────────────────────────────────────────────────────── */}
       <div
-        className="flex-1 overflow-y-auto"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none", minHeight: 0 }}
+        className="flex-1 overflow-y-auto pr-2"
+        style={{ minHeight: 0 }}
       >
         {loading ? (
           <div className="h-full flex items-center justify-center">
@@ -530,23 +529,6 @@ export function SegmentRiskChart({ isPresentationMode = false }: { isPresentatio
           </AnimatePresence>
         )}
       </div>
-
-      {/* ── Show more ──────────────────────────────────────────────────── */}
-      {hasMore && !loading && !error && (
-        <div className={`flex-shrink-0 flex justify-center pb-2 ${mode === "ultra" ? "pt-0.5" : "pt-1"}`}>
-          <button
-            onClick={() => setShowAll((p) => !p)}
-            className={`font-semibold text-[#8b1a1a] hover:text-[#6e150e] transition-colors
-              dark:text-[#fca5a5] dark:hover:text-[#f87171]
-              ${mode === "ultra"
-                ? "text-[9px] px-2 py-0.5"
-                : "text-[11px] bg-red-50 hover:bg-red-100 dark:bg-[#a0191e]/10 dark:hover:bg-[#a0191e]/20 px-3 py-1.5 rounded-lg"
-              }`}
-          >
-            {showAll ? "Recolher" : `+${data.length - (limit ?? 0)} mais`}
-          </button>
-        </div>
-      )}
     </section>
   );
 }

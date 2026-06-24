@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-ALTER TABLE usuarios OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS seguros (
     luc character varying NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS seguros (
     numero_apolice VARCHAR(50) DEFAULT ''
 );
 
-ALTER TABLE seguros OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS documentos (
     id SERIAL PRIMARY KEY,
@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS documentos (
     deleted_at TIMESTAMP DEFAULT NULL
 );
 
-ALTER TABLE documentos OWNER TO postgres;
+
 
 CREATE TABLE IF NOT EXISTS historico_apolice (
     id SERIAL PRIMARY KEY,
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS historico_apolice (
 CREATE INDEX IF NOT EXISTS idx_historico_apolice_luc ON historico_apolice (apolice_luc);
 CREATE INDEX IF NOT EXISTS idx_historico_apolice_data ON historico_apolice (data DESC);
 
-ALTER TABLE historico_apolice OWNER TO postgres;
+
 
 -- NOTE: sample seed data is available in seguros-app/seguros.sql and seguros-app/database/Seguros.sql
 -- You can import it using: psql -U postgres -d seguros_db -f ../../seguros-app/seguros.sql

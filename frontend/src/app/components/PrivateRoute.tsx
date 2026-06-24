@@ -81,6 +81,7 @@ export function PrivateRoute() {
               const el = node as HTMLElement;
               if (el?.hasAttribute && el.hasAttribute('data-sonner-toaster')) return false;
               if (el?.classList && el.classList.contains('driver-popover')) return false;
+              if (el?.classList && el.classList.contains('snapshot-ignore')) return false;
               return true;
             },
             pixelRatio: window.devicePixelRatio > 1 ? window.devicePixelRatio : 1.5,

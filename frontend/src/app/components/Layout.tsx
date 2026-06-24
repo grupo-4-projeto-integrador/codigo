@@ -357,15 +357,22 @@ export function Layout() {
   else if (equipe.length > 0) firstItemDisplayedId = equipe[0].id;
 
   const [bellAnimate, setBellAnimate] = useState(false);
+  const [hasInitialAnimated, setHasInitialAnimated] = useState(false);
   const prevUnreadRef = useRef(unreadCount);
 
   useEffect(() => {
-    if (unreadCount > prevUnreadRef.current) {
+    // Anima de forma mais suave (instrucional) na primeira vez se houver mensagens
+    if (unreadCount > 0 && !hasInitialAnimated) {
+      setHasInitialAnimated(true);
       setBellAnimate(true);
-      setTimeout(() => setBellAnimate(false), 300);
+      setTimeout(() => setBellAnimate(false), 1500);
+    } else if (unreadCount > prevUnreadRef.current && hasInitialAnimated) {
+      // Nova notificação recebida
+      setBellAnimate(true);
+      setTimeout(() => setBellAnimate(false), 1500);
     }
     prevUnreadRef.current = unreadCount;
-  }, [unreadCount]);
+  }, [unreadCount, hasInitialAnimated]);
 
   const handleMarkAllRead = async () => {
     try {
@@ -415,7 +422,7 @@ export function Layout() {
               className="relative p-1.5 text-white/80 hover:text-white rounded-full transition-colors"
               title="Notificações"
             >
-              <motion.div animate={bellAnimate ? { rotate: [0, 3, -3, 3, 0] } : { rotate: 0 }} transition={{ duration: 0.3 }}>
+              <motion.div animate={bellAnimate ? { rotate: [0, -15, 15, -15, 15, -10, 10, -5, 5, 0] } : { rotate: 0 }} transition={{ duration: 1.5, ease: "easeInOut" }}>
                 <Bell className="w-4 h-4" />
               </motion.div>
               {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#D93030] rounded-full"></span>}
