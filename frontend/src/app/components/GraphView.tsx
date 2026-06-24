@@ -133,7 +133,7 @@ export function GraphView() {
       .scaleExtent([0.1, 4])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
-        g.selectAll('text').style('opacity', event.transform.k < 0.8 ? 0 : 1);
+        g.selectAll('text').style('opacity', event.transform.k < 0.35 ? 0 : 1);
       });
     zoomRef.current = zoom;
     
@@ -324,7 +324,9 @@ export function GraphView() {
       .attr('class', 'graph-node')
       .style('cursor', 'pointer')
       .attr('transform', `translate(${width / 2}, ${height / 2})`)
-      .on('mouseenter', (event, d) => setHoveredNode(d))
+      .on('mouseenter', (event, d) => {
+        if (animPhaseRef.current === 'idle') setHoveredNode(d);
+      })
       .on('mouseleave', () => setHoveredNode(null));
 
     const defs = d3.select(svgRef.current).select('defs');

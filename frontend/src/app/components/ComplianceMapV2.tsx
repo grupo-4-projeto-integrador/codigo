@@ -98,10 +98,18 @@ export function ComplianceMapV2({
           }
           return prev + 1;
         });
-      }, 150);
+      }, 1000); // 1 second per step
     }
     return () => clearInterval(interval);
   }, [isPlaying]);
+
+  useEffect(() => {
+    if (selectedLuc) {
+      const el = document.getElementById(`tile-${selectedLuc}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [selectedLuc]);
+  
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(getSidebarCollapsed());
   const [showMapModal, setShowMapModal] = useState(false);
 
@@ -473,11 +481,7 @@ export function ComplianceMapV2({
                 <Tooltip key={luc}>
                   <TooltipTrigger asChild>
                     <motion.button
-                      ref={(el) => {
-                        if (el && isSelected) {
-                          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                        }
-                      }}
+                      id={`tile-${luc}`}
                       onClick={() => onSelectLuc(isSelected ? null : luc)}
                       className={`relative flex items-center justify-center font-bold text-sm shadow-sm border border-transparent outline-none focus:outline-none focus-visible:outline-none map-tile compliance-tile ${isSelected ? 'sel' : ''}`}
                       aria-label={`LUC ${luc}`}
