@@ -3,11 +3,6 @@ package app
 import (
 	"context"
 	"database/sql"
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"grupo4/seguros/internal/ai"
 	"grupo4/seguros/internal/apolice"
 	"grupo4/seguros/internal/audit"
@@ -18,6 +13,11 @@ import (
 	"grupo4/seguros/internal/relatorio"
 	"grupo4/seguros/pkg/config"
 	"grupo4/seguros/pkg/response"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 func Run() error {

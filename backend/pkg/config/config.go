@@ -95,7 +95,6 @@ func (c Config) String() string {
 // GoString implementa fmt.GoStringer para redatar segredos em %#v também.
 func (c Config) GoString() string { return c.String() }
 
-
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value

@@ -82,6 +82,7 @@ jobs:
           PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           PG_DBNAME: seguros_db
           PG_SSLMODE: disable
+          JWT_SECRET: "test_secret_for_ci_environment_must_be_32_chars"
         run: go run ./cmd/migrate -seed
 
       - name: Run Smoke Integration Tests
@@ -93,9 +94,8 @@ jobs:
           PG_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           PG_DBNAME: seguros_db
           PG_SSLMODE: disable
-          # Vetor 5: JWT_SECRET vem do secret — sem string vazia ou valor hardcoded.
-          # Use uma string aleatória de 32+ chars em: Settings → Secrets → JWT_SECRET
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          # Vetor 5: JWT_SECRET configurado com um valor fixo apenas para testes em CI.
+          JWT_SECRET: "test_secret_for_ci_environment_must_be_32_chars"
           # GEMINI_API_KEY não é necessária nos testes de smoke (endpoint desabilitado com chave vazia).
           # Se quiser testar com IA em CI, adicione o secret GEMINI_API_KEY no GitHub.
         run: |

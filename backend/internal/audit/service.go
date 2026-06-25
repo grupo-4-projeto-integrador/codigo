@@ -125,7 +125,7 @@ func (s *Service) ReverterUltimaAcao(ctx context.Context, entidade, entidadeID, 
 		WHERE entidade = $1 AND entidade_id = $2 AND acao = $3 
 		ORDER BY id DESC LIMIT 1`, entidade, entidadeID, acao).
 		Scan(&logItem.ID, &logItem.Acao, &logItem.Entidade, &logItem.EntidadeID, &logItem.PayloadAnterior)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("ação não encontrada para reversão")
@@ -144,7 +144,7 @@ func (s *Service) ReverterPorID(ctx context.Context, auditID int64) error {
 		FROM audit_logs 
 		WHERE id = $1`, auditID).
 		Scan(&logItem.ID, &logItem.Acao, &logItem.Entidade, &logItem.EntidadeID, &logItem.PayloadAnterior)
-	
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return fmt.Errorf("log de auditoria não encontrado")
@@ -174,7 +174,7 @@ func (s *Service) ReverterLog(ctx context.Context, logItem AuditLog) error {
 		if err != nil {
 			return err
 		}
-	
+
 	case AcaoEditar, AcaoRenovar:
 		if logItem.PayloadAnterior == nil || *logItem.PayloadAnterior == "" || *logItem.PayloadAnterior == "null" {
 			return fmt.Errorf("sem dados anteriores (payload_anterior nulo) para reverter a ação")
@@ -191,7 +191,7 @@ func (s *Service) ReverterLog(ctx context.Context, logItem AuditLog) error {
 		if luc == "" {
 			luc = logItem.EntidadeID // fallback
 		}
-		
+
 		loja, _ := anterior["lojista"].(string)
 		segmento, _ := anterior["tipo"].(string)
 		seguradora, _ := anterior["seguradora"].(string)
@@ -214,7 +214,7 @@ func (s *Service) ReverterLog(ctx context.Context, logItem AuditLog) error {
 				observacoes = $9, cnpj = $10, numero_apolice = $11
 			WHERE luc = $12
 		`, loja, segmento, seguradora, vigencia, vencimento, status, cobertura, responsavel, observacoes, cnpj, numeroApolice, luc)
-		
+
 		if err != nil {
 			return fmt.Errorf("erro ao restaurar dados da apólice: %v", err)
 		}

@@ -356,12 +356,12 @@ func (r *PostgresRepository) Renovar(luc string, novoVencimento time.Time, novoV
 
 	query := fmt.Sprintf(`UPDATE %s SET vencimento = $1, cobertura = $2`, tableName)
 	args := []interface{}{novoVencimento, novoValor}
-	
+
 	if novaSeguradora != "" {
 		query += `, seguradora = $3`
 		args = append(args, novaSeguradora)
 	}
-	
+
 	query += fmt.Sprintf(` WHERE luc = $%d`, len(args)+1)
 	args = append(args, luc)
 

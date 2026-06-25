@@ -75,7 +75,7 @@ Retorne SOMENTE o JSON. Não adicione textos antes ou depois.`)
 	for _, mName := range modelNames {
 		model := s.client.GenerativeModel(mName)
 		model.SetTemperature(0.0)
-		
+
 		if strings.Contains(mName, "1.5") {
 			model.ResponseMIMEType = "application/json"
 		}
@@ -132,7 +132,7 @@ Retorne SOMENTE o JSON. Não adicione textos antes ou depois.`)
 	}
 
 	jsonResponse := string(textPart)
-	
+
 	// Sometimes Gemini wraps JSON in markdown like ```json ... ``` despite ResponseMIMEType. Let's clean it just in case.
 	jsonResponse = strings.TrimPrefix(jsonResponse, "```json")
 	jsonResponse = strings.TrimPrefix(jsonResponse, "```")

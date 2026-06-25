@@ -1,16 +1,22 @@
 package main
+
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
-	_ "github.com/lib/pq"
 )
+
 func main() {
 	db, err := sql.Open("postgres", os.Getenv("DATABASE_URL"))
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	rows, err := db.Query(`SELECT luc, loja, cnpj FROM seguros LIMIT 5;`)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer rows.Close()
 	count := 0
 	for rows.Next() {

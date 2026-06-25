@@ -34,6 +34,7 @@ export function exportToXLSX(data: ApoliceRecord[], filename: string) {
     "LUC": item.luc || item.id || "-",
     "Loja": item.fantasia || item.lojista || item.loja || "-",
     "CNPJ": formatCNPJ(item.cnpj),
+    "Segmento": item.segmento || item.tipo || "-",
     "Seguradora": item.seguradora || "-",
     "Vigência": formatDate(item.vigencia),
     "Vencimento": formatDate(item.vencimento),
@@ -55,18 +56,19 @@ export function exportToXLSX(data: ApoliceRecord[], filename: string) {
 export function exportToPDF(data: ApoliceRecord[], filename: string) {
   if (!data || data.length === 0) return;
 
-  const doc = new jsPDF();
+  const doc = new jsPDF('landscape');
   
   doc.setFontSize(14);
   doc.text("Listagem de Apólices", 14, 15);
   doc.setFontSize(10);
   doc.text(`Exportado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 22);
 
-  const head = [["LUC", "Loja", "CNPJ", "Seguradora", "Vigência", "Vencimento", "Status", "Cobertura"]];
+  const head = [["LUC", "Loja", "CNPJ", "Segmento", "Seguradora", "Vigência", "Vencimento", "Status", "Cobertura"]];
   const body = data.map(item => [
     item.luc || item.id || "-",
     item.fantasia || item.lojista || item.loja || "-",
     formatCNPJ(item.cnpj),
+    item.segmento || item.tipo || "-",
     item.seguradora || "-",
     formatDate(item.vigencia),
     formatDate(item.vencimento),

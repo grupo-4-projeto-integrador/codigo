@@ -150,7 +150,7 @@ func (r *PostgresRepository) GetAtividadeEquipe(usuarioID int) ([]Notificacao, e
 		if err := rows.Scan(&n.ID, &n.ApoliceLUC, &n.Tipo, &nome, &acao, &ts); err != nil {
 			return nil, err
 		}
-		
+
 		diff := time.Since(ts)
 		var tempoStr string
 		if diff.Hours() >= 1 {
@@ -160,12 +160,15 @@ func (r *PostgresRepository) GetAtividadeEquipe(usuarioID int) ([]Notificacao, e
 		} else {
 			tempoStr = "agora mesmo"
 		}
-		
+
 		acaoFormatada := acao
 		switch acao {
-		case "criar": acaoFormatada = "criou"
-		case "renovar": acaoFormatada = "renovou"
-		case "excluir": acaoFormatada = "excluiu"
+		case "criar":
+			acaoFormatada = "criou"
+		case "renovar":
+			acaoFormatada = "renovou"
+		case "excluir":
+			acaoFormatada = "excluiu"
 		}
 
 		n.Mensagem = fmt.Sprintf("%s %s %s · %s", nome, acaoFormatada, n.ApoliceLUC, tempoStr)
