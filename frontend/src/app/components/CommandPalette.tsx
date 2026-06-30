@@ -13,6 +13,7 @@ import {
   getFullscreenTableFilter,
   subscribeFullscreenTable
 } from '../store';
+import { setPitchActive } from '../stores/pitchStore';
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
@@ -202,6 +203,16 @@ export function CommandPalette() {
                 >
                   <LayoutDashboard className="w-4 h-4 opacity-70" />
                   <span>Ir para Visão Geral</span>
+                </Command.Item>
+                <Command.Item 
+                  value="pitch mode modo apresentacao tv"
+                  onSelect={() => handleSelect(() => {
+                    setPitchActive(true);
+                  })}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-gray-700 dark:text-gray-200 cursor-pointer"
+                >
+                  <Tv2 className="w-4 h-4 text-gray-400" />
+                  <span>Iniciar Pitch Mode</span>
                 </Command.Item>
                 <Command.Item 
                   value="ir para audit log auditoria historico acoes logs registros"

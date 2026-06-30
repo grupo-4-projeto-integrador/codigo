@@ -1094,7 +1094,7 @@ export function Insurance() {
       setRelatorioTexto(data?.relatorio || 'Não foi possível gerar o relatório.');
     } catch (err) {
       console.error('Erro ao gerar relatório IA:', err);
-      setRelatorioTexto('Serviço de IA indisponível. Contate o administrador do sistema.');
+      setRelatorioTexto('Serviço indisponível no momento. Tente novamente mais tarde.');
     } finally {
       setLoadingRelatorio(false);
     }
@@ -1652,7 +1652,7 @@ export function Insurance() {
                                 <path d="M2 12l10 5 10-5" />
                               </svg>
                             )}
-                            <span className="hidden xl:inline">Relatório IA</span>
+                            <span className="hidden xl:inline">Relatório</span>
                           </span>
                           <motion.div
                             className="absolute inset-y-0 z-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] w-[60%] pointer-events-none"
@@ -1666,7 +1666,7 @@ export function Insurance() {
                         </motion.button>
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        <p>Gerar relatório executivo com IA</p>
+                        <p>Gerar relatório executivo</p>
                       </TooltipContent>
                     </ShadcnTooltip>
                   </TooltipProvider>
@@ -3121,7 +3121,7 @@ export function Insurance() {
                     </div>
                     <div>
                       <h2 className="text-[16px] font-bold text-white leading-tight">Relatório Executivo</h2>
-                      <p className="text-[11px] text-[#bc9b7c] font-medium">Gerado por Gemini Flash</p>
+                      <p className="text-[11px] text-[#bc9b7c] font-medium">Processamento Sistêmico Automático</p>
                     </div>
                   </div>
                   <button
@@ -3156,7 +3156,7 @@ export function Insurance() {
                       </div>
                       <div className="text-center">
                         <p className="text-[#f9e4a0] font-semibold text-[14px]">Analisando dados do dashboard...</p>
-                        <p className="text-[#bc9b7c] text-[12px] mt-1">A IA está processando as métricas de conformidade</p>
+                        <p className="text-[#bc9b7c] text-[12px] mt-1">Processando métricas de conformidade do sistema</p>
                       </div>
                       <div className="flex gap-1.5 mt-2">
                         {[0, 1, 2].map(i => (

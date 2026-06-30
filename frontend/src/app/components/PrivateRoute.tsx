@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import { CommandPalette } from "./CommandPalette";
 import { FullscreenTable } from "./FullscreenTable";
 import { ShortcutsModal } from "./ShortcutsModal";
+import { PitchOverlay } from "./PitchMode/PitchOverlay";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { useEffect, useState } from "react";
 import { toPng } from "html-to-image";
@@ -155,6 +156,7 @@ export function PrivateRoute() {
       <Outlet />
       <CommandPalette />
       <FullscreenTable />
+      <PitchOverlay />
       <ShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setIsShortcutsModalOpen(false)} />
     </>
   );

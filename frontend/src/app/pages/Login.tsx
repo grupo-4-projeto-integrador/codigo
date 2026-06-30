@@ -85,21 +85,19 @@ export function Login() {
               </p>
             )}
             
-            {import.meta.env.DEV && (
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#222]">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    loginAsDev();
-                    navigate("/seguros");
-                  }}
-                  className="w-full border-dashed border-gray-300 dark:border-[#333] text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                >
-                  Modo Dev: Entrar sem Senha
-                </Button>
-              </div>
-            )}
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[#222]">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  loginAsDev();
+                  navigate("/seguros");
+                }}
+                className="w-full border-dashed border-gray-300 dark:border-[#333] text-gray-500 hover:text-gray-900 dark:hover:text-white"
+              >
+                Acessar como Visitante (Apresentação)
+              </Button>
+            </div>
           </div>
         </form>
       </div>
